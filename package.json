@@ -2,23 +2,20 @@
 	"name": "computacao-1",
 	"version": "1.0.0",
 	"description": "Questões sobre Fluxograma, Portugol e Introdução à Linguagem C",
-	"main": "app.js",
+	"main": "server.js",
 	"scripts": {
 		"start": "node server.js"
 	},
 	"engines": {
 		"node": ">=8.9.1"
 	},
-	"files": [
-		"app.js"
-	],
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/bancodequestoes/computacao-1.git"
 	},
 	"author": "Banco de Questões",
 	"license": "MIT",
-	"homepage": "https://bancodequestoes.github.io",
+	"homepage": "https://bancodequestoes.github.io/computacao-1",
 	"dependencies": {
 		"serve-static": "^1.13.2",
 		"connect": "^3.6.6",
