@@ -1,0 +1,30 @@
+{
+	"name": "ciencia-da-computacao",
+	"version": "1.0.0",
+	"description": "Questões sobre Ciência da Computação",
+	"main": "app.js",
+	"scripts": {
+		"start": "node server.js"
+	},
+	"engines": {
+		"node": ">=0.10.0"
+	},
+	"files": [
+		"app.js"
+	],
+	"author": "Thiago N. Ferreira",
+	"license": "",
+	"homepage": "http://www.inf.ufpr.br/tnferreira",
+	"dependencies": {
+		"serve-static": "",
+		"connect": "",
+		"network": "",
+		"fs-extra": "",
+		"chokidar": "",
+		"winston": "",
+		"ncp": "",
+		"recursive-readdir": "",
+		"recursive-readdir-synchronous": "",
+		"livereload": ""
+	}
+}
