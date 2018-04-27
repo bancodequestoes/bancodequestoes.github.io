@@ -1,30 +1,29 @@
 {
-	"name": "ciencia-da-computacao",
+	"name": "computacao-1",
 	"version": "1.0.0",
-	"description": "Questões sobre Ciência da Computação",
+	"description": "Questões sobre Fluxograma, Portugol e Introdução à Linguagem C",
 	"main": "app.js",
 	"scripts": {
 		"start": "node server.js"
 	},
 	"engines": {
-		"node": ">=0.10.0"
+		"node": ">=8.9.1"
 	},
 	"files": [
 		"app.js"
 	],
-	"author": "Thiago N. Ferreira",
-	"license": "",
-	"homepage": "http://www.inf.ufpr.br/tnferreira",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/bancodequestoes/computacao-1.git"
+	},
+	"author": "Banco de Questões",
+	"license": "MIT",
+	"homepage": "https://bancodequestoes.github.io",
 	"dependencies": {
-		"serve-static": "",
-		"connect": "",
-		"network": "",
-		"fs-extra": "",
-		"chokidar": "",
-		"winston": "",
-		"ncp": "",
-		"recursive-readdir": "",
-		"recursive-readdir-synchronous": "",
-		"livereload": ""
+		"serve-static": "^1.13.2",
+		"connect": "^3.6.6",
+		"network": "^0.4.1",
+		"winston": "^2.4.2",
+		"livereload": "^0.7.0"
 	}
 }
