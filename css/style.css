@@ -1,6 +1,6 @@
 
 .content{
-    margin-top: 80px;
+    margin-top: 130px;
 }
 
 .box-shadow {
@@ -15,6 +15,14 @@
 
 .bg-h-blue{
     background-color: #7cb5ec;
+}
+
+.tag:hover {
+    cursor: pointer;
+}
+
+.toolbar{
+    margin-top: 50px;
 }
 
 answer{

@@ -7,9 +7,9 @@
 
 
         <title>Computação 1 - Banco de Questões</title>
-		<meta name="author" content="Banco de Questões">
+		<meta name="author" content="Thiago N. Ferreira">
 		<meta name="description" content="Questões sobre Fluxograma, Portugol e Introdução à Linguagem C">
-		<meta name="keywords" content="banco de questoes, computacao, exercicios">
+		<meta name="keywords" content="banco de questoes, fluxograma, linguagem C, portugol, computacao, exercicios">
 		<meta name="robots" content="index, follow">
 		<meta name="theme-color" content="rgb(51,122,183)">
 		<meta name="mobile-web-app-capable" content="yes">
@@ -36,7 +36,7 @@
         <link rel="stylesheet" type="text/css" href="css/style.css"/>
     </head>
 	<body>
-        <nav class="navbar  fixed-top navbar-expand-lg navbar-dark bg-h-blue border-bottom box-shadow">
+        <nav class="navbar  fixed-top navbar-expand-lg navbar-dark bg-dark">
             <div class="container">
 
                 <a class="navbar-brand" href="#">
@@ -44,17 +44,50 @@
                     &nbsp; Banco de Questões
                 </a>
 
-                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
+                <ul class="navbar-nav mr-auto">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            Computação 1
+                        </a>
+                        <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+                            <a class="dropdown-item" href="#">Computação 1</a>
+                            <a class="dropdown-item" href="#">Computação 2</a>
+                        </div>
+                    </li>
+                </ul>
 
-                <div class="collapse navbar-collapse" id="navbarSupportedContent">
-                    <span class="navbar-text">Computação 1</span>
-                </div>
+
+                <form class="form-inline">
+                    <input id="question-search" class="form-control" type="text" placeholder="Buscar" aria-label="Search"/>
+                    <select id="question-level" class="form-control">
+                        <option selected value="facil">Fácil</option>
+                        <option value="medio">Médio</option>
+                        <option value="dificil">Difícil</option>
+                    </select>
+                </form>
             </div>
         </nav>
 
+        <!--<nav class="navbar fixed-top toolbar navbar-expand-lg navbar-dark bg-light border-bottom box-shadow">
+            <div class="container">
+                <div class="row">
+                    <div class="col-9">
+                        <input id="question-search" class="form-control" type="text" placeholder="Buscar"/>
+                    </div>
+                    <div class="col-3">
+                        <select id="question-level" class="form-control">
+                            <option selected value="facil">Fácil</option>
+                            <option value="medio">Médio</option>
+                            <option value="dificil">Difícil</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </nav>-->
+
+
         <div class="container content">
+            <!--
             <div class="form-row">
                 <div class="col-9">
                     <input id="question-search" class="form-control" type="text" placeholder="Buscar"/>
@@ -66,8 +99,9 @@
                         <option value="dificil">Difícil</option>
                     </select>
                 </div>
-            </div>
-            <hr/>
+                <hr/>
+            </div>-->
+
             <div class="questions"></div>
         </div>
 

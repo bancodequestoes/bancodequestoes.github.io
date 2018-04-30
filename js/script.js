@@ -17,6 +17,23 @@ function loadQuestions(level, number){
         url: "questoes/" + level +"/"+ pNumber+ ".html",
         error : function(e) {
             keepLoading = false;
+
+            $questions.find("question").each(function(i, el){
+                if($(this).attr("data-tags")){
+
+                    var tags = $(this).attr("data-tags").split(" ");
+
+                    var pos = $(this).next().next();
+
+                    $.each(tags, function(i, tag){
+                        pos.after("&nbsp;<span class='tag badge badge-light'>"+tag+"</span>");
+                        pos = pos.next();
+                    });
+
+                }
+            });
+
+            $("#question-search").keyup();
         },
         success : function(data) {
             var str = "";
@@ -30,7 +47,6 @@ function loadQuestions(level, number){
             str += "</div>";
 
             str += "</div>";
-
 
             $questions.append(str);
 
@@ -93,6 +109,14 @@ $(function(){
         });
 
         return false;
+    });
+
+    $(document).on("click",".tag",function() {
+        $("#question-search").val($(this).text()).keyup();
+    });
+
+    $(document).on("touchstart",".tag",function() {
+        $("#question-search").val($(this).text()).keyup();
     });
 
     loadQuestions("facil", 1);
