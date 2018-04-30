@@ -3,7 +3,8 @@
     <head>
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
 
         <title>Computação 1 - Banco de Questões</title>
 		<meta name="author" content="Banco de Questões">
@@ -14,9 +15,11 @@
 		<meta name="mobile-web-app-capable" content="yes">
 
         <!-- iOS Support -->
+        <link rel="apple-touch-icon" href="/img/logo.png">
         <meta name="apple-mobile-web-app-title" content="Computação 1"/>
 		<meta name="apple-mobile-web-app-capable" content="yes" />
 		<meta name="apple-mobile-web-app-status-bar-style" content="black" />
+
 
         <!-- Link Preview-->
         <meta property="og:title" content="Banco de Questões" />
@@ -26,68 +29,55 @@
         <meta property="og:locale" content="en_US" />
         <meta property="og:locale:alternate" content="pt_BR" />
 
-        <!-- Bootstrap -->
+        <!-- Vendors -->
         <link rel="stylesheet" type="text/css" href="css/vendor/bootstrap.min.css">
+        <link rel="stylesheet" type="text/css" href="css/vendor/highlight.default.min.css">
+        <!-- Custom -->
         <link rel="stylesheet" type="text/css" href="css/style.css"/>
     </head>
 	<body>
-        <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom box-shadow">
-            <a class="navbar-brand" href="#">Computação 1</a>
-            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
+        <nav class="navbar  fixed-top navbar-expand-lg navbar-dark bg-h-blue border-bottom box-shadow">
+            <div class="container">
 
-            <div class="collapse navbar-collapse" id="navbarSupportedContent">
-                <ul class="navbar-nav mr-auto">
-                    <li class="nav-item active">
-                        <a class="nav-link" href="#">Home <span class="sr-only">(current)</span></a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#">Link</a>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            Dropdown
-                        </a>
-                        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                            <a class="dropdown-item" href="#">Action</a>
-                            <a class="dropdown-item" href="#">Another action</a>
-                            <div class="dropdown-divider"></div>
-                            <a class="dropdown-item" href="#">Something else here</a>
-                        </div>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link disabled" href="#">Disabled</a>
-                    </li>
-                </ul>
+                <a class="navbar-brand" href="#">
+                    <img src="/img/logo-transparent.svg" class="d-inline-block align-top" width="30" height="30" alt="">
+                    &nbsp; Banco de Questões
+                </a>
+
+                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                    <span class="navbar-text">Computação 1</span>
+                </div>
             </div>
         </nav>
 
-      <div class="container">
-        <div class="row">
-          <div class="col-sm">
-            Faça um algoritmo que calcule a área de um triângulo, considerando a fórmula AREA = (BASE*ALTURA)/2. Utilize as variáveis AREA, BASE e ALTURA e os operadores aritméticos de multiplicação e divisão.
-
-            Questão 04. Faça um algoritmo que:
-a)	Leia um número inteiro;
-b)	Leia um segundo número inteiro;
-c)	Efetue a adição dos dois valores;
-d)	Apresente o valor calculado.
-
-
-</div>
+        <div class="container content">
+            <div class="form-row">
+                <div class="col-9">
+                    <input id="question-search" class="form-control" type="text" placeholder="Buscar"/>
+                </div>
+                <div class="col-3">
+                    <select id="question-level" class="form-control">
+                        <option selected value="facil">Fácil</option>
+                        <option value="medio">Médio</option>
+                        <option value="dificil">Difícil</option>
+                    </select>
+                </div>
+            </div>
+            <hr/>
+            <div class="questions"></div>
         </div>
-      </div>
 
-
-
-      <!-- Vendors -->
-      <script type="text/javascript" src="js/vendor/jquery-3.3.1.slim.min.js"></script>
-      <script type="text/javascript" src="js/vendor/bootstrap.min.js"></script>
-      <!-- Custom -->
-      <script type="text/javascript" src="js/script.js"></script>
-      <script>document.write('<script src="http://' + (location.host || 'localhost').split(':')[0] + ':35729/livereload.js?snipver=1"></' + 'script>')</script>
-
-  </body>
+        <!-- Vendors -->
+        <script type="text/javascript" src="js/vendor/jquery-3.3.1.min.js"></script>
+        <script type="text/javascript" src="js/vendor/bootstrap.min.js"></script>
+        <script type="text/javascript" src="js/vendor/highlight.min.js"></script>
+        <!-- Custom -->
+        <script type="text/javascript" src="js/script.js"></script>
+        <script>document.write('<script src="http://' + (location.host || 'localhost').split(':')[0] + ':35729/livereload.js?snipver=1"></' + 'script>')</script>
+    </body>
 
 </html>

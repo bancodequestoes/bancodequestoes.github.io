@@ -1,3 +1,8 @@
+
+.content{
+    margin-top: 80px;
+}
+
 .box-shadow {
     box-shadow: 0 .25rem .75rem rgba(0, 0, 0, .05);
 }
@@ -6,4 +11,22 @@
 }
 .border-bottom {
     border-bottom: 1px solid #e5e5e5;
+}
+
+.bg-h-blue{
+    background-color: #7cb5ec;
+}
+
+answer{
+    display: none;
+}
+
+pre > code {
+    white-space: pre;
+    margin-top: -1.5em;
+    display: block;
+}
+
+pre{
+    margin-bottom: 0px;
 }
