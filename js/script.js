@@ -93,12 +93,12 @@ $(function(){
 
     $(".question-search").keyup(function(){
 
-        var searchFor = $(this).val().trim().toLowerCase().latinise();
+        var searchFor = latinize($(this).val().trim().toLowerCase());
 
         if(searchFor){
             $(".question").hide().filter(function(){
 
-                var texts = $(this).text().toLowerCase();
+                var texts = latinize($(this).text().toLowerCase());
                 var tags = $(this).find("question").data("tags") || "";
 
                 return texts.search(searchFor) !== -1 || tags.search(searchFor) !== -1;
