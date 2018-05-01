@@ -1,6 +1,6 @@
 
 .content{
-    margin-top: 80px;
+    margin-top: 130px;
 }
 
 .box-shadow {
@@ -43,4 +43,13 @@ pre > code {
 
 pre{
     margin-bottom: 0px;
+}
+
+.toolbar{
+    margin-top: 57px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(0,0,0,.05);
+    background-color: white;
+    z-index: 0;
 }

@@ -91,7 +91,7 @@ $(function(){
 
     $questions = $(".questions");
 
-    $("#question-search").keyup(function(){
+    $(".question-search").keyup(function(){
 
         var searchFor = $(this).val().trim().toLowerCase().latinise();
 
@@ -138,7 +138,9 @@ $(function(){
         var link = $(this).data("link");
         var name = $(this).data("name");
 
-        $(".nav-link").text(name);
+        $(".dropdown .nav-link").text(name);
+
+        $(".navbar-collapse").collapse('hide');
 
         $("#question-search").val("");
         $questions.html("");
