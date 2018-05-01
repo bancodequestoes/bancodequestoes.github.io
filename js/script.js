@@ -2,56 +2,78 @@ var keepLoading = true;
 
 var $questions;
 
+function getLevel(level){
+
+    if(level == "facil"){
+        return "(Fácil)";
+    }else if(level == "medio"){
+        return "(Médio)";
+    }else if(level == 'dificil'){
+        return "(Difícil)";
+    }
+
+    return "(Desconhecido)";
+}
+
 function pad(a, b){
     return(1e15 + a + "").slice(-b);
 }
 
-function loadQuestions(level, number){
+function loadQuestions(cls, number){
 
     keepLoading = true;
 
     var pNumber = pad(number, 5);
 
+    var url = "questoes/" + cls +"/" + pNumber+ ".html";
+
     $.ajax({
         type: 'GET',
-        url: "questoes/" + level +"/"+ pNumber+ ".html",
+        url: url,
         error : function(e) {
             keepLoading = false;
-
-            $questions.find("question").each(function(i, el){
-                if($(this).attr("data-tags")){
-
-                    var tags = $(this).attr("data-tags").split(" ");
-
-                    var pos = $(this).next().next();
-
-                    $.each(tags, function(i, tag){
-                        pos.after("&nbsp;<span class='tag badge badge-light'>"+tag+"</span>");
-                        pos = pos.next();
-                    });
-
-                }
-            });
-
             $("#question-search").keyup();
         },
         success : function(data) {
-            var str = "";
 
-            str += "<div class='row question'>";
-            str += "<div class='col-md'>";
-            str += "<strong>Questão " + number + ".</strong>";
-            str += data;
-            str += "<a class='open-answer' href='#'>Ver Resposta</a>";
-            str += "<hr/>";
-            str += "</div>";
+            var $data = $(data);
+            var $description = $data.find("description");
+            var $answer = $data.find("answer");
 
-            str += "</div>";
+            $answer.prepend("<p class='answer-label text-success font-weight-bold'>Resposta</p>");
 
-            $questions.append(str);
+            var tags = ($data.attr("data-tags") || "").split(" ");
+            var level = $data.attr("data-level");
+
+            $data.append([
+                $('<div/>', {"class": "bottombar"}).append([
+                    $('<a/>',{
+                        "class": "open-answer",
+                        text:"Ver Resposta",
+                        href:"#"
+                    }),
+                    "&nbsp; Tags: ",
+                    tags.map(tag => {
+                        return tag
+                    })
+                ])
+            ]);
+
+            $questions.append([
+                $('<div/>',{ "class": "row question" }).append([
+                    $('<div/>',{ "class": "col-md" }).append([
+                        $("<span/>",{
+                            text: "Questão " + number + " " + getLevel(level),
+                            "class": "font-weight-bold"
+                        }),
+                        $data,
+                        $('<hr/>')
+                    ]),
+                ]),
+            ]);
 
             if(keepLoading){
-                loadQuestions(level, number + 1);
+                loadQuestions(cls, number + 1);
             }
        },
    });
@@ -59,19 +81,11 @@ function loadQuestions(level, number){
 
 $(function(){
 
-    hljs.initHighlightingOnLoad();
-
     $questions = $(".questions");
-
-    $('#question-level').change(function () {
-        var level = $(this).find("option:selected").val();
-        $questions.children().remove();
-        loadQuestions(level, 1);
-    });
 
     $("#question-search").keyup(function(){
 
-        var searchFor = $(this).val().trim().toLowerCase();
+        var searchFor = $(this).val().trim().toLowerCase().latinise();
 
         if(searchFor){
             $(".question").hide().filter(function(){
@@ -90,11 +104,7 @@ $(function(){
 
     $(document).on("click",".open-answer",function() {
 
-        $answer = $(this).prev();
-
-        if($answer.find(".answer-label").length == 0){
-            $answer.prepend("<p class='answer-label text-success font-weight-bold'>Resposta</p>");
-        }
+        $answer = $(this).parent().prev();
 
         $("answer").hide("slide");
         $(".open-answer").text("Ver Resposta");
@@ -111,13 +121,21 @@ $(function(){
         return false;
     });
 
-    $(document).on("click",".tag",function() {
-        $("#question-search").val($(this).text()).keyup();
-    });
-
     $(document).on("touchstart",".tag",function() {
         $("#question-search").val($(this).text()).keyup();
     });
 
-    loadQuestions("facil", 1);
+    $(".menu-item").click(function(){
+
+        var link = $(this).data("link");
+        var name = $(this).data("name");
+
+        $(".nav-link").text(name);
+
+        $("#question-search").val("");
+        $questions.html("");
+        loadQuestions(link, 1);
+    });
+
+    loadQuestions("computacao-1", 1);
 });

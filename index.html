@@ -5,8 +5,7 @@
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
-
-        <title>Computação 1 - Banco de Questões</title>
+        <title>Banco de Questões</title>
 		<meta name="author" content="Thiago N. Ferreira">
 		<meta name="description" content="Questões sobre Fluxograma, Portugol e Introdução à Linguagem C">
 		<meta name="keywords" content="banco de questoes, fluxograma, linguagem C, portugol, computacao, exercicios">
@@ -19,7 +18,6 @@
         <meta name="apple-mobile-web-app-title" content="Computação 1"/>
 		<meta name="apple-mobile-web-app-capable" content="yes" />
 		<meta name="apple-mobile-web-app-status-bar-style" content="black" />
-
 
         <!-- Link Preview-->
         <meta property="og:title" content="Banco de Questões" />
@@ -36,7 +34,7 @@
         <link rel="stylesheet" type="text/css" href="css/style.css"/>
     </head>
 	<body>
-        <nav class="navbar  fixed-top navbar-expand-lg navbar-dark bg-dark">
+        <nav class="navbar  fixed-top navbar-expand-lg navbar-dark bg-dark border-bottom box-shadow">
             <div class="container">
 
                 <a class="navbar-brand" href="#">
@@ -44,64 +42,32 @@
                     &nbsp; Banco de Questões
                 </a>
 
-                <ul class="navbar-nav mr-auto">
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            Computação 1
-                        </a>
-                        <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
-                            <a class="dropdown-item" href="#">Computação 1</a>
-                            <a class="dropdown-item" href="#">Computação 2</a>
-                        </div>
-                    </li>
-                </ul>
+                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#collapse-this-navbar" aria-controls="collapse-this-navbar" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
 
+                <div class="collapse navbar-collapse" id="collapse-this-navbar">
+                    <ul class="navbar-nav mr-auto">
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                Computação 1
+                            </a>
+                            <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+                                <a class="menu-item dropdown-item" data-link="computacao-1" data-name="Computação 1" href="#">Computação 1</a>
+                                <a class="menu-item dropdown-item" data-link="computacao-2" data-name="Computação 2" href="#">Computação 2</a>
+                                <a class="menu-item dropdown-item" data-link="logica-para-computacao" data-name="Lógica para Computação" href="#">Lógica para Computação</a>
+                            </div>
+                        </li>
+                    </ul>
 
-                <form class="form-inline">
-                    <input id="question-search" class="form-control" type="text" placeholder="Buscar" aria-label="Search"/>
-                    <select id="question-level" class="form-control">
-                        <option selected value="facil">Fácil</option>
-                        <option value="medio">Médio</option>
-                        <option value="dificil">Difícil</option>
-                    </select>
-                </form>
+                    <form class="form-inline">
+                        <input id="question-search" class="form-control" type="text" placeholder="Buscar..." aria-label="Search"/>
+                    </form>
+                </div>
             </div>
         </nav>
 
-        <!--<nav class="navbar fixed-top toolbar navbar-expand-lg navbar-dark bg-light border-bottom box-shadow">
-            <div class="container">
-                <div class="row">
-                    <div class="col-9">
-                        <input id="question-search" class="form-control" type="text" placeholder="Buscar"/>
-                    </div>
-                    <div class="col-3">
-                        <select id="question-level" class="form-control">
-                            <option selected value="facil">Fácil</option>
-                            <option value="medio">Médio</option>
-                            <option value="dificil">Difícil</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-        </nav>-->
-
-
         <div class="container content">
-            <!--
-            <div class="form-row">
-                <div class="col-9">
-                    <input id="question-search" class="form-control" type="text" placeholder="Buscar"/>
-                </div>
-                <div class="col-3">
-                    <select id="question-level" class="form-control">
-                        <option selected value="facil">Fácil</option>
-                        <option value="medio">Médio</option>
-                        <option value="dificil">Difícil</option>
-                    </select>
-                </div>
-                <hr/>
-            </div>-->
-
             <div class="questions"></div>
         </div>
 
@@ -109,6 +75,7 @@
         <script type="text/javascript" src="js/vendor/jquery-3.3.1.min.js"></script>
         <script type="text/javascript" src="js/vendor/bootstrap.min.js"></script>
         <script type="text/javascript" src="js/vendor/highlight.min.js"></script>
+        <script type="text/javascript" src="js/vendor/latinise.min.js"></script>
         <!-- Custom -->
         <script type="text/javascript" src="js/script.js"></script>
         <script>document.write('<script src="http://' + (location.host || 'localhost').split(':')[0] + ':35729/livereload.js?snipver=1"></' + 'script>')</script>

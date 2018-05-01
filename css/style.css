@@ -1,6 +1,6 @@
 
 .content{
-    margin-top: 130px;
+    margin-top: 80px;
 }
 
 .box-shadow {
@@ -17,17 +17,19 @@
     background-color: #7cb5ec;
 }
 
-.tag:hover {
-    cursor: pointer;
-}
-
-.toolbar{
-    margin-top: 50px;
+.bottombar{
+    margin-top: 10px;
 }
 
 answer{
     display: none;
+    margin-top: 10px;
 }
+
+question{
+    display: block;
+}
+
 
 pre > code {
     white-space: pre;
