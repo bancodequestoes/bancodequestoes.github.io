@@ -89,6 +89,8 @@ $(function(){
 		}
 	});
 
+    $.ajaxSetup({ cache: false });
+
     $questions = $(".questions");
 
     $(".question-search").keyup(function(){
