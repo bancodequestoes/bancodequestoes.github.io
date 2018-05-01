@@ -51,5 +51,5 @@ pre{
     padding-bottom: 10px;
     border-bottom: 1px solid rgba(0,0,0,.05);
     background-color: white;
-    z-index: 0;
+    z-index: 1029 !important;
 }
