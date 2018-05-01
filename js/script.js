@@ -33,6 +33,7 @@ function loadQuestions(cls, number){
         error : function(e) {
             keepLoading = false;
             $("#question-search").keyup();
+            MathJax.Hub.Typeset();
         },
         success : function(data) {
 
@@ -80,6 +81,13 @@ function loadQuestions(cls, number){
 }
 
 $(function(){
+
+    MathJax.Hub.Config({
+		tex2jax: {
+			inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+			processEscapes: true
+		}
+	});
 
     $questions = $(".questions");
 
