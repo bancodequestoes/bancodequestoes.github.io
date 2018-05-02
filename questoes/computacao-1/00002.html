@@ -1,14 +1,30 @@
-<question data-level="medio" data-tags="condicional">
+<question data-level="facil" data-tags="condicional">
     <description>
-        Faça um algoritmo para calcular $x = 2$ a área de uma circunferência, considerando a fórmula $AREA = \pi * RAIO^2$. Utilize as variáveis AREA e RAIO, a constante π (pi = 3,14159) e os operadores aritméticos de multiplicação
-
-        $$
-            \frac{3}{4} = \sum_{2}^{2}{x+1}
-        $$
+        Construa um algoritmo que leia dois valores numéricos inteiros e efetue a adição; caso o resultado seja maior que 10, apresentá-lo
     </description>
     <answer>
 
-        respostas
+<pre>
+<code class="c">
+#include "stdio.h"
 
+int main(){
+
+    int n1;
+    int n2;
+
+    printf("Digite n1:\n");
+    scanf("%d", &n1);
+    printf("Digite n2:\n");
+    scanf("%d", &n2);
+
+    int soma = n1+n2;
+
+    if(soma > 10){
+        printf("Soma: %d", soma);
+    }
+}
+</code>
+</pre>
     </answer>
 </question>
