@@ -53,6 +53,7 @@ function loadQuestions(cls, number){
                         text:"Ver Resposta",
                         href:"#"
                     }),
+                    "&nbsp; |",
                     "&nbsp; Tags: ",
                     tags.map(tag => {
                         return tag
