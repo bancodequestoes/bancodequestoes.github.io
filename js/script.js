@@ -2,6 +2,21 @@ var keepLoading = true;
 
 var $questions;
 
+function getQueryVariable(variable){
+
+   var query = window.location.search.substring(1);
+   var vars = query.split("&");
+
+   for (var i = 0;i < vars.length; i++) {
+       var pair = vars[i].split("=");
+       if(pair[0] == variable){
+           return pair[1];
+       }
+   }
+
+   return(false);
+}
+
 function getLevel(level){
 
     if(level == "facil"){
@@ -47,17 +62,34 @@ function loadQuestions(cls, number){
             var level = $data.attr("data-level");
 
             $data.append([
+                $('<div/>',{class:"tags"}).append([
+                    $("<p/>",{class: "answer-label text-success font-weight-bold", text:"Tags"}),
+                    tags.map(tag => {
+                        return tag
+                    })
+                ])
+            ])
+            //console.log($data);
+
+            $data.append([
                 $('<div/>', {"class": "bottombar"}).append([
                     $('<a/>',{
                         "class": "open-answer",
                         text:"Ver Resposta",
                         href:"#"
                     }),
-                    "&nbsp; |",
-                    "&nbsp; Tags: ",
-                    tags.map(tag => {
-                        return tag
-                    })
+                    "&nbsp; | &nbsp;",
+                    $('<a/>',{
+                        "class": "open-tags",
+                        text:"Tags",
+                        href:"#"
+                    }),
+                    "&nbsp; | &nbsp;",
+                    $('<a/>',{
+                        "class": "share",
+                        text:"Compartilhar",
+                        href:"/?id=" + number
+                    }),
                 ])
             ]);
 
@@ -81,6 +113,28 @@ function loadQuestions(cls, number){
    });
 }
 
+function search(searchFor){
+
+    if(searchFor){
+
+        $(".question").hide();
+
+        var $questions = $(".question").filter(function(){
+
+            var texts = latinize($(this).text().toLowerCase());
+            var tags = $(this).find("question").data("tags") || "";
+
+            return texts.search(searchFor) !== -1 || tags.search(searchFor) !== -1;
+        })
+
+        $questions.each(function(index, el){
+            $(this).show();
+        });
+    }else{
+        $(".question").show();
+    }
+}
+
 $(function(){
 
     MathJax.Hub.Config({
@@ -100,19 +154,7 @@ $(function(){
 
         var searchFor = latinize($input.val().trim().toLowerCase());
 
-        if(searchFor){
-            $(".question").hide().filter(function(){
-
-                var texts = latinize($(this).text().toLowerCase());
-                var tags = $(this).find("question").data("tags") || "";
-
-                return texts.search(searchFor) !== -1 || tags.search(searchFor) !== -1;
-            }).each(function(index, el){
-                $(this).show();
-            });
-        }else{
-            $(".question").show();
-        }
+        search(searchFor);
 
         // Hide the keyboard when the user submit the form
         $input.blur();
@@ -121,9 +163,22 @@ $(function(){
         return false;
     });
 
+    $(document).on("click",".open-tags",function() {
+
+        $tags = $(this).parent().prev();
+
+        $(".tags").hide("slide");
+
+        if( ! $tags.is(":visible")){
+            $tags.show("slide");
+        }
+
+        return false;
+    });
+
     $(document).on("click",".open-answer",function() {
 
-        $answer = $(this).parent().prev();
+        $answer = $(this).parent().prev().prev();
 
         $("answer").hide("slide");
         $(".open-answer").text("Ver Resposta");
@@ -138,10 +193,6 @@ $(function(){
         });
 
         return false;
-    });
-
-    $(document).on("touchstart",".tag",function() {
-        $("#question-search").val($(this).text()).keyup();
     });
 
     $(".menu-item").click(function(){
@@ -159,4 +210,15 @@ $(function(){
     });
 
     loadQuestions("computacao-1", 1);
+
+    var id = getQueryVariable("id");
+
+    if(id){
+
+        id = parseInt(id);
+
+        $(".question-search").val("Questão "+id);
+
+        search("Questão "+id);
+    }
 });

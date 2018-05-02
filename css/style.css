@@ -30,6 +30,13 @@ answer{
     margin-top: 10px;
 }
 
+.tags{
+    display: none;
+}
+.tags p{
+    margin-bottom: 0px;
+}
+
 question{
     display: block;
     text-align: justify;
