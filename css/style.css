@@ -53,3 +53,7 @@ pre{
     background-color: white;
     z-index: 1029 !important;
 }
+
+.btn-outline-secondary{
+    border: 1px solid #ced4da
+}

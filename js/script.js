@@ -93,9 +93,11 @@ $(function(){
 
     $questions = $(".questions");
 
-    $(".question-search").keyup(function(){
+    $("#form-question-search").submit(function(){
 
-        var searchFor = latinize($(this).val().trim().toLowerCase());
+        var $input = $(this).find(".question-search");
+
+        var searchFor = latinize($input.val().trim().toLowerCase());
 
         if(searchFor){
             $(".question").hide().filter(function(){
@@ -110,6 +112,12 @@ $(function(){
         }else{
             $(".question").show();
         }
+
+        // Hide the keyboard when the user submit the form
+        $input.blur();
+
+        //Avoid submit the form
+        return false;
     });
 
     $(document).on("click",".open-answer",function() {
