@@ -59,9 +59,9 @@ function getHTMLForSearchResultItem(id, title, subtitle, url, content, path){
     html += "<div class='dropdown'>";
     html += "<span>"+subtitle+"</span>&nbsp;<a href='#' class='dropdown-toggle' id='dropdownMenuButton' data-toggle='dropdown'></a>";
     html += "        <div class='dropdown-menu dropdown-menu-right' >";
-    html += "             <a class='dropdown-item search-result-save-item' data-json='"+json+"' href='#'>Save</a>";
+    html += "             <a class='dropdown-item search-result-save-item' data-json='"+json+"' href='#'>Salvar</a>";
     html += "           <div class='dropdown-divider'></div>";
-    html += "            <a class='dropdown-item search-result-download' href='#' data-path='"+path+"'>Download</a>";
+    html += "            <a class='dropdown-item search-result-download' href='#' data-path='"+path+"'>Baixar</a>";
     html += "        </div>";
     html += "    </div>";
     html += "</a>";
