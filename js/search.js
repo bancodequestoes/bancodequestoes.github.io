@@ -28,47 +28,6 @@ var getUrlParameter = function getUrlParameter(sParam) {
     }
 };
 
-function getHTMLForPages(page, selectedPage, url){
-
-    var html = "";
-
-    html += "<li class='list-inline-item'>";
-
-    if(page == selectedPage){
-        html += "<a href='"+url+"'><strong>"+page+"</strong></a>";
-    }else{
-        html += "<a href='"+url+"'>"+page+"</a>";
-    }
-
-    html += "</li>";
-
-    return html;
-}
-
-function getHTMLForSearchResultItem(title, subtitle, url, content, path){
-
-    var html = "";
-
-    html += "<div class='row search-result-item'>";
-    html += "<div class='col-12'>";
-    html += "<a href='" + url + "'>";
-    html += "<h3>" + title + "</h3>";
-    html += "<div class='dropdown'>";
-    html += "<span>"+subtitle+"</span>&nbsp;<a href='#' class='dropdown-toggle' id='dropdownMenuButton' data-toggle='dropdown'></a>";
-    html += "        <div class='dropdown-menu dropdown-menu-right' >";
-    html += "             <a class='dropdown-item' href='#'>Save</a>";
-    html += "           <div class='dropdown-divider'></div>";
-    html += "            <a class='dropdown-item search-result-download' href='#' data-path='"+path+"'>Download</a>";
-    html += "        </div>";
-    html += "    </div>";
-    html += "</a>";
-    html += "<p>" + content + "...</p>";
-    html += "</div>";
-    html += "</div>";
-
-    return html;
-}
-
 function decodeUrlParameter(str) {
 	return decodeURIComponent((str+'').replace(/\+/g, '%20'));
 }
@@ -126,13 +85,14 @@ $(function(){
 
                 $.each(data.items, function(i, item){
 
+                    var id = item.sha;
                     var title = item.name;
                     var subtitle = item.path;
                     var url = item.html_url;
                     var content = item.text_matches[0].fragment;
                     var path = item.path;
 
-                    $(".search-result").append(getHTMLForSearchResultItem(title, subtitle, url,content, path))
+                    $(".search-result").append(getHTMLForSearchResultItem(id, title, subtitle, url,content, path))
                 });
 
                 if( total > maxPage){
@@ -177,4 +137,19 @@ $(function(){
             }
         });
      });
+
+     $('body').on('click', '.search-result-save-item', function() {
+
+        var item = $(this).data("json");
+
+        var items = getItem("saved-items") || [];
+
+        if (items.some(i => i.id === item.id)) {
+            // The item already exits
+        }else{
+            items.push(item);
+        }
+
+        saveItem("saved-items", items);
+      });
 });

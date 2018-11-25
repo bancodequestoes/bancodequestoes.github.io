@@ -6,6 +6,11 @@ body{
     background-color: #563d7c;
 }
 
+.namebar .logo, .namebar .settings i{
+    margin-top: 0px;
+    margin-bottom: 0px;
+}
+
 .logo a{
     color: white;
 }
@@ -18,20 +23,28 @@ body{
     margin-top: 10px;
 }
 
-.separator-with-25-px{
-    margin-top: 25px;
-}
-
 .separator-with-50-px{
     margin-top: 50px;
+}
+
+
+.padding-top-with-10-px{
+    padding-top: 10px;
 }
 
 .padding-top-with-20-px{
     padding-top: 20px;
 }
 
+.padding-top-with-25-px{
+    padding-top: 20px;
+}
+
 .padding-bottom-with-20-px{
     padding-bottom: 20px;
+}
+.padding-bottom-with-10-px{
+    padding-bottom: 10px;
 }
 
 
