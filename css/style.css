@@ -59,6 +59,11 @@ body{
     display: inline-block;
 }
 
+.search-result-item a.dropdown-toggle{
+    font-size: 14px;
+    color: #006621;
+}
+
 .search-result-item p{
     font-size: small;
     margin-bottom: 0px;
