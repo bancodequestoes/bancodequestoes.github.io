@@ -145,11 +145,13 @@ $(function(){
         var items = getItem("saved-items") || [];
 
         if (items.some(i => i.id === item.id)) {
-            // The item already exits
+            $.snackbar({content: "Arquivo já salvo!", timeout: 2000});
         }else{
             items.push(item);
+            $.snackbar({content: "Item salvo!", timeout: 2000});
         }
 
         saveItem("saved-items", items);
       });
+
 });
