@@ -13,12 +13,15 @@ function getTex(files){
 
 
     str += "\\pointpoints{ponto}{pontos}\n"
+
+    str += "\\footer{}{Página \\thepage\ de \\numpages}{} \n";
+
     str += "\\begin{document} \n";
 
     str += "    \\begin{questions}\n";
 
     $.each(files, function(i, file){
-        str += "    \\question[1] \\input{questoes/"+file+"}\n";
+        str += "    \\input{questoes/"+file+"}\n";
     });
 
     str += "    \\end{questions}\n";
