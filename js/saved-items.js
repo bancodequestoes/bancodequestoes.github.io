@@ -6,6 +6,12 @@ function getTex(files){
     str += "\\documentclass[a4paper, 12pt, addpoints]{exam} \n";
 
     str += "\\usepackage{listings} \n";
+
+    str += "\\usepackage[utf8]{inputenc}  \n";
+    str += "\\usepackage[T1]{fontenc} \n";
+    str += "\\usepackage[brazil]{babel} \n";
+
+
     str += "\\pointpoints{ponto}{pontos}\n"
     str += "\\begin{document} \n";
 
