@@ -53,20 +53,32 @@
         <!-- Custom -->
         <link rel="stylesheet" type="text/css" href="css/style.css"/>
     </head>
-	<body class="purple">
+	<body>
 
-        <div class="container ">
-
-            <h1 class="text-center logo logo-large display-4"><a href="/">Banco de Questões</a></h3>
-            <div class="separator-with-50-px"></div>
-            <form action="/search.html" method="GET" class="form-question-search">
-                <input type="text" id="question-search" class="form-control form-control-lg" placeholder="Buscar..." name="query" >
-                <div class="separator-with-50-px"></div>
-                <div class="col-12 text-center">
-                    <button type="submit" class="btn btn-light">Buscar</button>
-                    <button type="submit" class="btn btn-light">Estou com sorte!</button>
-                </div>
-            </form>
+        <div class="purple">
+            <div class="container">
+                <div class="padding-top-with-20-px"></div>
+                <h5 class="logo"><a href="/">Banco de Questões</a></h5>
+                <div class="separator-with-25-px"></div>
+                <form action="/search.html" method="GET" class="form-question-search">
+                    <div class="input-group mb-3">
+                        <input type="text" id="question-search" class="form-control" placeholder="Buscar..." name="query" >
+                        <div class="input-group-append">
+                            <button type="submit" class="btn btn-light">Buscar</button>
+                        </div>
+                    </div>
+                </form>
+                <div class="padding-bottom-with-20-px"></div>
+            </div>
+        </div>
+        <div class="container">
+            <div class="separator-with-10-px"></div>
+            <span class="search-total"></span>
+            <div class="separator-with-25-px"></div>
+            <div class="search-result"></div>
+            <div class="pages">
+                <ul class="list-inline"></ul>
+            </div>
         </div>
 
         <!-- Vendors -->
@@ -74,7 +86,7 @@
         <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
 
         <!-- Custom -->
-        <script type="text/javascript" src="js/script.js"></script>
+        <script type="text/javascript" src="js/search.js"></script>
         <script>document.write('<script src="http://' + (location.host || 'localhost').split(':')[0] + ':35729/livereload.js?snipver=1"></' + 'script>')</script>
 
         <!-- Global site tag (gtag.js) - Google Analytics -->
@@ -83,8 +95,10 @@
           window.dataLayer = window.dataLayer || [];
           function gtag(){dataLayer.push(arguments);}
           gtag('js', new Date());
-
           gtag('config', 'UA-118600295-1');
         </script>
+
+
     </body>
+
 </html>
