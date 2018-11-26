@@ -39,17 +39,6 @@ function getHTMLForSavedItem(id, title, subtitle, url, content, path){
 
 function getHTMLForSearchResultItem(id, title, subtitle, url, content, path){
 
-    var json = {
-        id: id,
-        title: title,
-        subtitle: subtitle,
-        url: url,
-        content: content,
-        path: path
-    }
-
-    json = JSON.stringify(json);
-
     var html = "";
 
     html += "<div class='row search-result-item'>";
@@ -59,7 +48,7 @@ function getHTMLForSearchResultItem(id, title, subtitle, url, content, path){
     html += "<div class='dropdown'>";
     html += "<span>"+subtitle+"</span>&nbsp;<a href='#' class='dropdown-toggle' id='dropdownMenuButton' data-toggle='dropdown'></a>";
     html += "        <div class='dropdown-menu dropdown-menu-right' >";
-    html += "             <a class='dropdown-item search-result-save-item' data-json='"+json+"' href='#'>Salvar</a>";
+    html += "             <a class='dropdown-item search-result-save-item' data-id='"+id+"' href='#'>Salvar</a>";
     html += "           <div class='dropdown-divider'></div>";
     html += "            <a class='dropdown-item search-result-download' href='#' data-path='"+path+"'>Baixar</a>";
     html += "        </div>";

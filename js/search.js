@@ -1,6 +1,8 @@
 
 var api = "https://api.github.com/search/code";
 
+var result = {};
+
 function highlight(text, highlight) {
 
     var index = text.indexOf(highlight);
@@ -92,6 +94,17 @@ $(function(){
                     var content = item.text_matches[0].fragment;
                     var path = item.path;
 
+                    var json = {
+                        id: id,
+                        title: title,
+                        subtitle: subtitle,
+                        url: url,
+                        content: content,
+                        path: path
+                    }
+
+                    result[id] = json;
+
                     $(".search-result").append(getHTMLForSearchResultItem(id, title, subtitle, url,content, path))
                 });
 
@@ -140,7 +153,9 @@ $(function(){
 
      $('body').on('click', '.search-result-save-item', function() {
 
-        var item = $(this).data("json");
+        var id = $(this).data("id");
+
+        var item = result[id];
 
         var items = getItem("saved-items") || [];
 

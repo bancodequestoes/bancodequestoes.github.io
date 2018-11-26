@@ -63,6 +63,13 @@ $(function(){
         location.reload();
     });
 
+    $("#clear").click(function(){
+        if(confirm("Deseja remover todos os itens salvos?")){
+            saveItem("saved-items", []);
+            location.reload();
+        }
+    });
+
     $("#download-as-zip-file").click(function(){
 
         var files = [];
