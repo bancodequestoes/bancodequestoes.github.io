@@ -14,6 +14,11 @@ function getTex(files){
 
     str += "\\pointpoints{ponto}{pontos}\n"
 
+	str += "\\newcommand{\tf}[1][{}]{% \n"
+	str += "  \\fillin[#1][0.25in]% \n"
+	str += "} \n"
+	
+	
     str += "\\footer{}{Página \\thepage\ de \\numpages}{} \n";
 
     str += "\\begin{document} \n";
