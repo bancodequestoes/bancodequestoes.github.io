@@ -11,6 +11,9 @@ function getTex(files){
     str += "\\usepackage[T1]{fontenc} \n";
     str += "\\usepackage[brazil]{babel} \n";
 
+    str += "\\usepackage[most]{tcolorbox} \n";
+    str += "\\usepackage{amssymb} \n";
+
 
     str += "\\pointpoints{ponto}{pontos}\n"
 
