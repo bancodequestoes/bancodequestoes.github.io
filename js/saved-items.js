@@ -17,8 +17,8 @@ function getTex(files){
 	str += "\\newcommand{\\tf}[1][{}]{% \n"
 	str += "  \\fillin[#1][0.25in]% \n"
 	str += "} \n"
-	
-	
+
+
     str += "\\footer{}{Página \\thepage\ de \\numpages}{} \n";
 
     str += "\\begin{document} \n";
@@ -26,7 +26,7 @@ function getTex(files){
     str += "    \\begin{questions}\n";
 
     $.each(files, function(i, file){
-        str += "    \\input{questoes/"+file+"}\n";
+        str += "    \\input{"+file+"}\n";
     });
 
     str += "    \\end{questions}\n";
@@ -78,21 +78,28 @@ $(function(){
     $("#download-as-zip-file").click(function(){
 
         var files = [];
-        var questionsFolder = zip.folder("questoes");
+
+        var folders = {};
 
         $.each(savedItems, function(i, item){
 
-            files.push(item.title);
+
 
             var url = "https://api.github.com/repos/bancodequestoes/linguagem-c/contents/";
             var path = item.path;
+            var folder = path.split("/")[0];
+            files.push(path);
+
+            if (!(folder in folders)){
+                folders[folder] = zip.folder(folder);
+            }
 
             $.ajax({
                 async: false,
                 url: url+path,
                 type: "GET",
                 success: function(file) {
-                    questionsFolder.file(file.name, file.content, {base64: true});
+                    folders[folder].file(file.name, file.content, {base64: true});
                 }
             });
         });
