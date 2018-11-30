@@ -63,18 +63,14 @@ body{
 }
 
 .search-result-item span{
-    font-size: 14px;
-    padding-top: 1px;
-    color: #006621;
-    font-style: normal;
-    padding-bottom: 3px;
-    padding-top: 2px;
-    display: inline-block;
+    font-size: 18px;
+    margin: 0;
+    padding: 0;
 }
 
 .search-result-item a.dropdown-toggle{
     font-size: 14px;
-    color: #006621;
+
 }
 
 .search-result-item p{

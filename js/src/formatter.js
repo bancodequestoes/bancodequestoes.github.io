@@ -22,7 +22,7 @@ function getHTMLForSavedItem(id, title, subtitle, url, content, path){
     html += "<div class='row search-result-item'>";
     html += "<div class='col-12'>";
     html += "<a href='" + url + "'>";
-    html += "<h3>" + title + "</h3>";
+    //html += "<h3>" + title + "</h3>";
     html += "<div class='dropdown'>";
     html += "<span>"+subtitle+"</span>&nbsp;<a href='#' class='dropdown-toggle' id='dropdownMenuButton' data-toggle='dropdown'></a>";
     html += "        <div class='dropdown-menu dropdown-menu-right' >";
@@ -44,9 +44,8 @@ function getHTMLForSearchResultItem(id, title, subtitle, url, content, path){
     html += "<div class='row search-result-item'>";
     html += "<div class='col-12'>";
     html += "<a href='" + url + "'>";
-    html += "<h3>" + title + "</h3>";
     html += "<div class='dropdown'>";
-    html += "<span>"+subtitle+"</span>&nbsp;<a href='#' class='dropdown-toggle' id='dropdownMenuButton' data-toggle='dropdown'></a>";
+    html += "<span>" + subtitle + "</span>&nbsp;<a href='#' class='dropdown-toggle' id='dropdownMenuButton' data-toggle='dropdown'></a>";
     html += "        <div class='dropdown-menu dropdown-menu-right' >";
     html += "             <a class='dropdown-item search-result-save-item' data-id='"+id+"' href='#'>Salvar</a>";
     html += "           <div class='dropdown-divider'></div>";
