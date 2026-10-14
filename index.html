@@ -466,6 +466,23 @@ input[type=file]{font-size:13px}
 <!-- ============ PROVA ============ -->
 <section class="vista" id="vista-prova">
   <div class="bloco nao-imprime">
+    <details id="det-turma-prova">
+      <summary><span><strong>Turma da prova</strong> <span class="sumario" id="resumo-turma-prova">— nenhuma escolhida</span></span></summary>
+      <p class="ajuda">Escolha a turma uma vez. Ela e a série entram no timbrado, na versão sem timbre e no nome do arquivo.</p>
+      <div class="linha">
+        <div><label for="p-turma">Turma</label><select id="p-turma"></select></div>
+        <div><label for="p-serie-turma">Série ou ano</label><input type="text" id="p-serie-turma" readonly placeholder="Vem da turma"></div>
+      </div>
+      <details id="det-minhas-turmas" style="margin-top:12px">
+        <summary><span style="font-size:13px">Editar minhas turmas</span></summary>
+        <p class="ajuda">Uma turma por linha, começando pela série: "9º ano A", "2ª série B". A lista vale também para o Planejamento.</p>
+        <textarea id="turmas-lista" style="min-height:140px"></textarea>
+        <div class="botoes"><button class="botao secundario" type="button" id="btn-salvar-turmas">Salvar lista de turmas</button></div>
+        <div id="retorno-turmas"></div>
+      </details>
+    </details>
+  </div>
+  <div class="bloco nao-imprime">
     <h2>Modelo timbrado</h2>
     <p class="ajuda">Anexe uma única vez o .docx timbrado da escola. Ele fica guardado neste navegador e é reaproveitado em todas as provas. Todo trecho entre chaves duplas no Word — como {{DISCIPLINA}} — vira um campo aqui embaixo, e o marcador {{QUESTOES}} indica onde as questões entram.</p>
     <input type="file" id="arquivo-modelo" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
@@ -495,7 +512,6 @@ input[type=file]{font-size:13px}
       <div><label for="p-titulo">Título</label><input type="text" id="p-titulo" value="Avaliação de História"></div>
     </div>
     <div class="linha">
-      <div><label for="p-turma">Turma</label><input type="text" id="p-turma" placeholder="Ex.: 9º ano A"></div>
       <div><label for="p-data">Data</label><input type="text" id="p-data" placeholder="Ex.: 12/09/2026"></div>
     </div>
     <label><input type="checkbox" id="p-gabarito" checked style="width:auto;margin-right:7px">Incluir folha de gabarito ao final</label>
@@ -657,6 +673,8 @@ input[type=file]{font-size:13px}
   <div class="bloco nao-imprime">
     <h2>Dados do ciclo</h2>
     <p class="ajuda">Os mesmos campos que você preenche hoje à mão. O desenvolvimento das aulas é escrito pela IA seguindo as suas regras e fica editável antes de virar documento.</p>
+    <label for="pl-turma">Turma</label>
+    <select id="pl-turma"></select>
     <div class="linha">
       <div>
         <label for="pl-etapa">Nível de ensino</label>
@@ -699,6 +717,16 @@ input[type=file]{font-size:13px}
         <input type="text" id="pl-aulas" value="4 aulas de 50 minutos">
       </div>
     </div>
+    <details id="det-material-plano" class="livros-sesi" style="margin-top:14px">
+      <summary><span><strong>Material didático</strong> <span class="sumario" id="resumo-material-plano">— nenhum capítulo escolhido</span></span></summary>
+      <p class="ajuda">Escolha o livro SESI da série e marque os capítulos do ciclo. A IA lê o texto deles para escrever o desenvolvimento. Na divisão entre as aulas basta escrever, por exemplo, "Aula 01: início do capítulo 1".</p>
+      <div class="linha">
+        <div><label for="pm-area">Área</label><select id="pm-area"></select></div>
+        <div><label for="pm-livro">Livro</label><select id="pm-livro"></select></div>
+      </div>
+      <div id="pm-capitulos"></div>
+      <div id="pm-marcados"></div>
+    </details>
     <label for="pl-tema">Temas norteadores e tema geral</label>
     <input type="text" id="pl-tema" placeholder="Ex.: Seminário de História — O mundo em conflito: das Guerras Mundiais à Corrida Espacial">
     <label for="pl-divisao">Divisão entre as aulas</label>
@@ -1783,6 +1811,7 @@ function livrosNuvemMudou(){
   if(!livrosNaNuvem())return;
   if(LS.serie&&!LS.indices[LS.serie]&&LS.carregando!==LS.serie)livrosRender();
   livrosCompletarTextos();
+  if(typeof PM!=="undefined"&&PM)renderMaterialPlano();
 }
 
 /* ---- envio pelo administrador: um arquivo JSON por série ---- */
@@ -3731,14 +3760,84 @@ function recuperarModelo(){
     return mapa;
   }catch(e){return null;}
 }
+/* ---------------- turmas: uma lista fixa, escolhida em Montar prova e no Planejamento ---------------- */
+var CHAVE_TURMAS="bancoQuestoes.turmas.v1", CHAVE_TURMA_PROVA="bancoQuestoes.turmaProva.v1";
+function turmasPadrao(){
+  var t=[];
+  SERIES["Ensino Fundamental"].concat(SERIES["Ensino Médio"]).forEach(function(s){
+    ["A","B","C"].forEach(function(l){t.push(s+" "+l);});
+  });
+  return t;
+}
+function listaTurmas(){
+  try{var l=JSON.parse(ler(CHAVE_TURMAS)||"null");if(Array.isArray(l)&&l.length)return l;}catch(e){}
+  return turmasPadrao();
+}
+// "9º ano A" → 9º ano; "2ª série B" → 2ª série
+function serieDaTurma(t){
+  var m=/(\d)\s*[º°o]?\s*ano/i.exec(t||"");
+  if(m)return m[1]+"º ano";
+  m=/(\d)\s*[ªa]?\s*s[ée]rie/i.exec(t||"");
+  return m?m[1]+"ª série":"";
+}
+function etapaDaSerie(s){return /ano/.test(s)?"Ensino Fundamental":/série/.test(s)?"Ensino Médio":"";}
+function opcoesTurmas(sel,vazio){
+  var atual=sel.value||sel.dataset.valor||"", turmas=listaTurmas(), grupos={};
+  turmas.forEach(function(t){var e=etapaDaSerie(serieDaTurma(t))||"Outras";(grupos[e]=grupos[e]||[]).push(t);});
+  sel.innerHTML='<option value="">'+esc(vazio)+"</option>"+["Ensino Fundamental","Ensino Médio","Outras"].map(function(e){
+    return grupos[e]?'<optgroup label="'+e+'">'+grupos[e].map(function(t){return "<option>"+esc(t)+"</option>";}).join("")+"</optgroup>":"";
+  }).join("");
+  sel.value=turmas.indexOf(atual)>=0?atual:"";
+}
+function turmaProvaMudou(){
+  var t=$("p-turma").value, s=serieDaTurma(t);
+  $("p-serie-turma").value=s;
+  $("resumo-turma-prova").textContent=t?"— "+t+(etapaDaSerie(s)?" · "+etapaDaSerie(s):""):"— nenhuma escolhida";
+  aplicarTurmaNosCampos();
+}
+// no timbrado, TURMA e ANO/SÉRIE saem deste bloco e não aparecem duas vezes
+function campoDeTurma(c){c=c.toUpperCase();return /TURMA/.test(c)?"turma":(/ANO\/SÉRIE|SÉRIE|SERIE|ANO ESCOLAR/.test(c)?"serie":"");}
+function aplicarTurmaNosCampos(){
+  var t=$("p-turma").value;
+  document.querySelectorAll("#campos-modelo [data-campo]").forEach(function(i){
+    var tipo=campoDeTurma(i.dataset.campo);
+    if(!tipo)return;
+    if(t)i.value=tipo==="turma"?t:serieDaTurma(t);
+    i.style.display=t?"none":"";
+    var r=document.querySelector('#campos-modelo label[for="'+i.id+'"]');
+    if(r)r.style.display=t?"none":"";
+  });
+}
+function iniciarTurmas(){
+  var pt=$("p-turma");
+  pt.dataset.valor=ler(CHAVE_TURMA_PROVA)||"";
+  opcoesTurmas(pt,"— escolher a turma —");
+  opcoesTurmas($("pl-turma"),"— escolher a turma —");
+  $("turmas-lista").value=listaTurmas().join("\n");
+  if(!pt.value)$("det-turma-prova").open=true;
+  turmaProvaMudou();
+  pt.addEventListener("change",function(){gravar(CHAVE_TURMA_PROVA,this.value);turmaProvaMudou();});
+  $("btn-salvar-turmas").addEventListener("click",function(){
+    var l=$("turmas-lista").value.split("\n").map(function(x){return x.trim();}).filter(Boolean), vistos={};
+    l=l.filter(function(x){if(vistos[x])return false;vistos[x]=1;return true;});
+    if(!l.length){gravar(CHAVE_TURMAS,"");l=turmasPadrao();$("turmas-lista").value=l.join("\n");}
+    else gravar(CHAVE_TURMAS,JSON.stringify(l));
+    opcoesTurmas($("p-turma"),"— escolher a turma —");opcoesTurmas($("pl-turma"),"— escolher a turma —");
+    turmaProvaMudou();
+    var sem=l.filter(function(x){return !serieDaTurma(x);});
+    msg("retorno-turmas","Lista salva: "+l.length+" turmas."+(sem.length?" Sem série reconhecida: "+sem.map(esc).join(", ")+".":""),sem.length?"":"ok");
+  });
+}
+iniciarTurmas();
+
 function sugestao(campo){
   var c=campo.toUpperCase();
-  if(valoresCampos[campo])return valoresCampos[campo];
+  if(valoresCampos[campo]&&!campoDeTurma(campo))return valoresCampos[campo];
   var primeira=questoes.filter(function(q){return selecionadas[q.id];})[0]||questoes[0]||{};
   if(/DISCIPLIN|COMPONENTE/.test(c))return primeira.componente||$("componente").value||"";
   if(/ÁREA|AREA/.test(c))return primeira.area||areaDoComponente($("etapa").value,$("componente").value)||primeira.componente||"";
-  if(/ANO\/SÉRIE|SÉRIE|SERIE|ANO ESCOLAR/.test(c))return primeira.serie||$("serie").value||"";
-  if(/TURMA/.test(c))return $("p-turma").value||"";
+  if(/TURMA/.test(c))return $("p-turma").value||valoresCampos[campo]||"";
+  if(/ANO\/SÉRIE|SÉRIE|SERIE|ANO ESCOLAR/.test(c))return serieDaTurma($("p-turma").value)||valoresCampos[campo]||primeira.serie||$("serie").value||"";
   if(/ASSUNTO|CONTEÚDO|CONTEUDO/.test(c))return primeira.assunto||$("assunto").value||"";
   if(/ANO LETIVO/.test(c))return String(new Date().getFullYear());
   if(/BIMESTRE|UNIDADE/.test(c))return (primeira.unidade||"").replace(/\D/g,"")||"";
@@ -3753,6 +3852,7 @@ function montarFormulario(){
       return '<label for="campo-'+i+'">'+esc(c)+'</label><input type="text" id="campo-'+i+'" data-campo="'+esc(c)+'" value="'+esc(sugestao(c))+'">';
     }).join("");
   }
+  aplicarTurmaNosCampos();
   $("bloco-campos").style.display="block";
 }
 function carregarModelo(mapa,anunciar){
@@ -5593,6 +5693,8 @@ $("busca-hab-plano").addEventListener("input",function(){renderHabPlano();});
       preencherLista("pl-serie",SERIES[$("pl-etapa").value]||[]);
     }
     habPlano={};renderHabPlano();
+    if(id==="pl-etapa"||id==="pl-serie"){var tm=$("pl-turma");if(tm.value&&serieDaTurma(tm.value)!==$("pl-serie").value)tm.value="";}
+    renderMaterialPlano();
   });
 });
 function preencherLista(id,valores){
@@ -5612,8 +5714,148 @@ function iniciarPlano(){
   modeloPlano=recuperarModeloPlano();
   resumoModeloPlano();
   renderHabPlano();
+  if(PM.serie){
+    var e=etapaDaSerie(PM.serie);
+    if(e&&e!==$("pl-etapa").value){$("pl-etapa").value=e;preencherLista("pl-componente",COMPONENTES[e]||[]);preencherLista("pl-serie",SERIES[e]||[]);}
+    $("pl-serie").value=PM.serie;renderHabPlano();
+  }
+  renderMaterialPlano();
 }
 
+
+/* ---- material didático do planejamento: livro SESI da série, capítulos marcados ----
+   Usa o mesmo índice e os mesmos textos da prateleira Livros SESI, mas a escolha
+   é própria do planejamento e fica guardada até trocar a série ou limpar os campos. */
+var CHAVE_MATERIAL_PLANO="bancoQuestoes.planoMaterial.v1", LIMITE_CAP_PLANO=120000, LIMITE_MATERIAL_PLANO=400000;
+var PM={serie:"",marcados:{},ordem:[],textos:{},area:"*",livro:""};
+try{
+  var pmSalvo=JSON.parse(ler(CHAVE_MATERIAL_PLANO)||"null");
+  if(pmSalvo){PM.serie=pmSalvo.serie||"";PM.marcados=pmSalvo.marcados||{};PM.ordem=pmSalvo.ordem||Object.keys(PM.marcados);PM.area=pmSalvo.area||"*";PM.livro=pmSalvo.livro||"";}
+}catch(e){}
+function pmGuardar(){gravar(CHAVE_MATERIAL_PLANO,JSON.stringify({serie:PM.serie,marcados:PM.marcados,ordem:PM.ordem,area:PM.area,livro:PM.livro}));}
+function chaveSesiDaSerie(serie){
+  var s=SERIES_SESI.filter(function(x){return x[2]===serie;})[0];
+  return s?s[0]:"";
+}
+// livros cuja área combina com a disciplina do plano: "História" ou "Ciências Humanas" para História
+function areaCombina(area,etapa,comp){
+  var a=semAcento(area).replace(/^map \| /,""), c=semAcento(comp||""), g=semAcento(areaDoComponente(etapa,comp)||"");
+  if(!c)return true;
+  if(a===c)return true;
+  if(/lingua port|portugues/.test(a)&&/lingua port/.test(c))return true;
+  if(c==="lingua inglesa"&&a==="ingles")return true;
+  if(c==="lingua espanhola"&&a==="espanhol")return true;
+  if(g&&a.split(" + ").some(function(p){return g.indexOf(p)===0;}))return true;
+  if(!g){ // Fundamental: as áreas integradas também valem
+    var areaFund={"historia":"ciencias humanas","geografia":"ciencias humanas","ciencias":"ciencias da natureza",
+      "lingua portuguesa":"linguagens","arte":"linguagens","educacao fisica":"linguagens","lingua inglesa":"linguagens","lingua espanhola":"linguagens"};
+    if(areaFund[c]&&a===areaFund[c])return true;
+  }
+  return false;
+}
+function pmIndice(){
+  var chave=chaveSesiDaSerie($("pl-serie").value);
+  if(!chave)return {erro:"Não há livros SESI para esta série."};
+  if(LS.indices[chave])return LS.indices[chave];
+  if(!livrosNaNuvem())return {erro:"Os livros ficam na nuvem do grupo. Entre na nuvem (em Ajustes) para ver os livros desta série."};
+  if(LS.carregando!==chave){
+    LS.carregando=chave;
+    NV.sdk.getDoc(NV.sdk.doc(NV.db,"livros","indice-"+chave)).then(function(d){
+      LS.indices[chave]=d.exists()?d.data():{vazio:true};
+    }).catch(function(){LS.indices[chave]={vazio:true,falha:true};})
+    .then(function(){LS.carregando=null;renderMaterialPlano();if(LS.serie===chave)livrosRender();});
+  }
+  return {carregando:true};
+}
+function pmTextoCapitulo(id){
+  if(PM.textos[id])return Promise.resolve(PM.textos[id]);
+  return textoCapitulo(id).then(function(t){PM.textos[id]=t;return t;});
+}
+function renderMaterialPlano(){
+  var serie=$("pl-serie").value;
+  if(PM.serie!==serie){PM.serie=serie;PM.marcados={};PM.ordem=[];PM.livro="";pmGuardar();}
+  var ind=pmIndice(), area=$("pm-area"), livro=$("pm-livro"), caps=$("pm-capitulos");
+  pmRenderMarcados();
+  if(!ind.livros||!ind.livros.length){
+    area.innerHTML="";livro.innerHTML="";
+    caps.innerHTML='<div class="aviso">'+(ind.erro?esc(ind.erro):ind.carregando?"Carregando os livros da série…":
+      ind.falha?"Não foi possível abrir a lista de livros.":"Os livros desta série ainda não foram enviados para a nuvem.")+"</div>";
+    return;
+  }
+  var etapa=$("pl-etapa").value, comp=$("pl-componente").value, vistos={}, areas=[];
+  ind.livros.forEach(function(L){if(!vistos[L.area]){vistos[L.area]=1;areas.push(L.area);}});
+  if(PM.area!=="*"&&PM.area!==""&&!vistos[PM.area])PM.area="*";
+  area.innerHTML='<option value="*">Livros de '+esc(comp)+'</option><option value="">Todas as áreas</option>'+
+    areas.sort().map(function(a){return '<option value="'+esc(a)+'">'+esc(a)+"</option>";}).join("");
+  area.value=PM.area;
+  var opcoes=[];
+  ind.livros.forEach(function(L,i){
+    if(PM.area==="*"?!areaCombina(L.area,etapa,comp):(PM.area&&L.area!==PM.area))return;
+    opcoes.push({i:i,nome:nomeCaderno(L),L:L});
+  });
+  if(!opcoes.length&&PM.area==="*"){PM.area="";return renderMaterialPlano();}
+  opcoes.sort(function(a,b){return a.nome.localeCompare(b.nome,"pt-BR",{numeric:true});});
+  if(!opcoes.some(function(o){return String(o.i)===PM.livro;}))PM.livro="";
+  livro.innerHTML='<option value="">— escolher o livro —</option>'+opcoes.map(function(o){
+    var marc=o.L.caps.filter(function(c){return PM.marcados[c.id];}).length;
+    return '<option value="'+o.i+'">'+esc(o.nome)+(marc?" ("+marc+" marcado"+(marc>1?"s":"")+")":"")+"</option>";
+  }).join("");
+  livro.value=PM.livro;
+  if(PM.livro===""){caps.innerHTML='<p class="ajuda" style="margin:8px 0">Escolha o livro para ver os capítulos.</p>';return;}
+  var L=ind.livros[+PM.livro];
+  caps.innerHTML=L.caps.map(function(c){
+    return '<label class="cap"><input type="checkbox" data-pm-cap="'+esc(c.id)+'"'+(PM.marcados[c.id]?" checked":"")+">"+
+      "<span>"+esc(c.nome)+' <span class="sub">'+(c.palavras||0).toLocaleString("pt-BR")+" palavras</span></span></label>";
+  }).join("");
+  caps.querySelectorAll("[data-pm-cap]").forEach(function(cb){
+    cb.addEventListener("change",function(){
+      var id=this.dataset.pmCap, c=L.caps.filter(function(x){return x.id===id;})[0], caixa=this;
+      if(!this.checked){pmTirar(id);renderMaterialPlano();return;}
+      PM.marcados[id]={livro:nomeCaderno(L),cap:c.nome};PM.ordem.push(id);pmGuardar();
+      renderMaterialPlano();
+      pmTextoCapitulo(id).then(pmRenderMarcados).catch(function(e){
+        caixa.checked=false;pmTirar(id);renderMaterialPlano();
+        msg("pm-marcados","Não foi possível baixar o capítulo: "+esc(e&&e.message||e)+".","erro");
+      });
+    });
+  });
+}
+function pmTirar(id){delete PM.marcados[id];delete PM.textos[id];PM.ordem=PM.ordem.filter(function(x){return x!==id;});pmGuardar();}
+function pmRenderMarcados(){
+  var ids=PM.ordem.filter(function(id){return PM.marcados[id];}), alvo=$("pm-marcados");
+  $("resumo-material-plano").textContent=ids.length?"— "+ids.length+" "+(ids.length===1?"capítulo escolhido":"capítulos escolhidos"):"— nenhum capítulo escolhido";
+  if(!ids.length){alvo.innerHTML="";return;}
+  alvo.innerHTML='<div class="aviso"><strong>A IA vai ler:</strong><ul style="margin:6px 0 0;padding-left:18px">'+ids.map(function(id){
+    var m=PM.marcados[id];
+    return "<li>"+esc(m.livro)+" · "+esc(m.cap)+(PM.textos[id]?"":" <em>(carregando…)</em>")+
+      ' <button type="button" data-pm-tirar="'+esc(id)+'" style="background:none;border:none;color:var(--cinza);text-decoration:underline;cursor:pointer;font-size:12px;padding:0">tirar</button></li>';
+  }).join("")+"</ul></div>";
+  alvo.querySelectorAll("[data-pm-tirar]").forEach(function(b){
+    b.addEventListener("click",function(){pmTirar(this.dataset.pmTirar);renderMaterialPlano();});
+  });
+}
+function pmLimpar(){PM.marcados={};PM.ordem=[];PM.textos={};pmGuardar();renderMaterialPlano();}
+// texto que vai para a IA, na ordem em que os capítulos foram marcados
+function materialDoPlano(){
+  var ids=PM.ordem.filter(function(id){return PM.marcados[id];});
+  return Promise.all(ids.map(function(id){return pmTextoCapitulo(id).catch(function(){return "";});})).then(function(textos){
+    var resto=LIMITE_MATERIAL_PLANO;
+    return ids.map(function(id,k){
+      var m=PM.marcados[id], t=String(textos[k]||"").slice(0,Math.min(LIMITE_CAP_PLANO,Math.max(0,resto)));
+      resto-=t.length;
+      return t?"=== "+m.livro+" · "+m.cap+" ===\n"+t:"";
+    }).filter(Boolean);
+  });
+}
+$("pm-area").addEventListener("change",function(){PM.area=this.value;PM.livro="";pmGuardar();renderMaterialPlano();});
+$("pm-livro").addEventListener("change",function(){PM.livro=this.value;pmGuardar();renderMaterialPlano();});
+$("det-material-plano").addEventListener("toggle",function(){if(this.open)renderMaterialPlano();});
+$("pl-turma").addEventListener("change",function(){
+  var s=serieDaTurma(this.value), e=etapaDaSerie(s);
+  if(!e)return;
+  if($("pl-etapa").value!==e){$("pl-etapa").value=e;$("pl-etapa").dispatchEvent(new Event("change"));}
+  if($("pl-serie").value!==s){$("pl-serie").value=s;$("pl-serie").dispatchEvent(new Event("change"));}
+});
 
 /* ---- pedido à IA: escreve o desenvolvimento seguindo as regras da casa ---- */
 function aulasDoFormulario(){
@@ -5629,8 +5871,9 @@ function habilidadesDoPlano(){
   var extras=$("hab-plano-extra").value.split("\n").map(function(l){return l.trim();}).filter(Boolean);
   return marcadas.concat(extras);
 }
-function montarPedidoPlano(){
+function montarPedidoPlano(material){
   var aulas=aulasDoFormulario();
+  material=material||[];
   return [
     "Você é um professor experiente da rede SESI e vai escrever o PLANEJAMENTO PEDAGÓGICO de um ciclo de aulas.",
     "",
@@ -5649,6 +5892,8 @@ function montarPedidoPlano(){
     "DIVISÃO DAS AULAS, como o professor pediu:",
     aulas.map(function(a){return "Aula "+(a.n<10?"0":"")+a.n+": "+a.descricao;}).join("\n"),
     "",
+    material.length?"MATERIAL DIDÁTICO DA TURMA (livro SESI adotado). Quando a divisão das aulas citar \"capítulo 1\", \"início do capítulo 2\", \"seção\" ou \"atividade\", refere-se a estes capítulos. "+
+      "Escreva o desenvolvimento a partir do conteúdo real deste material: nomeie as seções, os textos, as imagens e as atividades do livro que cada aula usa, com a página quando o texto a indicar, e distribua o capítulo entre as aulas na ordem do livro.\n\n"+material.join("\n\n")+"\n":"",
     "Responda APENAS um objeto JSON, sem comentários, neste formato:",
     '{"visaoGeral":"um parágrafo","nota":"SEMANA 1 (datas): Aulas 1–2 – título. SEMANA 2 (datas): Aulas 3–4 – título. Aulas em pares no mesmo dia…",',
     ' "aulas":[{"n":1,"data":"14 a 18/09/2026","duracao":"50 minutos","titulo":"…","inicio":"…","desenvolvimento":"…","finalizacao":"…","estrategias":"…"}],',
@@ -5676,7 +5921,9 @@ $("btn-gerar-plano").addEventListener("click",function(){
   },1000);
   $("progresso-plano").textContent="Escrevendo o planejamento de "+aulas.length+" aulas…";
 
-  chamarIAComInsistencia(montarPedidoPlano(),function(aviso){$("progresso-plano").textContent=aviso;})
+  materialDoPlano().then(function(material){
+    return chamarIAComInsistencia(montarPedidoPlano(material),function(aviso){$("progresso-plano").textContent=aviso;});
+  })
     .then(function(resposta){
       var dados=extrairObjeto(resposta);
       if(!dados||!Array.isArray(dados.aulas)||!dados.aulas.length)
@@ -5715,6 +5962,7 @@ $("btn-cancelar-plano").addEventListener("click",function(){
 $("btn-limpar-plano").addEventListener("click",function(){
   ["pl-tema","pl-divisao","pl-observacoes","hab-plano-extra","pl-periodo"].forEach(function(id){$(id).value="";});
   habPlano={};renderHabPlano();
+  pmLimpar();
 });
 
 /* o modelo às vezes embrulha o JSON em texto ou em cercas de código */
