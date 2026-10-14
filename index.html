@@ -134,6 +134,18 @@ input[type=file]{font-size:13px}
 .livros-sesi label.cap input{width:16px;height:16px;margin-top:2px;accent-color:var(--verde);flex:none}
 .livros-sesi label.cap .sub{color:var(--cinza);font-size:12px}
 
+.passo{font-size:15px;margin:22px 0 8px;display:flex;align-items:center;gap:8px}
+.passo span{display:inline-flex;width:24px;height:24px;border-radius:50%;background:var(--verde);color:#fff;font-size:13px;align-items:center;justify-content:center}
+.origens{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.origem{display:flex;flex-direction:column;gap:2px;border:1.5px solid var(--regua);border-radius:10px;padding:12px 12px 10px;cursor:pointer;margin:0;background:#fff}
+.origem input{position:absolute;opacity:0;pointer-events:none}
+.origem strong{font-size:15px}
+.origem span{font-weight:400;font-size:12px;color:var(--cinza)}
+.origem:has(input:checked){border-color:var(--verde);background:#F1F7F3;box-shadow:0 0 0 1px var(--verde) inset}
+.origem:has(input:focus-visible){outline:2px solid var(--verde);outline-offset:2px}
+.painel-origem{margin-top:12px;padding:12px 14px;border:1px solid var(--regua);border-radius:10px;background:#FBFCFA}
+.formatos{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+@media(max-width:640px){.origens{grid-template-columns:1fr 1fr}.formatos{grid-template-columns:1fr}}
 .caixa-hab{max-height:240px;overflow-y:auto;border:1px solid var(--regua);border-radius:8px;background:#FBFCFA;padding:4px 12px}
 .hab{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--regua);font-size:13px}
 .hab:last-child{border-bottom:none}
@@ -267,11 +279,20 @@ input[type=file]{font-size:13px}
     <button class="botao" type="button" data-abrir-assistente="1">Cadastrar minha chave</button>
   </div>
   <div class="bloco">
-    <details id="det-biblioteca">
-          <summary><strong>Biblioteca de materiais</strong> <span id="resumo-biblioteca" class="sumario"></span></summary>
-          <div class="livros-sesi" id="livros-sesi">
-            <h4>Livros SESI</h4>
-            <p class="ajuda">Os cadernos do portal SESI Educação, guardados na nuvem do grupo. Escolha a série e marque os capítulos que devem alimentar a próxima geração. O texto de cada capítulo é baixado só quando você o marca.</p>
+    <h2>O que gerar</h2>
+    <p class="ajuda">Três passos: de onde criar, sobre o quê e quantas questões de cada formato.</p>
+
+    <h3 class="passo"><span>1</span> Criar a partir de</h3>
+    <div class="origens" role="radiogroup" aria-label="Criar a partir de">
+      <label class="origem"><input type="radio" name="origem" value="livro" checked><strong>Livro SESI</strong><span>capítulos do livro da série</span></label>
+      <label class="origem"><input type="radio" name="origem" value="enem"><strong>ENEM</strong><span>molde das provas do acervo</span></label>
+      <label class="origem"><input type="radio" name="origem" value="ssa"><strong>SSA</strong><span>molde da UPE, 1ª a 3ª série</span></label>
+      <label class="origem"><input type="radio" name="origem" value="passe"><strong>PASSE</strong><span>molde das provas PASSE</span></label>
+    </div>
+
+    <div class="painel-origem livros-sesi" id="painel-livro">
+      <p class="ajuda" style="margin-top:0"><strong>Livros SESI</strong> <span id="resumo-biblioteca" class="sumario"></span></p>
+      <p class="ajuda">Os cadernos do portal SESI Educação, guardados na nuvem do grupo. Escolha a série e marque os capítulos que devem alimentar a próxima geração. O texto de cada capítulo é baixado só quando você o marca.</p>
             <div class="filtros" style="margin:8px 0 4px">
               <select id="ls-serie"><option value="">Escolha a série</option></select>
               <select id="ls-area"><option value="">Todas as áreas</option></select>
@@ -284,10 +305,104 @@ input[type=file]{font-size:13px}
               <input type="file" id="arquivo-livros" accept="application/json,.json,.gz" multiple style="display:none">
               <div id="ls-envio"></div>
             </div>
+    </div>
+    <div class="painel-origem" id="painel-enem" hidden>
+      <p class="ajuda" style="margin-top:0">As questões novas seguem a estrutura do ENEM. A IA recebe como modelo algumas questões reais do acervo (aba Provas oficiais) da habilidade escolhida.</p>
+      <div class="linha">
+        <div><label for="en-area">Área do ENEM</label><select id="en-area"></select></div>
+        <div><label for="en-comp">Competência</label><select id="en-comp"></select></div>
+      </div>
+      <label for="en-hab">Habilidade</label>
+      <select id="en-hab"></select>
+      <p class="ajuda" id="en-info"></p>
+    </div>
+    <div class="painel-origem" id="painel-ssa" hidden>
+      <p class="ajuda" style="margin-top:0">As questões novas seguem a estrutura dos cadernos do SSA/UPE.</p>
+      <label for="ssa-etapa">Etapa do SSA</label>
+      <select id="ssa-etapa"><option value="1">SSA 1 — 1ª série</option><option value="2">SSA 2 — 2ª série</option><option value="3">SSA 3 — 3ª série</option></select>
+      <p class="ajuda" id="ssa-info"></p>
+    </div>
+    <div class="painel-origem" id="painel-passe" hidden>
+      <p class="ajuda" style="margin-top:0">As questões novas seguem a estrutura do PASSE: texto-base analítico e denso seguido de pergunta interpretativa.</p>
+      <p class="ajuda" id="passe-info"></p>
+    </div>
+
+    <h3 class="passo"><span>2</span> Sobre o quê</h3>
+        <div class="linha">
+          <div>
+            <label for="etapa">Nível de ensino</label>
+            <select id="etapa">
+              <option value="Ensino Fundamental">Ensino Fundamental</option>
+              <option value="Ensino Médio">Ensino Médio</option>
+            </select>
           </div>
-          <details class="outros-arquivos" id="det-outros">
-            <summary><strong>Outros arquivos</strong> <span id="resumo-outros" class="sumario"></span></summary>
-            <p class="ajuda">Provas, apostilas e outros PDFs que não estão nos livros SESI. Anexe cada arquivo uma única vez, dê um título e marque quando ele deve alimentar a próxima geração.</p>
+          <div>
+            <label for="serie">Série ou ano</label>
+            <select id="serie"></select>
+          </div>
+        </div>
+        <label for="componente">Componente curricular</label>
+        <select id="componente"></select>
+        <label for="assunto">Assunto ou recorte <span style="font-weight:400;color:var(--cinza)">— opcional se houver capítulo ou material marcado</span></label>
+        <input type="text" id="assunto" placeholder="Ex.: Revolução Pernambucana de 1817 — causas e desdobramentos">
+
+    <h3 class="passo"><span>3</span> Formato e quantidade</h3>
+        <div class="formatos">
+          <div>
+            <label for="q-objetiva">Objetivas</label>
+            <select id="q-objetiva"><option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option></select>
+            <p class="ajuda" style="margin:4px 0 0"><span id="nota-objetiva">no molde escolhido no passo 1</span></p>
+          </div>
+          <div>
+            <label for="q-dissertativa">Dissertativas</label>
+            <select id="q-dissertativa"><option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option></select>
+            <p class="ajuda" style="margin:4px 0 0">resposta escrita, com correção esperada</p>
+          </div>
+          <div>
+            <label for="q-adaptada">Adaptadas</label>
+            <select id="q-adaptada"><option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option></select>
+            <p class="ajuda" style="margin:4px 0 0">para estudantes atípicos (TEA, TDAH)</p>
+          </div>
+        </div>
+        <p class="ajuda" id="total-pedido" style="margin-top:8px;font-weight:700;color:var(--verde)">Nenhuma questão pedida ainda.</p>
+        <p class="ajuda" style="margin-top:4px">Até 20 questões por geração. Para provas maiores, gere em rodadas: o banco acumula tudo.</p>
+
+        <details id="det-mais-opcoes" style="margin-top:14px">
+          <summary><span><strong>Mais opções</strong> <span class="sumario">— bimestre, habilidades, nível de exigência, orientações</span></span></summary>
+            <label for="unidade">Unidade ou bimestre</label>
+            <select id="unidade">
+              <option value="">— não informar —</option>
+              <option value="1º bimestre">1º bimestre</option>
+              <option value="2º bimestre">2º bimestre</option>
+              <option value="3º bimestre">3º bimestre</option>
+              <option value="4º bimestre">4º bimestre</option>
+            </select>
+        <details id="det-habilidades">
+          <summary><span><strong>Habilidades da matriz</strong> <span id="resumo-hab" class="sumario">— opcional</span></span></summary>
+          <input type="text" id="busca-hab" placeholder="Filtrar por código ou por palavra do texto">
+          <div id="lista-habilidades" class="caixa-hab"></div>
+          <label for="habilidades">Outros códigos, fora da matriz carregada</label>
+          <input type="text" id="habilidades" placeholder="Ex.: EF09HI09 — só para códigos que não aparecem na lista acima">
+        </details>
+        <p class="ajuda nota-hab">Sem marcar nada, a IA escolhe sozinha a habilidade mais adequada da matriz oficial para cada questão. Marque apenas se quiser dirigir a prova a habilidades específicas.</p>
+        <label for="nivel">Nível de exigência</label>
+        <select id="nivel">
+          <option value="misto">Misto — do reconhecimento à análise</option>
+          <option value="basico">Básico — reconhecimento e compreensão</option>
+          <option value="intermediario">Intermediário — aplicação e relação</option>
+          <option value="avancado">Avançado — análise e interpretação de fontes</option>
+        </select>
+        <label style="margin-top:10px"><input type="checkbox" id="raciocinio" style="width:auto;margin-right:7px">Elaboração cuidadosa — o modelo raciocina antes de responder e revisa cada questão. Melhora a qualidade, mas deixa a geração bem mais lenta e mais sujeita a congestionamento do provedor.</label>
+        <label for="observacoes">Orientações adicionais</label>
+        <textarea id="observacoes" placeholder="Ex.: usar fontes iconográficas; evitar datas isoladas; contemplar história local de Pernambuco."></textarea>
+        </details>
+
+        <details id="det-material-extra" style="margin-top:10px">
+          <summary><span><strong>Material extra</strong> <span class="sumario">— anexar um PDF ou colar um texto só para apoio <span id="resumo-outros"></span></span></span></summary>
+          <label for="texto-extra">Texto avulso</label>
+          <textarea id="texto-extra" placeholder="Cole aqui trechos, fontes históricas ou anotações que devem entrar apenas nesta geração."></textarea>
+          <label style="margin-top:12px">Arquivos guardados (PDF)</label>
+          <p class="ajuda">Provas, apostilas e outros PDFs que não estão nos livros SESI. Anexe cada arquivo uma única vez, dê um título e marque quando ele deve alimentar a próxima geração.</p>
             <input type="file" id="arquivos" accept="application/pdf" multiple>
             <div id="status-pdf" class="progresso"></div>
             <div class="filtros" style="margin:14px 0 4px">
@@ -301,120 +416,7 @@ input[type=file]{font-size:13px}
               <input type="file" id="arquivo-biblioteca" accept="application/json" style="display:none">
             </div>
             <div id="retorno-biblioteca"></div>
-          </details>
         </details>
-  </div>
-
-  <div class="bloco">
-    <h2>O que gerar</h2>
-        <p class="ajuda">Preencha o assunto e a quantidade por tipo. O que ficar em zero não é gerado.</p>
-
-        <div class="linha">
-          <div>
-            <label for="etapa">Nível de ensino</label>
-            <select id="etapa">
-              <option value="Ensino Fundamental">Ensino Fundamental</option>
-              <option value="Ensino Médio">Ensino Médio</option>
-            </select>
-          </div>
-          <div>
-            <label for="componente">Componente curricular</label>
-            <select id="componente"></select>
-          </div>
-        </div>
-
-        <label for="assunto">Assunto ou recorte <span style="font-weight:400;color:var(--cinza)">— opcional se houver material marcado</span></label>
-        <input type="text" id="assunto" placeholder="Ex.: Revolução Pernambucana de 1817 — causas e desdobramentos">
-
-        <div class="linha">
-          <div>
-            <label for="matriz">Matriz de referência</label>
-            <select id="matriz">
-              <option value="Autoral">Autoral — currículo da rede</option>
-              <option value="Livro didático SESI">Livro didático SESI</option>
-              <option value="ENEM">ENEM</option>
-              <option value="SSA 1">SSA 1 — UPE, 1ª série</option>
-              <option value="SSA 2">SSA 2 — UPE, 2ª série</option>
-              <option value="SSA 3">SSA 3 — UPE, 3ª série</option>
-              <option value="Simulado">Simulado interno</option>
-            </select>
-          </div>
-          <div>
-            <label for="ano-matriz">Edição de referência</label>
-            <input type="text" id="ano-matriz" placeholder="Ex.: 2024" disabled>
-          </div>
-        </div>
-
-        <div class="linha">
-          <div>
-            <label for="serie">Série ou ano</label>
-            <select id="serie"></select>
-          </div>
-          <div>
-            <label for="unidade">Unidade ou bimestre</label>
-            <select id="unidade">
-              <option value="">— não informar —</option>
-              <option value="1º bimestre">1º bimestre</option>
-              <option value="2º bimestre">2º bimestre</option>
-              <option value="3º bimestre">3º bimestre</option>
-              <option value="4º bimestre">4º bimestre</option>
-            </select>
-          </div>
-        </div>
-
-        <details id="det-habilidades">
-          <summary><span><strong>Habilidades da matriz</strong> <span id="resumo-hab" class="sumario">— opcional</span></span></summary>
-          <input type="text" id="busca-hab" placeholder="Filtrar por código ou por palavra do texto">
-          <div id="lista-habilidades" class="caixa-hab"></div>
-          <label for="habilidades">Outros códigos, fora da matriz carregada</label>
-          <input type="text" id="habilidades" placeholder="Ex.: EF09HI09 — só para códigos que não aparecem na lista acima">
-        </details>
-        <p class="ajuda nota-hab">Sem marcar nada, a IA escolhe sozinha a habilidade mais adequada da matriz oficial para cada questão. Marque apenas se quiser dirigir a prova a habilidades específicas.</p>
-
-        <label>Quantidade por estilo de questão</label>
-        <div class="quatro">
-          <div>
-            <label for="q-objetiva" style="font-weight:400;color:var(--cinza)">Objetivas</label>
-            <select id="q-objetiva"><option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option></select>
-          </div>
-          <div>
-            <label for="q-dissertativa" style="font-weight:400;color:var(--cinza)">Dissertativas</label>
-            <select id="q-dissertativa"><option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option></select>
-          </div>
-          <div>
-            <label for="q-passe" style="font-weight:400;color:var(--cinza)">PASSE</label>
-            <select id="q-passe"><option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option></select>
-          </div>
-          <div>
-            <label for="q-adaptada" style="font-weight:400;color:var(--cinza)">Adaptadas</label>
-            <select id="q-adaptada"><option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option></select>
-          </div>
-          <div>
-            <label for="q-enem" style="font-weight:400;color:var(--cinza)">Estilo ENEM</label>
-            <select id="q-enem"><option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option></select>
-          </div>
-          <div>
-            <label for="q-ssa" style="font-weight:400;color:var(--cinza)">Estilo SSA</label>
-            <select id="q-ssa"><option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option></select>
-          </div>
-        </div>
-        <p class="ajuda" id="total-pedido" style="margin-top:8px;font-weight:700;color:var(--verde)">Nenhuma questão pedida ainda.</p>
-        <p class="ajuda" style="margin-top:4px">Até 20 questões por geração. Para provas maiores, gere em rodadas — o banco acumula tudo. Pedidos desse tamanho costumam sair em um ou dois minutos.</p>
-        <label style="margin-top:10px"><input type="checkbox" id="raciocinio" style="width:auto;margin-right:7px">Elaboração cuidadosa — o modelo raciocina antes de responder e revisa cada questão. Melhora a qualidade, mas deixa a geração bem mais lenta e mais sujeita a congestionamento do provedor.</label>
-
-        <label for="nivel">Nível de exigência</label>
-        <select id="nivel">
-          <option value="misto">Misto — do reconhecimento à análise</option>
-          <option value="basico">Básico — reconhecimento e compreensão</option>
-          <option value="intermediario">Intermediário — aplicação e relação</option>
-          <option value="avancado">Avançado — análise e interpretação de fontes</option>
-        </select>
-
-        <label for="observacoes">Orientações adicionais</label>
-        <textarea id="observacoes" placeholder="Ex.: usar fontes iconográficas; evitar datas isoladas; contemplar história local de Pernambuco."></textarea>
-
-        <label for="texto-extra">Texto avulso (opcional)</label>
-        <textarea id="texto-extra" placeholder="Cole aqui trechos, fontes históricas ou anotações que devem entrar apenas nesta geração."></textarea>
 
         <div class="botoes">
           <button class="botao" id="btn-gerar">Gerar questões</button>
@@ -423,7 +425,7 @@ input[type=file]{font-size:13px}
         </div>
         <div id="progresso-geracao" class="progresso"></div>
         <div id="retorno-geracao"></div>
-      </div>
+  </div>
 </section>
 
 <!-- ============ BANCO ============ -->
@@ -437,13 +439,10 @@ input[type=file]{font-size:13px}
     <select id="filtro-material"><option value="">Todos os materiais</option></select>
     <select id="filtro-nivel"><option value="">Todos os níveis de exigência</option></select>
     <select id="filtro-tipo">
-      <option value="">Todos os tipos</option>
+      <option value="">Todos os formatos</option>
       <option value="objetiva">Objetiva</option>
       <option value="dissertativa">Dissertativa</option>
-      <option value="passe">PASSE</option>
       <option value="adaptada">Adaptada</option>
-      <option value="enem">Estilo ENEM</option>
-      <option value="ssa">Estilo SSA</option>
     </select>
   </div>
   <div class="contador" id="contador-banco"></div>
@@ -529,14 +528,11 @@ input[type=file]{font-size:13px}
     <div class="aviso" id="resumo-pedido"></div>
     <label for="c-assunto">Assunto destas questões</label>
     <input type="text" id="c-assunto" placeholder="Deixe como está para repetir o assunto anterior">
-    <label>Quantidade por estilo</label>
-    <div class="quatro">
+    <label>Quantidade por formato <span class="sumario">— as objetivas seguem o molde do último pedido</span></label>
+    <div class="formatos">
       <div><label for="c-objetiva" style="font-weight:400;color:var(--cinza)">Objetivas</label><select id="c-objetiva"><option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option></select></div>
       <div><label for="c-dissertativa" style="font-weight:400;color:var(--cinza)">Dissertativas</label><select id="c-dissertativa"><option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option></select></div>
-      <div><label for="c-passe" style="font-weight:400;color:var(--cinza)">PASSE</label><select id="c-passe"><option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option></select></div>
       <div><label for="c-adaptada" style="font-weight:400;color:var(--cinza)">Adaptadas</label><select id="c-adaptada"><option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option></select></div>
-      <div><label for="c-enem" style="font-weight:400;color:var(--cinza)">Estilo ENEM</label><select id="c-enem"><option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option></select></div>
-      <div><label for="c-ssa" style="font-weight:400;color:var(--cinza)">Estilo SSA</label><select id="c-ssa"><option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option></select></div>
     </div>
     <div class="botoes">
       <button class="botao" id="btn-completar">Gerar e incluir na prova</button>
@@ -580,6 +576,10 @@ input[type=file]{font-size:13px}
         <select id="origem-prova">
           <option>ENEM</option>
           <option>SSA — UPE</option>
+          <option>PASSE</option>
+          <option>UNICAMP</option>
+          <option>Fuvest</option>
+          <option>CEBRASPE</option>
           <option>Outro vestibular</option>
           <option>Simulado</option>
         </select>
@@ -1855,6 +1855,13 @@ function livrosIniciar(){
   livrosCompletarTextos();
   $("ls-serie").addEventListener("change",function(){
     LS.serie=this.value;livrosGuardar();$("ls-area").value="";livrosRender();
+    // a série do livro vale também para o passo 2 do Gerar
+    var sl=SERIES_SESI.filter(function(x){return x[0]===LS.serie;})[0];
+    if(sl){
+      var et=sl[1]==="Ensino Médio"?"Ensino Médio":"Ensino Fundamental";
+      if($("etapa").value!==et){$("etapa").value=et;$("etapa").dispatchEvent(new Event("change"));}
+      $("serie").value=sl[2];$("serie").dispatchEvent(new Event("change"));
+    }
   });
   $("ls-area").addEventListener("change",livrosRender);
   $("ls-tipo").addEventListener("change",livrosRender);
@@ -2038,6 +2045,8 @@ function montarPrompt(p,quantidades,jaFeitas,passo,evitar){
     matriz="Matriz de referência: "+p.matriz+" da UPE, avaliação seriada. Ajuste a profundidade ao ano correspondente do Ensino Médio.";
   else if(p.matriz==="Livro didático SESI")
     matriz="Matriz de referência: livro didático adotado pela rede SESI. Mantenha-se fiel à abordagem e ao vocabulário do material fornecido.";
+  else if(p.matriz==="PASSE")
+    matriz="Estrutura de referência: PASSE. Siga o molde das questões PASSE descrito abaixo.";
   else if(p.matriz==="Simulado")
     matriz="Matriz de referência: simulado interno, com distribuição de dificuldade crescente ao longo do conjunto.";
   else matriz="Matriz de referência: currículo da rede, elaboração autoral.";
@@ -2053,6 +2062,7 @@ function montarPrompt(p,quantidades,jaFeitas,passo,evitar){
   (p.unidade?", "+p.unidade:"")+", sobre o seguinte recorte: "+p.assunto+".",
 "",
 matriz,
+(p.modelos&&p.modelos.length)?("QUESTÕES REAIS DO "+(p.matriz.indexOf("SSA")===0?"SSA":p.matriz)+" USADAS COMO MODELO — imite a estrutura delas: tipo e extensão do texto-base, forma de citar a fonte, formulação do comando, estilo e extensão das alternativas e nível de exigência. NÃO copie, não parafraseie e não reaproveite os textos, os temas específicos nem as alternativas: as questões novas devem ser inéditas e tratar do recorte pedido.\n\n"+p.modelos.join("\n\n")+"\n"):"",
 "Quantidades neste lote: "+pedidos.join("; ")+".",
 "Devolva EXATAMENTE esse número de objetos no array JSON — nem um a mais, nem um a menos. Conte antes de responder.",
 "Nível de exigência: "+p.nivel+".",
@@ -2565,17 +2575,166 @@ $("btn-cancelar-completar").addEventListener("click",function(){
   this.style.display="none";cancelarGeracao();
   $("progresso-completar").textContent="Interrompendo…";
 });
+/* ---------------- passo 1: criar a partir de Livro SESI, ENEM, SSA ou PASSE ----------------
+   A origem decide o molde das objetivas (estilo ENEM, SSA, PASSE ou objetiva simples do livro)
+   e, para ENEM, SSA e PASSE, quais questões reais do acervo vão para a IA como modelo.      */
+var ORIGENS={
+  livro:{nome:"Livro SESI",objetiva:"objetiva",nota:"objetiva simples, fiel ao livro"},
+  enem:{nome:"ENEM",objetiva:"enem",nota:"no molde do ENEM"},
+  ssa:{nome:"SSA",objetiva:"ssa",nota:"no molde do SSA"},
+  passe:{nome:"PASSE",objetiva:"passe",nota:"no molde do PASSE"}
+};
+var CHAVE_ORIGEM="bancoQuestoes.origemGerar.v1", MAX_MODELOS=4, acervoCache=null;
+function origemAtual(){
+  var r=document.querySelector('input[name="origem"]:checked');
+  return r&&ORIGENS[r.value]?r.value:"livro";
+}
+function matrizDaOrigem(o){
+  return o==="enem"?"ENEM":o==="ssa"?"SSA "+$("ssa-etapa").value:o==="passe"?"PASSE":"Livro didático SESI";
+}
+// as três quantidades da tela viram os tipos internos: a objetiva assume o molde da origem
+function quantidadesDoFormato(prefixo,origem){
+  var q={}, total=0;
+  TIPOS_VALIDOS.forEach(function(t){q[t]=0;});
+  [["objetiva",ORIGENS[origem].objetiva],["dissertativa","dissertativa"],["adaptada","adaptada"]].forEach(function(par){
+    var c=$(prefixo+par[0]), n=c?(parseInt(c.value,10)||0):0;
+    q[par[1]]+=n;total+=n;
+  });
+  q._total=total;
+  return q;
+}
+function acervo(){
+  if(acervoCache)return Promise.resolve(acervoCache);
+  return listarProvas().catch(function(){return [];}).then(function(l){acervoCache=l;return l;});
+}
+function provaDaOrigem(prova,origem){
+  var o=(prova.origem||"")+" "+(prova.nome||"");
+  if(origem==="enem")return prova.origem==="ENEM"||/^ENEM/i.test(prova.nome||"");
+  if(origem==="ssa")return /SSA|UPE/i.test(o);
+  if(origem==="passe")return /PASSE/i.test(o);
+  return false;
+}
+// códigos de habilidade do ENEM que o filtro escolhido abrange ("CH-H11")
+function habsEnemDoFiltro(){
+  var area=$("en-area").value, comp=$("en-comp").value, hab=$("en-hab").value;
+  if(hab)return [hab];
+  var A=(MATRIZ_ENEM||[]).filter(function(x){return x.s===area;})[0];
+  if(!A)return [];
+  var cs=comp?[A.c[+comp-1]]:A.c, l=[];
+  cs.forEach(function(c){(c&&c.h||[]).forEach(function(h){l.push(area+"-H"+h[0]);});});
+  return l;
+}
+function questoesModelo(provas,p){
+  var origem=p.origem, cand=[];
+  var habs=origem==="enem"?habsEnemDoFiltro():null, conj={};
+  if(habs)habs.forEach(function(h){conj[h]=1;});
+  provas.forEach(function(prova){
+    if(!provaDaOrigem(prova,origem))return;
+    var ssaN=origem==="ssa"&&/SSA\s*([123])/i.exec(prova.nome||"");
+    (prova.questoes||[]).forEach(function(q){
+      if(!q.comando&&!(q.partes||[]).length)return;
+      if(q.gabarito==="Anulada"||!(q.alternativas||[]).length)return;
+      if(habs&&!conj[q.matriz])return;
+      var peso=0;
+      if((q.materias||[]).indexOf(p.componente)>=0)peso+=4;
+      if(!q.temFigura&&!(q.partes||[]).some(function(x){return x.tipo!=="texto";}))peso+=2;
+      if(ssaN&&ssaN[1]===$("ssa-etapa").value)peso+=3;
+      cand.push({prova:prova,q:q,peso:peso+Math.random()});
+    });
+  });
+  return cand.sort(function(a,b){return b.peso-a.peso;});
+}
+function textoModelo(c,i){
+  var q=c.q, prova=c.prova, linhas=[];
+  linhas.push("MODELO "+(i+1)+" — "+prova.nome+", questão "+q.numero+(q.matriz?" (habilidade "+q.matriz+")":"")+(q.assunto?" — "+q.assunto:""));
+  var comum=q.comum&&(prova.comuns||[]).filter(function(x){return x.id===q.comum;})[0];
+  [comum,q].forEach(function(bloco){
+    if(!bloco)return;
+    (bloco.partes||[]).forEach(function(x){linhas.push(x.tipo==="texto"?x.texto:"[figura do caderno]");});
+    if(bloco.fonte)linhas.push(bloco.fonte);
+  });
+  if(q.comando)linhas.push(q.comando);
+  (q.alternativas||[]).forEach(function(a,j){linhas.push(LETRAS[j]+") "+a);});
+  if(q.gabarito)linhas.push("Gabarito: "+q.gabarito);
+  return linhas.join("\n");
+}
+function prepararModelos(p){
+  if(p.origem==="livro")return Promise.resolve([]);
+  return acervo().then(function(provas){
+    return questoesModelo(provas,p).slice(0,MAX_MODELOS).map(textoModelo);
+  });
+}
+function opcoesSelect(sel,lista,vazio){
+  var atual=sel.value;
+  sel.innerHTML=(vazio?'<option value="">'+esc(vazio)+"</option>":"")+lista.map(function(o){
+    return '<option value="'+esc(o[0])+'">'+esc(o[1])+"</option>";}).join("");
+  if(lista.some(function(o){return String(o[0])===atual;}))sel.value=atual;
+}
+function renderFiltroEnem(){
+  if(typeof MATRIZ_ENEM==="undefined")return;
+  var area=$("en-area");
+  if(!area.options.length){
+    opcoesSelect(area,MATRIZ_ENEM.map(function(a){return [a.s,a.nome];}),"");
+    area.value=AREA_DA_MATERIA[$("componente").value]||"CH";
+  }
+  var A=MATRIZ_ENEM.filter(function(x){return x.s===area.value;})[0]||MATRIZ_ENEM[0];
+  opcoesSelect($("en-comp"),A.c.map(function(c,i){return [i+1,"Competência "+(i+1)+" — "+c.t];}),"Todas as competências");
+  var comp=$("en-comp").value, habs=[];
+  A.c.forEach(function(c,i){
+    if(comp&&+comp!==i+1)return;
+    c.h.forEach(function(h){habs.push([A.s+"-H"+h[0],"H"+h[0]+" — "+h[1]]);});
+  });
+  opcoesSelect($("en-hab"),habs,"Todas as habilidades do filtro");
+  infoAcervo();
+}
+function infoAcervo(){
+  var o=origemAtual(), alvo=$(o==="enem"?"en-info":o+"-info");
+  if(!alvo)return;
+  var p={origem:o,componente:$("componente").value};
+  acervo().then(function(provas){
+    var n=questoesModelo(provas,p).length;
+    var nome=ORIGENS[o].nome;
+    alvo.innerHTML=n
+      ? "O acervo tem <strong>"+n+"</strong> "+(n===1?"questão":"questões")+" do "+nome+(o==="enem"?" neste filtro":"")+". A IA recebe até "+MAX_MODELOS+" delas como modelo, de preferência da sua disciplina."
+      : (o==="enem"?"Nenhuma questão do acervo neste filtro. A IA segue só a estrutura do ENEM descrita no app.":
+         "Ainda não há provas do "+nome+" no acervo. Enquanto isso, a IA segue a estrutura do "+nome+" descrita no app. Importe as provas em Provas oficiais para que ela receba modelos reais.");
+  });
+}
+function origemMudou(guardar){
+  var o=origemAtual();
+  Object.keys(ORIGENS).forEach(function(k){$("painel-"+k).hidden=k!==o;});
+  $("nota-objetiva").textContent=ORIGENS[o].nota;
+  if(o!=="livro"&&$("etapa").value!=="Ensino Médio"){$("etapa").value="Ensino Médio";$("etapa").dispatchEvent(new Event("change"));}
+  if(o==="ssa"){$("serie").value=$("ssa-etapa").value+"ª série";$("serie").dispatchEvent(new Event("change"));}
+  if(o==="enem")renderFiltroEnem();else infoAcervo();
+  if(guardar)gravar(CHAVE_ORIGEM,o);
+  atualizarTotalPedido();
+}
+document.querySelectorAll('input[name="origem"]').forEach(function(r){
+  r.addEventListener("change",function(){acervoCache=null;origemMudou(true);});
+});
+$("en-area").addEventListener("change",function(){$("en-comp").value="";$("en-hab").value="";renderFiltroEnem();});
+$("en-comp").addEventListener("change",function(){$("en-hab").value="";renderFiltroEnem();});
+$("en-hab").addEventListener("change",infoAcervo);
+$("ssa-etapa").addEventListener("change",function(){origemMudou(false);});
+(function(){
+  var salva=ler(CHAVE_ORIGEM), r=salva&&document.querySelector('input[name="origem"][value="'+salva+'"]');
+  if(r)r.checked=true;
+  // a matriz do ENEM é declarada mais abaixo: espera o script terminar
+  setTimeout(function(){origemMudou(false);},0);
+})();
+
 var PLURAL_TIPO={objetiva:["objetiva","objetivas"],dissertativa:["dissertativa","dissertativas"],
   passe:["PASSE","PASSE"],adaptada:["adaptada","adaptadas"],
   enem:["estilo ENEM","estilo ENEM"],ssa:["estilo SSA","estilo SSA"]};
 function atualizarTotalPedido(){
-  var q=lerQuantidades("q-"), partes=[];
+  var q=quantidadesDoFormato("q-",origemAtual()), partes=[];
   TIPOS_VALIDOS.forEach(function(t){if(q[t])partes.push(q[t]+" "+PLURAL_TIPO[t][q[t]===1?0:1]);});
   $("total-pedido").textContent=q._total
     ? ("Total do pedido: "+q._total+" "+(q._total===1?"questão":"questões")+" — "+partes.join(", ")+".")
-    : "Nenhuma questão pedida ainda. Preencha a quantidade dos estilos desejados.";
+    : "Nenhuma questão pedida ainda. Escolha a quantidade de pelo menos um formato.";
 }
-TIPOS_VALIDOS.forEach(function(t){
+["objetiva","dissertativa","adaptada"].forEach(function(t){
   var campo=$("q-"+t);
   if(campo)campo.addEventListener("input",atualizarTotalPedido);
 });
@@ -2584,14 +2743,15 @@ $("raciocinio").addEventListener("change",function(){
   conf.raciocinio=this.checked;salvarConf();
 });
 $("btn-gerar").addEventListener("click",function(){
-  var etapa=$("etapa").value, comp=$("componente").value;
+  var etapa=$("etapa").value, comp=$("componente").value, origem=origemAtual(), botao=this;
   var p={
+    origem:origem,
     assunto:$("assunto").value.trim(),
     etapa:etapa,
     componente:comp,
     area:areaDoComponente(etapa,comp),
-    matriz:$("matriz").value,
-    anoMatriz:$("ano-matriz").value.trim(),
+    matriz:matrizDaOrigem(origem),
+    anoMatriz:"",
     serie:$("serie").value,
     unidade:$("unidade").value.trim(),
     habilidades:$("habilidades").value.trim(),
@@ -2602,22 +2762,33 @@ $("btn-gerar").addEventListener("click",function(){
     textoExtra:$("texto-extra").value.trim(),
     material:ativos().map(function(m){return m.nome;}).join(", ")
   };
-  var quantidades=lerQuantidades("q-"), total=quantidades._total;
+  // no ENEM, a habilidade vem da matriz do ENEM: a escolhida, ou a IA escolhe entre as do filtro
+  if(origem==="enem"){
+    var codigos=habsEnemDoFiltro(), textos={};
+    MATRIZ_ENEM.forEach(function(a){a.c.forEach(function(c){c.h.forEach(function(h){textos[a.s+"-H"+h[0]]=h[1];});});});
+    var lista=codigos.map(function(c){return {c:c,t:textos[c]||""};});
+    if($("en-hab").value){p.detalheHabilidades=lista;p.habilidades="";}
+    else if(!p.detalheHabilidades.length&&!p.habilidades)p.matrizDisponivel=lista;
+  }
+  var quantidades=quantidadesDoFormato("q-",origem), total=quantidades._total;
 
   if(!conf.chave){msg("retorno-geracao","Falta cadastrar a sua chave de acesso à IA.","erro");abrirAssistenteChave();return;}
-  if(!p.assunto&&!ativos().length&&!p.textoExtra){msg("retorno-geracao","Informe o assunto, marque um material da biblioteca ou cole um texto avulso antes de gerar.","erro");return;}
-  if(total===0){msg("retorno-geracao","Defina a quantidade de pelo menos um estilo de questão.","erro");return;}
+  if(!p.assunto&&!ativos().length&&!p.textoExtra&&!(origem==="enem"&&$("en-hab").value)){
+    msg("retorno-geracao",origem==="livro"?"Marque um capítulo do livro ou informe o assunto antes de gerar.":"Informe o assunto antes de gerar"+(origem==="enem"?", ou escolha uma habilidade do ENEM":"")+".","erro");return;}
+  if(total===0){msg("retorno-geracao","Escolha a quantidade de pelo menos um formato no passo 3.","erro");return;}
   if(/preview|exp/.test(conf.modelo||""))
     msg("retorno-geracao","Atenção: <strong>"+esc(conf.modelo)+"</strong> é um modelo de pré-lançamento — são os mais congestionados e com menor cota. Em Ajustes, clique em buscar modelos disponíveis para trocar por um estável.","");
   if(!navigator.onLine){msg("retorno-geracao","Seu computador está <strong>sem conexão com a internet</strong>. A geração depende do provedor de IA. Reconecte e tente de novo — nada foi perdido.","erro");return;}
   if(!conf.chave){msg("retorno-geracao","Nenhuma chave de API salva. Abra <strong>Ajustes</strong>, cole a chave e clique em testar conexão antes de gerar.","erro");abrirAssistenteChave();return;}
   if(total>20){msg("retorno-geracao","O limite é de 20 questões por geração — acima disso o provedor costuma recusar os lotes. Gere em rodadas de até 20; o banco vai acumulando.","erro");return;}
 
+  prepararModelos(p).catch(function(){return [];}).then(function(modelos){
+  p.modelos=modelos;
   ultimoPedido=p;
   try{gravar(CHAVE_PEDIDO,JSON.stringify(p));}catch(e){}
   atualizarResumoPedido();
 
-  rodarGeracao(p,quantidades,this,"progresso-geracao","retorno-geracao","Gerar questões",function(novas,falhas,falta,total){
+  rodarGeracao(p,quantidades,botao,"progresso-geracao","retorno-geracao","Gerar questões",function(novas,falhas,falta,total){
     if(!novas.length){
       msg("retorno-geracao",textoDaFalha(falhas),"erro");
       return;
@@ -2639,12 +2810,13 @@ $("btn-gerar").addEventListener("click",function(){
     var link=$("ir-banco");
     if(link)link.addEventListener("click",function(e){e.preventDefault();irPara("banco");});
   });
+  });
 });
 
 $("btn-limpar-form").addEventListener("click",function(){
-  ["assunto","unidade","habilidades","observacoes","texto-extra","ano-matriz","busca-hab"].forEach(function(c){$(c).value="";});
+  ["assunto","unidade","habilidades","observacoes","texto-extra","busca-hab"].forEach(function(c){$(c).value="";});
   habSelecionadas={};renderHabilidades();
-  TIPOS_VALIDOS.forEach(function(t){var c=$("q-"+t);if(c)c.value="0";});
+  ["objetiva","dissertativa","adaptada"].forEach(function(t){var c=$("q-"+t);if(c)c.value="0";});
   atualizarTotalPedido();
   $("arquivos").value="";
   $("status-pdf").className="progresso";$("status-pdf").innerHTML="";
@@ -2717,21 +2889,20 @@ $("busca-hab").addEventListener("input",renderHabilidades);
 $("etapa").addEventListener("change",function(){
   preencherComponentes();preencherSeries();habSelecionadas={};renderHabilidades();
 });
-$("componente").addEventListener("change",function(){habSelecionadas={};renderHabilidades();});
-$("serie").addEventListener("change",function(){habSelecionadas={};renderHabilidades();});
-$("matriz").addEventListener("change",function(){
-  var enem=this.value==="ENEM";
-  $("ano-matriz").disabled=!enem;
-  $("ano-matriz").placeholder=enem?"Ex.: 2024":"Somente para ENEM";
-  if(!enem)$("ano-matriz").value="";
+$("componente").addEventListener("change",function(){
+  habSelecionadas={};renderHabilidades();
+  var ae=AREA_DA_MATERIA[this.value];
+  if(origemAtual()==="enem"&&ae&&ae!==$("en-area").value){$("en-area").value=ae;$("en-comp").value="";$("en-hab").value="";renderFiltroEnem();}
+  else infoAcervo();
 });
+$("serie").addEventListener("change",function(){habSelecionadas={};renderHabilidades();});
 preencherComponentes();
 preencherSeries();
 renderHabilidades();
 
 function preencherFiltros(){
   ["etapa","componente","serie","matriz","material","nivel"].forEach(function(campo){
-    var rotulos={etapa:"Todos os níveis",componente:"Todos os componentes",serie:"Todas as séries",matriz:"Todas as matrizes",material:"Todos os materiais",nivel:"Todos os níveis de exigência"};
+    var rotulos={etapa:"Todos os níveis",componente:"Todos os componentes",serie:"Todas as séries",matriz:"Todas as origens",material:"Todos os materiais",nivel:"Todos os níveis de exigência"};
     var sel=$("filtro-"+campo), atual=sel.value, vistos={}, lista=[];
     questoes.forEach(function(q){var v=q[campo];if(v&&!vistos[v]){vistos[v]=1;lista.push(v);}});
     sel.innerHTML='<option value="">'+rotulos[campo]+"</option>";
@@ -2748,7 +2919,7 @@ function filtradas(){
   return questoes.filter(function(q){
     if(fc&&q.componente!==fc)return false;
     if(fs&&q.serie!==fs)return false;
-    if(ft&&q.tipo!==ft)return false;
+    if(ft&&(ft==="objetiva"?["objetiva","enem","ssa","passe"].indexOf(q.tipo)<0:q.tipo!==ft))return false;
     if(fe&&q.etapa!==fe)return false;
     if(fm&&q.matriz!==fm)return false;
     if(fx&&q.material!==fx)return false;
@@ -3116,6 +3287,12 @@ $("btn-montar").addEventListener("click",function(){
   $("folha").innerHTML=html;
   $("folha").scrollIntoView({behavior:"smooth",block:"start"});
 });
+// pedidos antigos não tinham origem: ela sai da matriz
+function origemDoPedido(u){
+  if(u&&ORIGENS[u.origem])return u.origem;
+  var m=(u&&u.matriz)||"";
+  return m==="ENEM"?"enem":m.indexOf("SSA")===0?"ssa":m==="PASSE"?"passe":"livro";
+}
 function atualizarResumoPedido(){
   var alvo=$("resumo-pedido");
   if(!alvo)return;
@@ -3137,7 +3314,7 @@ $("btn-completar").addEventListener("click",function(){
     msg("retorno-completar","Faça uma primeira geração na aba Gerar para definir os parâmetros.","erro");
     return;
   }
-  var quantidades=lerQuantidades("c-");
+  var quantidades=quantidadesDoFormato("c-",origemDoPedido(ultimoPedido));
   if(!quantidades._total){msg("retorno-completar","Defina quantas questões novas você quer.","erro");return;}
   if(!conf.chave){msg("retorno-completar","Nenhuma chave de API salva. Cadastre-a em Ajustes.","erro");abrirAssistenteChave();return;}
   if(quantidades._total>20){msg("retorno-completar","O limite é de 20 questões por geração. Complete a prova em rodadas.","erro");return;}
@@ -4063,7 +4240,7 @@ function gravarProva(prova){
     return new Promise(function(ok,erro){
       var t=db.transaction(BD_LOJA,"readwrite");
       t.objectStore(BD_LOJA).put(prova);
-      t.oncomplete=function(){nuvemMudou();ok();};
+      t.oncomplete=function(){acervoCache=null;nuvemMudou();ok();};
       t.onerror=function(){erro(t.error);};
     });
   });
@@ -4082,7 +4259,7 @@ function apagarProvaBD(idProva){
     return new Promise(function(ok,erro){
       var t=db.transaction(BD_LOJA,"readwrite");
       t.objectStore(BD_LOJA).delete(idProva);
-      t.oncomplete=function(){nuvemMudou();ok();};
+      t.oncomplete=function(){acervoCache=null;nuvemMudou();ok();};
       t.onerror=function(){erro(t.error);};
     });
   });
