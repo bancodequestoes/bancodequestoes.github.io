@@ -711,7 +711,8 @@ input[type=file]{font-size:13px}
     <p class="ajuda">Os mesmos campos que você preenche hoje à mão. O desenvolvimento das aulas é escrito pela IA seguindo as suas regras e fica editável antes de virar documento.</p>
     <label for="pl-turma">Turma</label>
     <select id="pl-turma"></select>
-    <div class="linha">
+    <!-- nível e série saem da turma; ficam escondidos porque o resto do planejamento lê deles -->
+    <div class="linha" style="display:none">
       <div>
         <label for="pl-etapa">Nível de ensino</label>
         <select id="pl-etapa"><option>Ensino Fundamental</option><option selected>Ensino Médio</option></select>
@@ -4031,15 +4032,15 @@ function opcoesTurmas(sel,vazio){
 }
 // no planejamento basta a série: "2ª série A", "2ª série B" viram uma só "2ª série"
 function opcoesSeries(sel,vazio){
-  var atual=sel.value||"", vistas={}, grupos={};
+  var atual=sel.value||$("pl-serie").value||"", vistas={}, grupos={};
   listaTurmas().map(serieDaTurma).concat(SERIES["Ensino Fundamental"],SERIES["Ensino Médio"]).forEach(function(s){
     if(!s||vistas[s])return;vistas[s]=1;(grupos[etapaDaSerie(s)]=grupos[etapaDaSerie(s)]||[]).push(s);
   });
   function ordem(a,b){return parseInt(a,10)-parseInt(b,10);}
-  sel.innerHTML='<option value="">'+esc(vazio)+"</option>"+["Ensino Fundamental","Ensino Médio"].map(function(e){
+  sel.innerHTML=(vazio?'<option value="">'+esc(vazio)+"</option>":"")+["Ensino Fundamental","Ensino Médio"].map(function(e){
     return grupos[e]?'<optgroup label="'+e+'">'+grupos[e].sort(ordem).map(function(t){return "<option>"+esc(t)+"</option>";}).join("")+"</optgroup>":"";
   }).join("");
-  sel.value=vistas[atual]?atual:"";
+  sel.value=vistas[atual]?atual:(vazio?"":sel.value);
 }
 function turmaProvaMudou(){
   var t=$("p-turma").value, s=serieDaTurma(t);
@@ -4064,7 +4065,7 @@ function iniciarTurmas(){
   var pt=$("p-turma");
   pt.dataset.valor=ler(CHAVE_TURMA_PROVA)||"";
   opcoesTurmas(pt,"— escolher a turma —");
-  opcoesSeries($("pl-turma"),"— escolher a turma —");
+  opcoesSeries($("pl-turma"));
   $("turmas-lista").value=listaTurmas().join("\n");
   if(!pt.value)$("det-turma-prova").open=true;
   turmaProvaMudou();
@@ -4074,7 +4075,7 @@ function iniciarTurmas(){
     l=l.filter(function(x){if(vistos[x])return false;vistos[x]=1;return true;});
     if(!l.length){gravar(CHAVE_TURMAS,"");l=turmasPadrao();$("turmas-lista").value=l.join("\n");}
     else gravar(CHAVE_TURMAS,JSON.stringify(l));
-    opcoesTurmas($("p-turma"),"— escolher a turma —");opcoesSeries($("pl-turma"),"— escolher a turma —");
+    opcoesTurmas($("p-turma"),"— escolher a turma —");opcoesSeries($("pl-turma"));
     turmaProvaMudou();
     var sem=l.filter(function(x){return !serieDaTurma(x);});
     msg("retorno-turmas","Lista salva: "+l.length+" turmas."+(sem.length?" Sem série reconhecida: "+sem.map(esc).join(", ")+".":""),sem.length?"":"ok");
@@ -6044,7 +6045,7 @@ $("busca-hab-plano").addEventListener("input",function(){renderHabPlano();});
       preencherLista("pl-serie",SERIES[$("pl-etapa").value]||[]);
     }
     habPlano={};renderHabPlano();
-    if(id==="pl-etapa"||id==="pl-serie"){var tm=$("pl-turma");if(tm.value&&serieDaTurma(tm.value)!==$("pl-serie").value)tm.value="";}
+    if(id==="pl-serie"&&$("pl-serie").value)$("pl-turma").value=$("pl-serie").value;
     renderMaterialPlano();
   });
 });
@@ -6070,6 +6071,12 @@ function iniciarPlano(){
     if(e&&e!==$("pl-etapa").value){$("pl-etapa").value=e;preencherLista("pl-componente",COMPONENTES[e]||[]);preencherLista("pl-serie",SERIES[e]||[]);}
     $("pl-serie").value=PM.serie;renderHabPlano();
   }
+  // a turma mostra a série que estiver valendo; se ela vier diferente, a série passa a segui-la
+  var tp=$("pl-turma"), guardada=ler("bancoQuestoes.turmaPlano.v1")||"";
+  opcoesSeries(tp);
+  tp.value=guardada||PM.serie||$("pl-serie").value;
+  if(!tp.value)tp.selectedIndex=0;
+  if(tp.value!==$("pl-serie").value)tp.dispatchEvent(new Event("change"));
   renderMaterialPlano();
 }
 
@@ -6203,6 +6210,7 @@ $("pm-livro").addEventListener("change",function(){PM.livro=this.value;pmGuardar
 $("det-material-plano").addEventListener("toggle",function(){if(this.open)renderMaterialPlano();});
 $("pl-turma").addEventListener("change",function(){
   var s=serieDaTurma(this.value), e=etapaDaSerie(s);
+  gravar("bancoQuestoes.turmaPlano.v1",this.value);
   if(!e)return;
   if($("pl-etapa").value!==e){$("pl-etapa").value=e;$("pl-etapa").dispatchEvent(new Event("change"));}
   if($("pl-serie").value!==s){$("pl-serie").value=s;$("pl-serie").dispatchEvent(new Event("change"));}
