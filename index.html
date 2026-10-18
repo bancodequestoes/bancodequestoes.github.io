@@ -146,6 +146,10 @@ input[type=file]{font-size:13px}
 .painel-origem{margin-top:12px;padding:12px 14px;border:1px solid var(--regua);border-radius:10px;background:#FBFCFA}
 .formatos{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
 @media(max-width:640px){.origens{grid-template-columns:1fr 1fr}.formatos{grid-template-columns:1fr}}
+.tag.dif{font-weight:700}
+.tag.dif-1,.tag.dif-2{background:#E6F4EA;color:#1E6B3A}
+.tag.dif-3{background:#FFF4D6;color:#7A5A00}
+.tag.dif-4,.tag.dif-5{background:#FCE4E4;color:#9B1C1C}
 .caixa-hab{max-height:240px;overflow-y:auto;border:1px solid var(--regua);border-radius:8px;background:#FBFCFA;padding:4px 12px}
 .hab{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--regua);font-size:13px}
 .hab:last-child{border-bottom:none}
@@ -312,8 +316,10 @@ input[type=file]{font-size:13px}
         <div><label for="en-area">Área do ENEM</label><select id="en-area"></select></div>
         <div><label for="en-comp">Competência</label><select id="en-comp"></select></div>
       </div>
-      <label for="en-hab">Habilidade</label>
-      <select id="en-hab"></select>
+      <div class="linha">
+        <div><label for="en-hab">Habilidade</label><select id="en-hab"></select></div>
+        <div><label for="en-dif">Dificuldade (TRI do INEP)</label><select id="en-dif"><option value="">Qualquer</option><option value="facil">Fácil</option><option value="media">Média</option><option value="dificil">Difícil</option></select></div>
+      </div>
       <p class="ajuda" id="en-info"></p>
     </div>
     <div class="painel-origem" id="painel-ssa" hidden>
@@ -632,6 +638,16 @@ input[type=file]{font-size:13px}
     <label for="filtro-hab-enem">Habilidade</label>
     <select id="filtro-hab-enem"><option value="">Todas as habilidades</option></select>
     <p class="ajuda nota-hab" id="texto-matriz-enem"></p>
+    <div class="linha">
+      <div>
+        <label for="filtro-dif">Dificuldade (TRI do INEP)</label>
+        <select id="filtro-dif"><option value="">Todas</option><option value="1">Muito fácil</option><option value="2">Fácil</option><option value="3">Média</option><option value="4">Difícil</option><option value="5">Muito difícil</option><option value="0">Sem dado do INEP</option></select>
+      </div>
+      <div>
+        <label for="ordem-oficiais">Ordem</label>
+        <select id="ordem-oficiais"><option value="">Como no caderno</option><option value="facil">Da mais fácil para a mais difícil</option><option value="dificil">Da mais difícil para a mais fácil</option></select>
+      </div>
+    </div>
     <div class="botoes" style="margin-top:6px">
       <button class="botao secundario" id="btn-marcar-oficiais">Selecionar todas as do filtro</button>
       <button class="botao secundario" id="btn-limpar-oficiais">Limpar seleção</button>
@@ -2063,6 +2079,7 @@ function montarPrompt(p,quantidades,jaFeitas,passo,evitar){
 "",
 matriz,
 (p.modelos&&p.modelos.length)?("QUESTÕES REAIS DO "+(p.matriz.indexOf("SSA")===0?"SSA":p.matriz)+" USADAS COMO MODELO — imite a estrutura delas: tipo e extensão do texto-base, forma de citar a fonte, formulação do comando, estilo e extensão das alternativas e nível de exigência. NÃO copie, não parafraseie e não reaproveite os textos, os temas específicos nem as alternativas: as questões novas devem ser inéditas e tratar do recorte pedido.\n\n"+p.modelos.join("\n\n")+"\n"):"",
+p.dificuldadeAlvo?("DIFICULDADE ALVO: "+p.dificuldadeAlvo+", como os modelos acima, que o INEP mediu pela TRI. Calibre o texto-base, o comando e os distratores para esse nível."):"",
 "Quantidades neste lote: "+pedidos.join("; ")+".",
 "Devolva EXATAMENTE esse número de objetos no array JSON — nem um a mais, nem um a menos. Conte antes de responder.",
 "Nível de exigência: "+p.nivel+".",
@@ -2584,6 +2601,7 @@ var ORIGENS={
   ssa:{nome:"SSA",objetiva:"ssa",nota:"no molde do SSA"},
   passe:{nome:"PASSE",objetiva:"passe",nota:"no molde do PASSE"}
 };
+var FAIXAS_MODELO={facil:[1,2],media:[3],dificil:[4,5]};
 var CHAVE_ORIGEM="bancoQuestoes.origemGerar.v1", MAX_MODELOS=4, acervoCache=null;
 function origemAtual(){
   var r=document.querySelector('input[name="origem"]:checked');
@@ -2635,6 +2653,7 @@ function questoesModelo(provas,p){
       if(!q.comando&&!(q.partes||[]).length)return;
       if(q.gabarito==="Anulada"||!(q.alternativas||[]).length)return;
       if(habs&&!conj[q.matriz])return;
+      if(origem==="enem"&&$("en-dif").value&&FAIXAS_MODELO[$("en-dif").value].indexOf(q.faixa)<0)return;
       var peso=0;
       if((q.materias||[]).indexOf(p.componente)>=0)peso+=4;
       if(!q.temFigura&&!(q.partes||[]).some(function(x){return x.tipo!=="texto";}))peso+=2;
@@ -2646,7 +2665,8 @@ function questoesModelo(provas,p){
 }
 function textoModelo(c,i){
   var q=c.q, prova=c.prova, linhas=[];
-  linhas.push("MODELO "+(i+1)+" — "+prova.nome+", questão "+q.numero+(q.matriz?" (habilidade "+q.matriz+")":"")+(q.assunto?" — "+q.assunto:""));
+  linhas.push("MODELO "+(i+1)+" — "+prova.nome+", questão "+q.numero+(q.matriz?" (habilidade "+q.matriz+")":"")+
+    (q.faixa?" [dificuldade na TRI do INEP: "+FAIXAS_DIF[q.faixa].toLowerCase()+"]":"")+(q.assunto?" — "+q.assunto:""));
   var comum=q.comum&&(prova.comuns||[]).filter(function(x){return x.id===q.comum;})[0];
   [comum,q].forEach(function(bloco){
     if(!bloco)return;
@@ -2716,6 +2736,7 @@ document.querySelectorAll('input[name="origem"]').forEach(function(r){
 $("en-area").addEventListener("change",function(){$("en-comp").value="";$("en-hab").value="";renderFiltroEnem();});
 $("en-comp").addEventListener("change",function(){$("en-hab").value="";renderFiltroEnem();});
 $("en-hab").addEventListener("change",infoAcervo);
+$("en-dif").addEventListener("change",infoAcervo);
 $("ssa-etapa").addEventListener("change",function(){origemMudou(false);});
 (function(){
   var salva=ler(CHAVE_ORIGEM), r=salva&&document.querySelector('input[name="origem"][value="'+salva+'"]');
@@ -2746,6 +2767,7 @@ $("btn-gerar").addEventListener("click",function(){
   var etapa=$("etapa").value, comp=$("componente").value, origem=origemAtual(), botao=this;
   var p={
     origem:origem,
+    dificuldadeAlvo:origem==="enem"&&$("en-dif").value?$("en-dif").options[$("en-dif").selectedIndex].text.toLowerCase():"",
     assunto:$("assunto").value.trim(),
     etapa:etapa,
     componente:comp,
@@ -3643,6 +3665,35 @@ $("arquivo-pacote").addEventListener("change",function(ev){
         var lista=Object.keys(mudadas).map(function(k){return mudadas[k];});
         return Promise.all(lista.map(gravarProva)).then(function(){
           relato.push(feitas+" "+(feitas===1?"questão corrigida":"questões corrigidas")+" nas provas oficiais");
+          return recarregarProvas().catch(function(){});
+        });
+      });
+    });
+    // dificuldade e habilidade oficiais do INEP (microdados): só acrescenta esses campos
+    var dados=Array.isArray(pacote.dificuldade)?pacote.dificuldade:[];
+    if(dados.length)seguir=seguir.then(function(){
+      return listarProvas().then(function(atuais){
+        var porNome={};atuais.forEach(function(pr){porNome[pr.nome]=pr;});
+        var mudadas={}, feitas=0, habs=0, provasFaltando={};
+        dados.forEach(function(d){
+          var pr=d&&porNome[d.prova];
+          if(!pr){if(d&&d.prova)provasFaltando[d.prova]=1;return;}
+          var q=(pr.questoes||[]).filter(function(x){return x.chave===d.chave;})[0];
+          if(!q)return;
+          if(typeof d.dificuldade==="number"){q.dificuldade=d.dificuldade;q.faixa=d.faixa;}
+          if(d.acerto!=null)q.acerto=d.acerto;
+          if(d.habilidade&&HAB_ENEM[d.habilidade]&&q.matriz!==d.habilidade){
+            if(q.matriz&&!q.matrizIA)q.matrizIA=q.matriz;
+            q.matriz=d.habilidade;habs++;
+          }
+          if(d.habilidade)q.matrizInep=true;
+          mudadas[pr.id]=pr;feitas++;
+        });
+        var lista=Object.keys(mudadas).map(function(k){return mudadas[k];});
+        return Promise.all(lista.map(gravarProva)).then(function(){
+          var faltam=Object.keys(provasFaltando).length;
+          relato.push("dificuldade do INEP em "+feitas+" questões"+(habs?" ("+habs+" com a habilidade corrigida pela oficial)":"")+
+            (faltam?"; "+faltam+" "+(faltam===1?"prova não está":"provas não estão")+" neste aparelho":""));
           return recarregarProvas().catch(function(){});
         });
       });
@@ -4947,13 +4998,14 @@ function corrigirAreasEnem(prova){
     q.areaEnem=area;
     var naArea=(q.materias||[]).filter(function(m){return AREA_DA_MATERIA[m]===area;});
     if(naArea.length&&naArea.length<(q.materias||[]).length)q.materias=naArea;
-    if(q.matriz&&HAB_ENEM[q.matriz]&&HAB_ENEM[q.matriz].area!==area){delete q.matriz;refazer++;}
+    if(q.matriz&&!q.matrizInep&&HAB_ENEM[q.matriz]&&HAB_ENEM[q.matriz].area!==area){delete q.matriz;refazer++;}
   });
   return refazer;
 }
 /* para provas já importadas: só a habilidade, com a matéria já conhecida ajudando a escolher a área */
 function classificarMatriz(lista,aoProgresso){
-  var pendentes=lista.filter(function(q){return q.texto;}), feitas=0, total=pendentes.length;
+  // a habilidade oficial do INEP (microdados) nunca é trocada pela da IA
+  var pendentes=lista.filter(function(q){return q.texto&&!q.matrizInep;}), feitas=0, total=pendentes.length;
   var PARALELAS=3;
   function lote(){
     if(!pendentes.length||cancelado||paradaGeral)return Promise.resolve();
@@ -5123,6 +5175,7 @@ function oficiaisFiltradas(){
   if(!provaAtual)return [];
   var mat=$("filtro-materia").value, ass=$("filtro-assunto").value;
   var area=$("filtro-area-enem").value, comp=$("filtro-comp-enem").value, hab=$("filtro-hab-enem").value;
+  var dif=$("filtro-dif").value, ordem=$("ordem-oficiais").value;
   var termos=semAcento($("busca-tema").value).split(/[^a-z0-9]+/).filter(function(t){return t.length>2;});
   var lista=provaAtual.questoes.filter(function(q){
     if(mat&&(q.materias||[]).indexOf(mat)<0)return false;
@@ -5133,8 +5186,19 @@ function oficiaisFiltradas(){
       if(comp&&String(x.c)!==comp)return false;
       if(hab&&q.matriz!==hab)return false;
     }
+    if(dif&&String(q.faixa||0)!==dif)return false;
     return true;
   });
+  if(ordem){
+    // questões sem dado do INEP ficam no fim, na ordem do caderno
+    var sentido=ordem==="facil"?1:-1;
+    lista=lista.map(function(q,i){return {q:q,i:i};}).sort(function(a,b){
+      var da=typeof a.q.dificuldade==="number", db=typeof b.q.dificuldade==="number";
+      if(da!==db)return da?-1:1;
+      if(!da)return a.i-b.i;
+      return sentido*(a.q.dificuldade-b.q.dificuldade)||a.i-b.i;
+    }).map(function(x){return x.q;});
+  }
   if(termos.length){
     lista=lista.map(function(q){return {q:q,p:pontuarTema(q,termos)};})
                .filter(function(x){return x.p>=4;})
@@ -5174,6 +5238,13 @@ function corpoDaQuestao(q,rotulo,comComum){
     (q.alternativasFigura?'<div class="fig-oficial"><img src="'+q.alternativasFigura+'" alt="Alternativas da questão"></div>':"")+
     "</div>";
 }
+/* dificuldade: parâmetro b da TRI publicado pelo INEP nos microdados, em 5 faixas por área */
+var FAIXAS_DIF=["","Muito fácil","Fácil","Média","Difícil","Muito difícil"];
+function etiquetaDificuldade(q){
+  if(!q.faixa)return "";
+  return '<span class="tag dif dif-'+q.faixa+'" title="Parâmetro de dificuldade da TRI (INEP): '+
+    String(q.dificuldade).replace(".",",")+(q.acerto!=null?" · "+q.acerto+"% de acerto":"")+'">'+FAIXAS_DIF[q.faixa]+"</span>";
+}
 function rotuloQuestao(n){return "QUESTÃO "+(n<10?"0":"")+n;}
 function renderOficiais(){
   var alvo=$("lista-oficiais");
@@ -5192,6 +5263,7 @@ function renderOficiais(){
     var etiquetas=(q.materias||[]).map(function(m){return '<span class="tag tipo">'+esc(m)+"</span>";}).join("")+
       (q.assunto?'<span class="tag habilidade">'+esc(q.assunto)+"</span>":"")+
       (HAB_ENEM[q.matriz]?'<span class="tag habilidade" title="'+esc(HAB_ENEM[q.matriz].texto)+'">ENEM '+rotuloHabilidade(q.matriz)+"</span>":"")+
+      etiquetaDificuldade(q)+
       '<span class="tag">questão '+q.numero+(q.variante?" · "+q.variante.toLowerCase():"")+"</span>"+
       '<span class="tag">página '+q.pagina+"</span>"+
       (q.temFigura?'<span class="tag habilidade">com figura</span>':"")+
@@ -5384,6 +5456,9 @@ $("filtro-materia").addEventListener("change",function(){
 });
 $("filtro-assunto").addEventListener("change",function(){
   visiveisOficiais=PASSO_OFICIAIS;renderOficiais();
+});
+["filtro-dif","ordem-oficiais"].forEach(function(qual){
+  $(qual).addEventListener("change",function(){visiveisOficiais=PASSO_OFICIAIS;renderOficiais();});
 });
 ["filtro-area-enem","filtro-comp-enem","filtro-hab-enem"].forEach(function(qual){
   $(qual).addEventListener("change",function(){
