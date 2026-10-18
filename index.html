@@ -77,11 +77,22 @@ main{max-width:1400px;margin:0 auto;padding:24px 20px 90px}
 .nota-hab{color:rgba(28,28,26,.78) !important;margin:8px 0 18px !important}
 .pilha{position:sticky;top:96px}
 
+/* recolhíveis: parecem botão, com seta e "Clique para abrir", para ninguém deixar de ver */
 details>summary{cursor:pointer;font-size:14px;font-weight:600;list-style:none;display:flex;
-  align-items:center;justify-content:space-between;gap:10px;padding:2px 0}
+  align-items:center;gap:12px;padding:11px 14px;border:1.5px solid rgba(47,111,78,.35);border-radius:10px;
+  background:var(--verde-fundo);transition:background .15s,border-color .15s,box-shadow .15s;user-select:none}
+details>summary>span:first-child{flex:1;min-width:0}
+details>summary:hover{background:#D7E8DD;border-color:var(--verde);box-shadow:0 2px 6px rgba(47,111,78,.15)}
+details>summary:focus-visible{outline:2px solid var(--verde);outline-offset:2px}
 details>summary::-webkit-details-marker{display:none}
-details>summary::after{content:"▾";color:var(--cinza);font-size:12px;transition:transform .15s}
-details[open]>summary::after{transform:rotate(180deg)}
+details>summary::before{content:"▸";flex:none;display:inline-flex;align-items:center;justify-content:center;
+  width:26px;height:26px;border-radius:50%;background:var(--verde);color:#fff;font-size:15px;line-height:1;transition:transform .2s}
+details[open]>summary::before{transform:rotate(90deg)}
+details>summary::after{content:"Clique para abrir";flex:none;font-family:var(--sans);font-size:11.5px;font-weight:700;
+  color:var(--verde-escuro);background:#fff;border:1px solid rgba(47,111,78,.35);border-radius:999px;padding:3px 10px;white-space:nowrap}
+details[open]>summary::after{content:"Fechar";color:var(--cinza);border-color:var(--regua)}
+details[open]>summary{background:#fff;border-color:var(--verde)}
+@media(max-width:640px){details>summary::after{content:"Abrir"}details[open]>summary::after{content:"Fechar"}}
 .sumario{font-weight:400;color:var(--cinza);font-size:12.5px}
 details>summary+*{margin-top:14px}
 
@@ -128,7 +139,10 @@ input[type=file]{font-size:13px}
 .outros-arquivos summary{cursor:pointer;font-size:14px}
 .livros-sesi h4{margin:0 0 4px;font-size:14px}
 .livros-sesi .caderno{border-bottom:1px solid var(--regua);padding:6px 0;font-size:13.5px}
-.livros-sesi .caderno summary{cursor:pointer;font-weight:700}
+.livros-sesi .caderno summary{cursor:pointer;font-weight:700;padding:8px 10px;background:#fff;border-width:1px;flex-wrap:wrap;gap:4px 10px}
+.livros-sesi .caderno summary::before{width:22px;height:22px;font-size:13px}
+.livros-sesi .caderno summary::after{content:"ver capítulos";margin-left:auto}
+.livros-sesi .caderno[open]>summary::after{content:"Fechar"}
 .livros-sesi .caderno summary .sub{font-weight:400;color:var(--cinza);font-size:12px}
 .livros-sesi label.cap{display:flex;gap:8px;align-items:flex-start;padding:4px 0 4px 6px;cursor:pointer}
 .livros-sesi label.cap input{width:16px;height:16px;margin-top:2px;accent-color:var(--verde);flex:none}
@@ -144,6 +158,8 @@ input[type=file]{font-size:13px}
 .origem:has(input:checked){border-color:var(--verde);background:#F1F7F3;box-shadow:0 0 0 1px var(--verde) inset}
 .origem:has(input:focus-visible){outline:2px solid var(--verde);outline-offset:2px}
 .painel-origem{margin-top:12px;padding:12px 14px;border:1px solid var(--regua);border-radius:10px;background:#FBFCFA}
+.origens-provas{grid-template-columns:repeat(auto-fill,minmax(118px,1fr))}
+.origem.vazia{opacity:.55}
 .formatos{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
 @media(max-width:640px){.origens{grid-template-columns:1fr 1fr}.formatos{grid-template-columns:1fr}}
 .tag.dif{font-weight:700}
@@ -375,7 +391,7 @@ input[type=file]{font-size:13px}
 
         <details id="det-mais-opcoes" style="margin-top:14px">
           <summary><span><strong>Mais opções</strong> <span class="sumario">— bimestre, habilidades, nível de exigência, orientações</span></span></summary>
-            <label for="unidade">Unidade ou bimestre</label>
+            <label for="unidade">Bimestre</label>
             <select id="unidade">
               <option value="">— não informar —</option>
               <option value="1º bimestre">1º bimestre</option>
@@ -604,26 +620,30 @@ input[type=file]{font-size:13px}
 
   <div class="bloco nao-imprime">
     <h2>Questões da prova</h2>
-    <div class="linha">
-      <div>
-        <label for="prova-escolhida">Prova</label>
-        <select id="prova-escolhida"><option value="">— nenhuma prova importada —</option></select>
+    <h3 class="passo"><span>1</span> Escolher a prova</h3>
+    <div class="origens origens-provas" id="origens-provas" role="radiogroup" aria-label="Escolher a prova"></div>
+    <div class="painel-origem" id="painel-prova" hidden>
+      <div class="linha" id="linha-prova">
+        <div><label for="prova-ano">Ano</label><select id="prova-ano"></select></div>
+        <div><label for="prova-caderno">Caderno</label><select id="prova-caderno"></select></div>
       </div>
+      <p class="ajuda nota-hab" id="info-prova" style="margin-bottom:0"></p>
+    </div>
+    <select id="prova-escolhida" hidden aria-hidden="true"><option value="">— nenhuma prova importada —</option></select>
+
+    <h3 class="passo"><span>2</span> Filtrar as questões</h3>
+    <div class="linha">
       <div>
         <label for="filtro-materia">Matéria</label>
         <select id="filtro-materia"><option value="">Todas</option></select>
       </div>
-    </div>
-    <div class="linha">
       <div>
         <label for="filtro-assunto">Assunto identificado na prova</label>
         <select id="filtro-assunto"><option value="">Todos</option></select>
       </div>
-      <div>
-        <label for="busca-tema">Buscar por tema amplo</label>
-        <input type="text" id="busca-tema" placeholder="Ex.: ódio na política">
-      </div>
     </div>
+    <label for="busca-tema">Buscar por tema amplo</label>
+    <input type="text" id="busca-tema" placeholder="Ex.: ódio na política">
     <p class="ajuda nota-hab">A busca por tema encontra questões próximas do que você digitou, mesmo com outras palavras — útil quando o capítulo do livro traz só um título.</p>
     <div class="linha">
       <div>
@@ -707,22 +727,14 @@ input[type=file]{font-size:13px}
         <select id="pl-componente"></select>
       </div>
       <div>
-        <label for="pl-bimestre">Bimestre</label>
+        <label for="pl-bimestre">Bimestre (unidade)</label>
         <select id="pl-bimestre">
           <option>1</option><option>2</option><option selected>3</option><option>4</option>
         </select>
       </div>
     </div>
-    <div class="linha">
-      <div>
-        <label for="pl-unidade">Unidade</label>
-        <input type="text" id="pl-unidade" value="I">
-      </div>
-      <div>
-        <label for="pl-professor">Professor</label>
-        <input type="text" id="pl-professor" placeholder="Ex.: MATHEUS ERNANDES">
-      </div>
-    </div>
+    <label for="pl-professor">Professor</label>
+    <input type="text" id="pl-professor">
     <div class="linha">
       <div>
         <label for="pl-periodo">Data das aulas</label>
@@ -734,7 +746,7 @@ input[type=file]{font-size:13px}
       </div>
     </div>
     <details id="det-material-plano" class="livros-sesi" style="margin-top:14px">
-      <summary><span><strong>Material didático</strong> <span class="sumario" id="resumo-material-plano">— nenhum capítulo escolhido</span></span></summary>
+      <summary><span><strong>Material didático que será utilizado nas aulas</strong> <span class="sumario" id="resumo-material-plano">— nenhum capítulo escolhido</span></span></summary>
       <p class="ajuda">Escolha o livro SESI da série e marque os capítulos do ciclo. A IA lê o texto deles para escrever o desenvolvimento. Na divisão entre as aulas basta escrever, por exemplo, "Aula 01: início do capítulo 1".</p>
       <div class="linha">
         <div><label for="pm-area">Área</label><select id="pm-area"></select></div>
@@ -4017,6 +4029,18 @@ function opcoesTurmas(sel,vazio){
   }).join("");
   sel.value=turmas.indexOf(atual)>=0?atual:"";
 }
+// no planejamento basta a série: "2ª série A", "2ª série B" viram uma só "2ª série"
+function opcoesSeries(sel,vazio){
+  var atual=sel.value||"", vistas={}, grupos={};
+  listaTurmas().map(serieDaTurma).concat(SERIES["Ensino Fundamental"],SERIES["Ensino Médio"]).forEach(function(s){
+    if(!s||vistas[s])return;vistas[s]=1;(grupos[etapaDaSerie(s)]=grupos[etapaDaSerie(s)]||[]).push(s);
+  });
+  function ordem(a,b){return parseInt(a,10)-parseInt(b,10);}
+  sel.innerHTML='<option value="">'+esc(vazio)+"</option>"+["Ensino Fundamental","Ensino Médio"].map(function(e){
+    return grupos[e]?'<optgroup label="'+e+'">'+grupos[e].sort(ordem).map(function(t){return "<option>"+esc(t)+"</option>";}).join("")+"</optgroup>":"";
+  }).join("");
+  sel.value=vistas[atual]?atual:"";
+}
 function turmaProvaMudou(){
   var t=$("p-turma").value, s=serieDaTurma(t);
   $("p-serie-turma").value=s;
@@ -4040,7 +4064,7 @@ function iniciarTurmas(){
   var pt=$("p-turma");
   pt.dataset.valor=ler(CHAVE_TURMA_PROVA)||"";
   opcoesTurmas(pt,"— escolher a turma —");
-  opcoesTurmas($("pl-turma"),"— escolher a turma —");
+  opcoesSeries($("pl-turma"),"— escolher a turma —");
   $("turmas-lista").value=listaTurmas().join("\n");
   if(!pt.value)$("det-turma-prova").open=true;
   turmaProvaMudou();
@@ -4050,7 +4074,7 @@ function iniciarTurmas(){
     l=l.filter(function(x){if(vistos[x])return false;vistos[x]=1;return true;});
     if(!l.length){gravar(CHAVE_TURMAS,"");l=turmasPadrao();$("turmas-lista").value=l.join("\n");}
     else gravar(CHAVE_TURMAS,JSON.stringify(l));
-    opcoesTurmas($("p-turma"),"— escolher a turma —");opcoesTurmas($("pl-turma"),"— escolher a turma —");
+    opcoesTurmas($("p-turma"),"— escolher a turma —");opcoesSeries($("pl-turma"),"— escolher a turma —");
     turmaProvaMudou();
     var sem=l.filter(function(x){return !serieDaTurma(x);});
     msg("retorno-turmas","Lista salva: "+l.length+" turmas."+(sem.length?" Sem série reconhecida: "+sem.map(esc).join(", ")+".":""),sem.length?"":"ok");
@@ -5094,9 +5118,84 @@ function recarregarProvas(){
       : '<option value="">— nenhuma prova importada —</option>';
     if(anterior&&provasCarregadas.some(function(p){return p.id===anterior;}))sel.value=anterior;
     provaAtual=provasCarregadas.filter(function(p){return p.id===sel.value;})[0]||null;
-    preencherFiltrosOficiais();renderOficiais();
+    renderEscolhaProva();preencherFiltrosOficiais();renderOficiais();
   });
 }
+/* escolher a prova em três toques, como o "Criar a partir de" do Gerar:
+   origem (cartões) › ano › caderno. O select escondido continua sendo a fonte. */
+var ORIGENS_PROVA=[["enem","ENEM","INEP"],["ssa","SSA","UPE"],["passe","PASSE",""],["unicamp","UNICAMP",""],
+  ["fuvest","Fuvest",""],["cebraspe","CEBRASPE",""],["outro","Outras","outras bancas"]],
+  CHAVE_ORIGEM_PROVA="bancoQuestoes.origemOficiais.v1";
+function origemDaProva(p){
+  var t=((p.origem||"")+" "+(p.nome||"")).toLowerCase();
+  if(/enem/.test(t))return "enem";
+  if(/\bssa\b|upe/.test(t))return "ssa";
+  if(/passe/.test(t))return "passe";
+  if(/unicamp/.test(t))return "unicamp";
+  if(/fuvest/.test(t))return "fuvest";
+  if(/cebraspe|cespe/.test(t))return "cebraspe";
+  return "outro";
+}
+function anoDaProva(p){var m=/\b(19|20)\d{2}\b/.exec(p.nome||"");return m?m[0]:"";}
+function rotuloCaderno(p){
+  var r=(p.nome||"").replace(/\b(19|20)\d{2}\b/,"").replace(/\b(ENEM|SSA|UPE|PASSE|UNICAMP|Fuvest|CEBRASPE)\b/gi,"")
+    .replace(/^[\s—–\-:,]+|[\s—–\-:,]+$/g,"").replace(/\s{2,}/g," ");
+  if(!/[a-zà-ú]{3}/i.test(r))r=p.nome||"Prova";
+  return r+" — "+p.questoes.length+" questões";
+}
+function origemEscolhida(){var r=document.querySelector('input[name="origem-oficial"]:checked');return r?r.value:"";}
+function renderEscolhaProva(){
+  var grupos={};
+  provasCarregadas.forEach(function(p){(grupos[origemDaProva(p)]=grupos[origemDaProva(p)]||[]).push(p);});
+  var o=provaAtual?origemDaProva(provaAtual):(origemEscolhida()||ler(CHAVE_ORIGEM_PROVA)||"");
+  var conhecidas=ORIGENS_PROVA.map(function(x){return x[0];});
+  if(conhecidas.indexOf(o)<0)o=conhecidas.filter(function(k){return grupos[k];})[0]||"";
+  $("origens-provas").innerHTML=ORIGENS_PROVA.map(function(x){
+    var n=(grupos[x[0]]||[]).length;
+    return '<label class="origem'+(n?"":" vazia")+'"><input type="radio" name="origem-oficial" value="'+x[0]+'"'+(x[0]===o?" checked":"")+
+      "><strong>"+x[1]+"</strong><span>"+(n?n+(n===1?" prova":" provas"):"nenhuma ainda")+(x[2]?" · "+x[2]:"")+"</span></label>";
+  }).join("");
+  var lista=(grupos[o]||[]).slice(), painel=$("painel-prova");
+  painel.hidden=!o;
+  if(!lista.length){
+    $("linha-prova").hidden=true;
+    $("info-prova").innerHTML="Nenhuma prova desta origem ainda. Envie o caderno em <strong>Importar uma prova oficial</strong>, no alto da página.";
+    return;
+  }
+  $("linha-prova").hidden=false;
+  var anos={};lista.forEach(function(p){anos[anoDaProva(p)||"Sem ano"]=1;});
+  var listaAnos=Object.keys(anos).sort(function(a,b){return b.localeCompare(a);});
+  var ano=provaAtual&&lista.indexOf(provaAtual)>=0?(anoDaProva(provaAtual)||"Sem ano"):listaAnos[0];
+  $("prova-ano").innerHTML=listaAnos.map(function(a){return "<option>"+esc(a)+"</option>";}).join("");
+  $("prova-ano").value=ano;
+  var doAno=lista.filter(function(p){return (anoDaProva(p)||"Sem ano")===ano;})
+    .sort(function(a,b){return (a.nome||"").localeCompare(b.nome||"","pt-BR",{numeric:true});});
+  $("prova-caderno").innerHTML=doAno.map(function(p){return '<option value="'+p.id+'">'+esc(rotuloCaderno(p))+"</option>";}).join("");
+  if(provaAtual&&doAno.indexOf(provaAtual)>=0)$("prova-caderno").value=provaAtual.id;
+  $("info-prova").textContent=lista.length+(lista.length===1?" prova":" provas")+" desta origem, de "+listaAnos.length+(listaAnos.length===1?" ano.":" anos.");
+}
+function escolherProva(idProva){
+  var sel=$("prova-escolhida");
+  if(sel.value===idProva&&provaAtual&&provaAtual.id===idProva){renderEscolhaProva();return;}
+  sel.value=idProva||"";sel.dispatchEvent(new Event("change"));
+}
+$("origens-provas").addEventListener("change",function(ev){
+  if(ev.target.name!=="origem-oficial")return;
+  var o=ev.target.value;gravar(CHAVE_ORIGEM_PROVA,o);
+  var daOrigem=provasCarregadas.filter(function(p){return origemDaProva(p)===o;});
+  if(!daOrigem.length){provaAtual=null;$("prova-escolhida").value="";oficiaisSelecionadas={};
+    renderEscolhaProva();preencherFiltrosOficiais();renderOficiais();return;}
+  // a mais recente: maior ano, primeiro caderno
+  daOrigem.sort(function(a,b){return (anoDaProva(b)).localeCompare(anoDaProva(a))||(a.nome||"").localeCompare(b.nome||"","pt-BR",{numeric:true});});
+  escolherProva(daOrigem[0].id);
+});
+$("prova-ano").addEventListener("change",function(){
+  var o=origemEscolhida(), ano=this.value;
+  var p=provasCarregadas.filter(function(p){return origemDaProva(p)===o&&(anoDaProva(p)||"Sem ano")===ano;})
+    .sort(function(a,b){return (a.nome||"").localeCompare(b.nome||"","pt-BR",{numeric:true});})[0];
+  if(p)escolherProva(p.id);
+});
+$("prova-caderno").addEventListener("change",function(){escolherProva(this.value);});
 function preencherFiltrosOficiais(){
   var questoes=provaAtual?provaAtual.questoes:[];
   var materias={};
@@ -5428,7 +5527,7 @@ $("btn-processar-prova").addEventListener("click",function(){
           oficiaisSelecionadas={};
           return recarregarProvas().then(function(){
             $("prova-escolhida").value=prova.id;
-            provaAtual=prova;preencherFiltrosOficiais();renderOficiais();
+            provaAtual=prova;renderEscolhaProva();preencherFiltrosOficiais();renderOficiais();
           });
         });
       });
@@ -5449,7 +5548,7 @@ $("btn-cancelar-prova").addEventListener("click",function(){
 $("prova-escolhida").addEventListener("change",function(){
   var escolhido=this.value;
   provaAtual=provasCarregadas.filter(function(p){return p.id===escolhido;})[0]||null;
-  oficiaisSelecionadas={};visiveisOficiais=PASSO_OFICIAIS;preencherFiltrosOficiais();renderOficiais();
+  oficiaisSelecionadas={};visiveisOficiais=PASSO_OFICIAIS;renderEscolhaProva();preencherFiltrosOficiais();renderOficiais();
 });
 $("filtro-materia").addEventListener("change",function(){
   atualizarAssuntos();visiveisOficiais=PASSO_OFICIAIS;renderOficiais();
@@ -6123,6 +6222,8 @@ function habilidadesDoPlano(){
   var extras=$("hab-plano-extra").value.split("\n").map(function(l){return l.trim();}).filter(Boolean);
   return marcadas.concat(extras);
 }
+// na rede o bimestre já é a unidade: o timbrado mostra o mesmo número em romano
+function unidadeDoBimestre(b){return ["","I","II","III","IV"][parseInt(b,10)]||b;}
 function montarPedidoPlano(material){
   var aulas=aulasDoFormulario();
   material=material||[];
@@ -6133,7 +6234,7 @@ function montarPedidoPlano(material){
     "DADOS DO CICLO:",
     "- Nível: "+$("pl-etapa").value+" — "+$("pl-serie").value,
     "- Disciplina: "+$("pl-componente").value,
-    "- Bimestre: "+$("pl-bimestre").value+" | Unidade: "+$("pl-unidade").value+" | Professor: "+$("pl-professor").value,
+    "- Bimestre (unidade): "+$("pl-bimestre").value+" | Professor: "+$("pl-professor").value,
     "- Período: "+$("pl-periodo").value+" | "+$("pl-aulas").value,
     "- Temas norteadores: "+($("pl-tema").value||"não informado"),
     $("pl-observacoes").value?("- Orientações do professor: "+$("pl-observacoes").value):"",
@@ -6182,7 +6283,7 @@ $("btn-gerar-plano").addEventListener("click",function(){
         throw new Error("A resposta não veio no formato esperado. Tente de novo.");
       planoAtual={
         cabecalho:{
-          unidade:$("pl-unidade").value, professor:$("pl-professor").value,
+          unidade:unidadeDoBimestre($("pl-bimestre").value), professor:$("pl-professor").value,
           serie:$("pl-serie").value, bimestre:$("pl-bimestre").value,
           periodo:$("pl-periodo").value, disciplina:$("pl-componente").value
         },
