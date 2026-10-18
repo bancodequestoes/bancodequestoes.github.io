@@ -160,6 +160,33 @@ input[type=file]{font-size:13px}
 .painel-origem{margin-top:12px;padding:12px 14px;border:1px solid var(--regua);border-radius:10px;background:#FBFCFA}
 .origens-provas{grid-template-columns:repeat(auto-fill,minmax(118px,1fr))}
 .origem.vazia{opacity:.55}
+/* calendário flutuante da data das aulas */
+.campo-data{position:relative}
+.campo-data input{padding-right:42px;cursor:pointer}
+.abre-cal{position:absolute;right:6px;top:50%;transform:translateY(-50%);border:none;background:none;font-size:17px;cursor:pointer;padding:4px 6px;border-radius:6px}
+.abre-cal:hover{background:var(--verde-fundo)}
+.calendario{position:absolute;z-index:30;top:calc(100% + 8px);left:0;width:300px;max-width:calc(100vw - 32px);background:var(--carta);
+  border:1px solid var(--regua);border-radius:var(--raio);box-shadow:0 16px 40px rgba(28,28,26,.18);padding:14px;
+  transform-origin:top left;animation:cal-abre .18s ease-out}
+.calendario.fechando{animation:cal-fecha .14s ease-in forwards}
+@keyframes cal-abre{from{opacity:0;transform:translateY(-6px) scale(.96)}to{opacity:1;transform:none}}
+@keyframes cal-fecha{to{opacity:0;transform:translateY(-6px) scale(.96)}}
+.cal-topo{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.cal-topo strong{font-family:var(--serif);font-size:14.5px}
+.cal-nav{border:none;background:var(--verde-fundo);color:var(--verde-escuro);width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:15px;font-weight:700}
+.cal-nav:hover{background:#D7E8DD}
+.cal-dica{font-size:12px;color:var(--cinza);margin:0 0 8px;text-align:center}
+.cal-grade{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center}
+.cal-grade .sem{font-size:11px;font-weight:700;color:var(--cinza);padding:4px 0}
+.cal-dia{border:none;background:none;font:inherit;font-size:13.5px;height:34px;border-radius:8px;cursor:pointer;color:var(--tinta);transition:background .12s}
+.cal-dia:hover{background:var(--verde-fundo)}
+.cal-dia.fds{color:var(--cinza)}
+.cal-dia.hoje{box-shadow:inset 0 0 0 1.5px var(--verde)}
+.cal-dia.meio{background:var(--verde-fundo);border-radius:0}
+.cal-dia.ini,.cal-dia.fim{background:var(--verde);color:#fff;font-weight:700}
+.cal-pe{display:flex;justify-content:space-between;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid var(--regua)}
+.cal-pe button{font:inherit;font-size:12.5px;font-weight:700;border-radius:999px;padding:6px 14px;cursor:pointer;border:1px solid var(--regua);background:#fff;color:var(--tinta)}
+.cal-pe .ok{background:var(--verde);border-color:var(--verde);color:#fff}
 .formatos{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
 @media(max-width:640px){.origens{grid-template-columns:1fr 1fr}.formatos{grid-template-columns:1fr}}
 .tag.dif{font-weight:700}
@@ -739,7 +766,11 @@ input[type=file]{font-size:13px}
     <div class="linha">
       <div>
         <label for="pl-periodo">Data das aulas</label>
-        <input type="text" id="pl-periodo" placeholder="Ex.: 14/09 a 25/09">
+        <div class="campo-data">
+          <input type="text" id="pl-periodo" placeholder="Clique para escolher no calendário" autocomplete="off">
+          <button type="button" class="abre-cal" id="abre-cal" aria-label="Abrir calendário" tabindex="-1">📅</button>
+          <div class="calendario" id="cal-periodo" role="dialog" aria-label="Escolher as datas das aulas" hidden></div>
+        </div>
       </div>
       <div>
         <label for="pl-aulas">Número de aulas e duração</label>
@@ -6215,6 +6246,84 @@ $("pl-turma").addEventListener("change",function(){
   if($("pl-etapa").value!==e){$("pl-etapa").value=e;$("pl-etapa").dispatchEvent(new Event("change"));}
   if($("pl-serie").value!==s){$("pl-serie").value=s;$("pl-serie").dispatchEvent(new Event("change"));}
 });
+
+/* ---- calendário da data das aulas: primeiro clique é o início, o segundo é o fim.
+   O campo continua aceitando texto livre; o calendário só o preenche como "14/09 a 25/09". ---- */
+(function(){
+  var campo=$("pl-periodo"), cal=$("cal-periodo"), visto=null, ini=null, fim=null;
+  var MESES=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+  function dois(n){return (n<10?"0":"")+n;}
+  function texto(d){return dois(d.getDate())+"/"+dois(d.getMonth()+1);}
+  function mesmoDia(a,b){return a&&b&&a.getTime()===b.getTime();}
+  // lê "14/09 a 25/09" do campo; o ano é o atual (ou o próximo, se o mês já passou há muito)
+  function lerCampo(){
+    var m=campo.value.match(/(\d{1,2})\/(\d{1,2})/g)||[], hoje=new Date(), ano=hoje.getFullYear();
+    function data(t){
+      var p=t.split("/");var d=new Date(ano,parseInt(p[1],10)-1,parseInt(p[0],10));
+      if(isNaN(d))return null;
+      if(hoje-d>120*864e5)d.setFullYear(ano+1);   // mais de 4 meses atrás: é do ano que vem
+      return d;
+    }
+    ini=m[0]?data(m[0]):null;fim=m[1]?data(m[1]):null;
+    if(ini&&fim&&fim<ini)fim.setFullYear(ano+1);
+  }
+  function escrever(){campo.value=ini?(fim&&!mesmoDia(ini,fim)?texto(ini)+" a "+texto(fim):texto(ini)):"";}
+  function desenhar(){
+    var hoje=new Date();hoje.setHours(0,0,0,0);
+    var primeiro=new Date(visto.getFullYear(),visto.getMonth(),1), vazio=primeiro.getDay(),
+        dias=new Date(visto.getFullYear(),visto.getMonth()+1,0).getDate(), h="";
+    for(var i=0;i<vazio;i++)h+="<span></span>";
+    for(var d=1;d<=dias;d++){
+      var dt=new Date(visto.getFullYear(),visto.getMonth(),d), c="cal-dia", sem=dt.getDay();
+      if(sem===0||sem===6)c+=" fds";
+      if(mesmoDia(dt,hoje))c+=" hoje";
+      if(mesmoDia(dt,ini))c+=" ini";
+      if(mesmoDia(dt,fim))c+=" fim";
+      if(ini&&fim&&dt>ini&&dt<fim)c+=" meio";
+      h+='<button type="button" class="'+c+'" data-dia="'+d+'">'+d+"</button>";
+    }
+    cal.innerHTML='<div class="cal-topo"><button type="button" class="cal-nav" data-mes="-1" aria-label="Mês anterior">‹</button>'+
+      "<strong>"+MESES[visto.getMonth()]+" de "+visto.getFullYear()+"</strong>"+
+      '<button type="button" class="cal-nav" data-mes="1" aria-label="Próximo mês">›</button></div>'+
+      '<p class="cal-dica">'+(!ini||fim?"Clique no primeiro dia das aulas":"Agora clique no último dia")+"</p>"+
+      '<div class="cal-grade">'+["D","S","T","Q","Q","S","S"].map(function(x){return '<span class="sem">'+x+"</span>";}).join("")+h+"</div>"+
+      '<div class="cal-pe"><button type="button" data-acao="limpar">Limpar</button><button type="button" class="ok" data-acao="pronto">Pronto</button></div>';
+  }
+  function abrir(){
+    if(!cal.hidden&&!cal.classList.contains("fechando"))return;
+    lerCampo();
+    var base=ini||new Date();visto=new Date(base.getFullYear(),base.getMonth(),1);
+    cal.classList.remove("fechando");cal.hidden=false;desenhar();
+  }
+  function fechar(){
+    if(cal.hidden||cal.classList.contains("fechando"))return;
+    cal.classList.add("fechando");
+    setTimeout(function(){if(cal.classList.contains("fechando")){cal.hidden=true;cal.classList.remove("fechando");}},150);
+  }
+  campo.addEventListener("click",abrir);
+  campo.addEventListener("input",function(){
+    if(cal.hidden)return;
+    lerCampo();if(ini)visto=new Date(ini.getFullYear(),ini.getMonth(),1);desenhar();
+  });
+  campo.addEventListener("focus",abrir);
+  $("abre-cal").addEventListener("click",function(){cal.hidden?(campo.focus(),abrir()):fechar();});
+  campo.addEventListener("keydown",function(ev){if(ev.key==="Escape"||ev.key==="Tab")fechar();});
+  cal.addEventListener("mousedown",function(ev){ev.preventDefault();});   // não tira o foco do campo
+  cal.addEventListener("click",function(ev){
+    var b=ev.target.closest("button");if(!b)return;
+    if(b.dataset.mes){visto=new Date(visto.getFullYear(),visto.getMonth()+parseInt(b.dataset.mes,10),1);desenhar();return;}
+    if(b.dataset.acao==="limpar"){ini=fim=null;escrever();desenhar();return;}
+    if(b.dataset.acao==="pronto"){fechar();return;}
+    var dt=new Date(visto.getFullYear(),visto.getMonth(),parseInt(b.dataset.dia,10));
+    if(!ini||fim){ini=dt;fim=null;}
+    else if(dt<ini){fim=ini;ini=dt;}
+    else fim=dt;
+    escrever();desenhar();
+    if(ini&&fim)setTimeout(fechar,350);
+  });
+  document.addEventListener("mousedown",function(ev){if(!ev.target.closest(".campo-data"))fechar();});
+  document.addEventListener("keydown",function(ev){if(ev.key==="Escape")fechar();});
+})();
 
 /* ---- pedido à IA: escreve o desenvolvimento seguindo as regras da casa ---- */
 function aulasDoFormulario(){
