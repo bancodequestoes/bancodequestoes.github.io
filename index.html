@@ -204,6 +204,8 @@ input[type=file]{font-size:13px}
 .filtros{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;
   background:var(--carta);border:1px solid var(--regua);border-radius:var(--raio);padding:16px;margin-bottom:14px}
 .filtros input,.filtros select{width:100%}
+.filtros .filtro-principal{grid-column:1/-1;font-weight:700;border-color:rgba(47,111,78,.45);background:var(--verde-fundo)}
+.filtros .busca-fim{grid-column:1/-1}
 .contador{font-size:13.5px;color:var(--cinza);margin-bottom:12px}
 .q-oficial{font-size:14.5px;line-height:1.55}
 .rotulo-oficial{font-family:var(--serif);font-weight:700;font-size:14px;margin:0 0 12px;letter-spacing:.02em}
@@ -480,7 +482,7 @@ input[type=file]{font-size:13px}
 <!-- ============ BANCO ============ -->
 <section class="vista" id="vista-banco">
   <div class="filtros">
-    <input type="text" id="busca" placeholder="Buscar por palavra, assunto ou habilidade">
+    <select id="filtro-assunto-banco" class="filtro-principal"><option value="">Todos os assuntos</option></select>
     <select id="filtro-etapa"><option value="">Todos os níveis</option></select>
     <select id="filtro-componente"><option value="">Todos os componentes</option></select>
     <select id="filtro-serie"><option value="">Todas as séries</option></select>
@@ -493,6 +495,7 @@ input[type=file]{font-size:13px}
       <option value="dissertativa">Dissertativa</option>
       <option value="adaptada">Adaptada</option>
     </select>
+    <input type="text" id="busca" class="busca-fim" placeholder="Ou busque por palavra, assunto ou habilidade">
   </div>
   <div class="contador" id="contador-banco"></div>
   <div id="barra-selecao" class="nao-imprime" style="display:none">
@@ -2977,9 +2980,24 @@ function preencherFiltros(){
       if(v===atual)o.selected=true;sel.appendChild(o);
     });
   });
+  preencherAssuntosBanco();
+}
+function preencherAssuntosBanco(){
+  var sel=$("filtro-assunto-banco"), atual=sel.value, cont={},
+      fc=$("filtro-componente").value, fs=$("filtro-serie").value, fe=$("filtro-etapa").value;
+  questoes.forEach(function(q){
+    if((fc&&q.componente!==fc)||(fs&&q.serie!==fs)||(fe&&q.etapa!==fe))return;
+    var a=(q.assunto||"").trim();if(a)cont[a]=(cont[a]||0)+1;
+  });
+  var lista=Object.keys(cont).sort(function(a,b){return a.localeCompare(b,"pt-BR");});
+  sel.innerHTML='<option value="">Todos os assuntos ('+lista.length+")</option>"+lista.map(function(a){
+    var r=a.length>90?a.slice(0,87)+"…":a;
+    return '<option value="'+esc(a)+'">'+esc(r)+" ("+cont[a]+")</option>";
+  }).join("");
+  sel.value=cont[atual]?atual:"";
 }
 function filtradas(){
-  var busca=$("busca").value.toLowerCase().trim();
+  var busca=$("busca").value.toLowerCase().trim(), fa=$("filtro-assunto-banco").value;
   var fc=$("filtro-componente").value, fs=$("filtro-serie").value, ft=$("filtro-tipo").value,
       fe=$("filtro-etapa").value, fm=$("filtro-matriz").value, fx=$("filtro-material").value, fn=$("filtro-nivel").value;
   return questoes.filter(function(q){
@@ -2990,6 +3008,7 @@ function filtradas(){
     if(fm&&q.matriz!==fm)return false;
     if(fx&&q.material!==fx)return false;
     if(fn&&q.nivel!==fn)return false;
+    if(fa&&(q.assunto||"").trim()!==fa)return false;
     if(busca){
       var alvo=(q.enunciado+" "+q.assunto+" "+q.habilidade+" "+q.textoBase+" "+q.alternativas.join(" ")).toLowerCase();
       if(alvo.indexOf(busca)<0)return false;
@@ -3208,8 +3227,11 @@ $("busca").addEventListener("input",function(){
   clearTimeout(esperaBusca);
   esperaBusca=setTimeout(function(){editando=null;visiveisNoBanco=PASSO_BANCO;renderBanco();},250);
 });
-["filtro-etapa","filtro-componente","filtro-serie","filtro-tipo","filtro-matriz","filtro-material","filtro-nivel"].forEach(function(c){
-  $(c).addEventListener("change",function(){editando=null;visiveisNoBanco=PASSO_BANCO;renderBanco();});
+["filtro-assunto-banco","filtro-etapa","filtro-componente","filtro-serie","filtro-tipo","filtro-matriz","filtro-material","filtro-nivel"].forEach(function(c){
+  $(c).addEventListener("change",function(){
+    if(c==="filtro-etapa"||c==="filtro-componente"||c==="filtro-serie")preencherAssuntosBanco();
+    editando=null;visiveisNoBanco=PASSO_BANCO;renderBanco();
+  });
 });
 $("btn-marcar-todas").addEventListener("click",function(){filtradas().forEach(function(q){selecionadas[q.id]=true;});renderBanco();});
 $("btn-desmarcar").addEventListener("click",function(){selecionadas={};renderBanco();});
