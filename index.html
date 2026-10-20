@@ -2280,7 +2280,10 @@ function chamarIAComInsistencia(prompt,avisar){
   extras.forEach(function(m){plano.push([m,0]);});
   plano.push([principal,30000]);
 
-  var falhasDeRede=0, semResposta=0, modelosSemCota={}, modelosSobrecarregados={};
+  var falhasDeRede=0, semResposta=0, modelosSemCota={}, modelosSobrecarregados={}, rodadaSobrecarga=0;
+  // quando todos os modelos estão ocupados, o Google costuma voltar em um ou dois minutos:
+  // novas rodadas com pausas crescentes antes de desistir (com o aviso na tela)
+  var PAUSAS_SOBRECARGA=[20000,40000,60000];
   var distintos={};plano.forEach(function(x){distintos[x[0]]=1;});
   function tentar(i,ultimo){
     if(i>=plano.length)throw ultimo;
@@ -2326,7 +2329,17 @@ function chamarIAComInsistencia(prompt,avisar){
       // insistir (e refazer o lote) só deixava o professor minutos olhando "0 de 10"
       if(e&&(e.sobrecarga||e.semResposta)){
         modelosSobrecarregados[modelo]=1;
-        if(Object.keys(modelosSobrecarregados).length>=Object.keys(distintos).length){paradaGeral="sobrecarga";throw e;}
+        if(Object.keys(modelosSobrecarregados).length>=Object.keys(distintos).length){
+          if(rodadaSobrecarga>=PAUSAS_SOBRECARGA.length||(e.semResposta&&semResposta>=2)){paradaGeral="sobrecarga";throw e;}
+          var pausa=PAUSAS_SOBRECARGA[rodadaSobrecarga++];
+          modelosSobrecarregados={};
+          if(avisar)avisar("O Gemini está sobrecarregado no Google em todos os modelos. Nova rodada de tentativas em "+
+            Math.round(pausa/1000)+" segundos ("+rodadaSobrecarga+" de "+PAUSAS_SOBRECARGA.length+"). Você pode cancelar quando quiser.");
+          return esperar(pausa).then(function(){
+            if(cancelado)throw e;
+            return tentar(0,e);
+          });
+        }
       }
       // cota esgotada não passa com o tempo: pula para outro modelo e, se todos
       // estiverem esgotados, desiste na hora em vez de esperar minutos
