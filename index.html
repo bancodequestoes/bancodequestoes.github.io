@@ -2254,6 +2254,9 @@ function textoDaFalha(falhas){
     return "A cota gratuita do dia da sua chave do Gemini acabou em todos os modelos que o site tentou. "+
       "Ela volta sozinha em "+volta+", segundo o Google. Cada chave tem a sua cota: outro professor pode gerar com a dele enquanto isso.";
   }
+  if(paradaGeral==="sobrecarga"||paradaGeral==="sem resposta")
+    return "O Gemini está sobrecarregado no Google agora: todos os modelos que o site tentou responderam \"ocupado\". "+
+      "Não é problema do site nem da sua chave, e nada foi perdido. Costuma passar em alguns minutos; tente gerar de novo daqui a pouco.";
   return "Nenhuma questão foi gerada. "+esc(falhas.length?falhas.join(" · "):ultimoErroIA);
 }
 function repetivel(e){if(cancelado||(e&&e.name==="AbortError"))return false;return !!(e&&(e.repetivel||e.name==="TypeError"));}
@@ -2277,7 +2280,7 @@ function chamarIAComInsistencia(prompt,avisar){
   extras.forEach(function(m){plano.push([m,0]);});
   plano.push([principal,30000]);
 
-  var falhasDeRede=0, semResposta=0, modelosSemCota={};
+  var falhasDeRede=0, semResposta=0, modelosSemCota={}, modelosSobrecarregados={};
   var distintos={};plano.forEach(function(x){distintos[x[0]]=1;});
   function tentar(i,ultimo){
     if(i>=plano.length)throw ultimo;
@@ -2319,6 +2322,12 @@ function chamarIAComInsistencia(prompt,avisar){
         if(semResposta>=2){paradaGeral="sem resposta";throw e;}
       }
       var proxima=i+1;
+      // todos os modelos sobrecarregados ao mesmo tempo é o Google fora do ar por um tempo:
+      // insistir (e refazer o lote) só deixava o professor minutos olhando "0 de 10"
+      if(e&&(e.sobrecarga||e.semResposta)){
+        modelosSobrecarregados[modelo]=1;
+        if(Object.keys(modelosSobrecarregados).length>=Object.keys(distintos).length){paradaGeral="sobrecarga";throw e;}
+      }
       // cota esgotada não passa com o tempo: pula para outro modelo e, se todos
       // estiverem esgotados, desiste na hora em vez de esperar minutos
       if(e&&e.cota){
@@ -2382,7 +2391,7 @@ function tratarResposta(r){
       var det=(d&&d.error&&(d.error.message||d.error.type))||t.slice(0,200);
       if(r.status===401||r.status===403)throw new Error("Chave recusada pelo provedor. Confira em Ajustes. ("+det+")");
       var passageiro=[429,500,502,503,504].indexOf(r.status)>-1;
-      if(r.status===503){var e503=new Error("O modelo está sobrecarregado no provedor. ("+det+")");e503.repetivel=true;throw e503;}
+      if(r.status===503){var e503=new Error("O modelo está sobrecarregado no provedor. ("+det+")");e503.repetivel=true;e503.sobrecarga=true;throw e503;}
       if(r.status===429){
         var cota=/quota|exceeded|per day|daily/i.test(det);
         var e429=new Error(cota
