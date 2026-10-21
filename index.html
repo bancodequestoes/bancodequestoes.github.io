@@ -90,9 +90,9 @@ details>summary::before{content:"▸";flex:none;display:inline-flex;align-items:
 details[open]>summary::before{transform:rotate(90deg)}
 details>summary::after{content:"Clique para abrir";flex:none;font-family:var(--sans);font-size:11.5px;font-weight:700;
   color:var(--verde-escuro);background:#fff;border:1px solid rgba(47,111,78,.35);border-radius:999px;padding:3px 10px;white-space:nowrap}
-details[open]>summary::after{content:"Fechar";color:var(--cinza);border-color:var(--regua)}
+details[open]>summary::after{content:"✕ Fechar";color:#fff;background:var(--verde);border-color:var(--verde);font-size:12px;padding:4px 12px}
 details[open]>summary{background:#fff;border-color:var(--verde)}
-@media(max-width:640px){details>summary::after{content:"Abrir"}details[open]>summary::after{content:"Fechar"}}
+@media(max-width:640px){details>summary::after{content:"Abrir"}details[open]>summary::after{content:"✕ Fechar"}}
 .sumario{font-weight:400;color:var(--cinza);font-size:12.5px}
 details>summary+*{margin-top:14px}
 
@@ -142,7 +142,10 @@ input[type=file]{font-size:13px}
 .livros-sesi .caderno summary{cursor:pointer;font-weight:700;padding:8px 10px;background:#fff;border-width:1px;flex-wrap:wrap;gap:4px 10px}
 .livros-sesi .caderno summary::before{width:22px;height:22px;font-size:13px}
 .livros-sesi .caderno summary::after{content:"ver capítulos";margin-left:auto}
-.livros-sesi .caderno[open]>summary::after{content:"Fechar"}
+.livros-sesi .caderno[open]>summary::after{content:"✕ Fechar capítulos"}
+#det-ls-lista{margin-top:10px}
+#det-ls-lista>summary::after{content:"Mostrar os livros"}
+#det-ls-lista[open]>summary::after{content:"✕ Esconder os livros"}
 .livros-sesi .caderno summary .sub{font-weight:400;color:var(--cinza);font-size:12px}
 .livros-sesi label.cap{display:flex;gap:8px;align-items:flex-start;padding:4px 0 4px 6px;cursor:pointer}
 .livros-sesi label.cap input{width:16px;height:16px;margin-top:2px;accent-color:var(--verde);flex:none}
@@ -348,7 +351,10 @@ input[type=file]{font-size:13px}
               <select id="ls-tipo"><option value="">Aluno e professor</option><option value="aluno">Caderno do aluno</option><option value="professor">Caderno do professor</option></select>
             </div>
             <div id="ls-marcados"></div>
-            <div id="ls-lista"></div>
+            <details id="det-ls-lista">
+              <summary><span><strong>Livros da série</strong> <span class="sumario" id="ls-resumo-lista">— escolha a série acima</span></span></summary>
+              <div id="ls-lista"></div>
+            </details>
             <div class="so-admin" style="margin-top:10px">
               <button class="botao secundario" type="button" id="btn-ls-enviar">Enviar livros para a nuvem</button>
               <input type="file" id="arquivo-livros" accept="application/json,.json,.gz" multiple style="display:none">
@@ -518,13 +524,11 @@ input[type=file]{font-size:13px}
 <section class="vista" id="vista-prova">
   <div class="bloco nao-imprime">
     <details id="det-turma-prova">
-      <summary><span><strong>Turma da prova</strong> <span class="sumario" id="resumo-turma-prova">— nenhuma escolhida</span></span></summary>
-      <p class="ajuda">Escolha a turma uma vez. Ela e a série entram no timbrado, na versão sem timbre e no nome do arquivo.</p>
-      <div class="linha">
-        <div><label for="p-turma">Turma</label><select id="p-turma"></select></div>
-        <div><label for="p-serie-turma">Série ou ano</label><input type="text" id="p-serie-turma" readonly placeholder="Vem da turma"></div>
-      </div>
-      <details id="det-minhas-turmas" style="margin-top:12px">
+      <summary><span><strong>Série ou ano da prova</strong> <span class="sumario" id="resumo-turma-prova">— nenhuma escolhida</span></span></summary>
+      <p class="ajuda">Escolha uma vez. Ela entra no timbrado, na versão sem timbre e no nome do arquivo.</p>
+      <label for="p-turma">Série ou ano</label><select id="p-turma"></select>
+      <input type="hidden" id="p-serie-turma">
+      <details id="det-minhas-turmas" style="margin-top:12px;display:none">
         <summary><span style="font-size:13px">Editar minhas turmas</span></summary>
         <p class="ajuda">Uma turma por linha, começando pela série: "9º ano A", "2ª série B". A lista vale também para o Planejamento.</p>
         <textarea id="turmas-lista" style="min-height:140px"></textarea>
@@ -1808,7 +1812,8 @@ function livrosRender(){
   sel.value=LS.serie;
   livrosRenderMarcados();
   var lista=$("ls-lista"), area=$("ls-area");
-  if(!LS.serie){lista.innerHTML="";area.innerHTML='<option value="">Todas as áreas</option>';return;}
+  if(!LS.serie){lista.innerHTML="";area.innerHTML='<option value="">Todas as áreas</option>';$("ls-resumo-lista").textContent="— escolha a série acima";return;}
+  if(!LS.indices[LS.serie]||LS.indices[LS.serie].vazio)$("ls-resumo-lista").textContent="";
   var ind=LS.indices[LS.serie];
   if(!ind){
     if(!livrosNaNuvem()){
@@ -1853,6 +1858,8 @@ function livrosRender(){
       }).join("")+"</details>";
   }).join("");
   lista.innerHTML=html||'<div class="aviso">Nenhum caderno corresponde aos filtros.</div>';
+  var nCad=ind.livros.filter(function(L){return !((atualA&&L.area!==atualA)||(ft&&L.tipo!==ft));}).length;
+  $("ls-resumo-lista").textContent="— "+nCad+" "+(nCad===1?"caderno":"cadernos")+(atualA?" de "+atualA:"");
   lista.querySelectorAll("[data-cap]").forEach(function(cb){
     cb.addEventListener("change",function(){
       var id=this.dataset.cap, L=ind.livros[+this.dataset.livro], caixa=this;
@@ -1928,6 +1935,10 @@ function livrosIniciar(){
   });
   $("ls-area").addEventListener("change",livrosRender);
   $("ls-tipo").addEventListener("change",livrosRender);
+  var dl=$("det-ls-lista");
+  dl.open=ler("bancoQuestoes.listaLivrosAberta.v1")==="1";
+  dl.addEventListener("toggle",function(){gravar("bancoQuestoes.listaLivrosAberta.v1",this.open?"1":"0");});
+  ["ls-serie","ls-area","ls-tipo"].forEach(function(id){$(id).addEventListener("change",function(){dl.open=true;});});
   $("btn-ls-enviar").addEventListener("click",function(){
     if(!(NV.admin&&NV.membro)){msg("ls-envio","Entre na nuvem com a conta do administrador para enviar os livros.","erro");return;}
     $("arquivo-livros").click();
@@ -4107,7 +4118,8 @@ function opcoesTurmas(sel,vazio){
 }
 // no planejamento basta a série: "2ª série A", "2ª série B" viram uma só "2ª série"
 function opcoesSeries(sel,vazio){
-  var atual=sel.value||$("pl-serie").value||"", vistas={}, grupos={};
+  // valor antigo como "2ª série B" vira "2ª série"
+  var atual=sel.value||serieDaTurma(sel.dataset.valor||"")||(vazio?"":$("pl-serie").value)||"", vistas={}, grupos={};
   listaTurmas().map(serieDaTurma).concat(SERIES["Ensino Fundamental"],SERIES["Ensino Médio"]).forEach(function(s){
     if(!s||vistas[s])return;vistas[s]=1;(grupos[etapaDaSerie(s)]=grupos[etapaDaSerie(s)]||[]).push(s);
   });
@@ -4139,7 +4151,7 @@ function aplicarTurmaNosCampos(){
 function iniciarTurmas(){
   var pt=$("p-turma");
   pt.dataset.valor=ler(CHAVE_TURMA_PROVA)||"";
-  opcoesTurmas(pt,"— escolher a turma —");
+  opcoesSeries(pt,"— escolher a série ou o ano —");
   opcoesSeries($("pl-turma"));
   $("turmas-lista").value=listaTurmas().join("\n");
   if(!pt.value)$("det-turma-prova").open=true;
@@ -4150,7 +4162,7 @@ function iniciarTurmas(){
     l=l.filter(function(x){if(vistos[x])return false;vistos[x]=1;return true;});
     if(!l.length){gravar(CHAVE_TURMAS,"");l=turmasPadrao();$("turmas-lista").value=l.join("\n");}
     else gravar(CHAVE_TURMAS,JSON.stringify(l));
-    opcoesTurmas($("p-turma"),"— escolher a turma —");opcoesSeries($("pl-turma"));
+    opcoesSeries($("p-turma"),"— escolher a série ou o ano —");opcoesSeries($("pl-turma"));
     turmaProvaMudou();
     var sem=l.filter(function(x){return !serieDaTurma(x);});
     msg("retorno-turmas","Lista salva: "+l.length+" turmas."+(sem.length?" Sem série reconhecida: "+sem.map(esc).join(", ")+".":""),sem.length?"":"ok");
