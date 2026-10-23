@@ -163,6 +163,14 @@ input[type=file]{font-size:13px}
 .painel-origem{margin-top:12px;padding:12px 14px;border:1px solid var(--regua);border-radius:10px;background:#FBFCFA}
 .origens-provas{grid-template-columns:repeat(auto-fill,minmax(118px,1fr))}
 .origem.vazia{opacity:.55}
+/* quinzenais do planejamento */
+.quinzenais{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.quinzenal{font:inherit;text-align:left;border:1.5px solid var(--regua);border-radius:10px;background:#fff;padding:9px 12px;cursor:pointer;transition:border-color .12s,background .12s}
+.quinzenal:hover{border-color:var(--verde)}
+.quinzenal strong{display:block;font-size:14.5px}
+.quinzenal span{font-size:12.5px;color:var(--cinza)}
+.quinzenal.atual span::after{content:" · agora";color:var(--verde);font-weight:700}
+.quinzenal.escolhida{border-color:var(--verde);background:#F1F7F3;box-shadow:0 0 0 1px var(--verde) inset}
 /* calendário flutuante da data das aulas */
 .campo-data{position:relative}
 .campo-data input{padding-right:42px;cursor:pointer}
@@ -770,6 +778,11 @@ input[type=file]{font-size:13px}
     </div>
     <label for="pl-professor">Professor</label>
     <input type="text" id="pl-professor">
+    <details id="det-quinzenal" style="margin-top:14px">
+      <summary><span><strong>Quinzenal</strong> <span class="sumario" id="resumo-quinzenal">— escolha para preencher as datas</span></span></summary>
+      <p class="ajuda">Calendário do 2º semestre do SESI Ibura. Ao escolher, a data das aulas é preenchida; você ainda pode ajustá-la no calendário.</p>
+      <div class="quinzenais" id="lista-quinzenais"></div>
+    </details>
     <div class="linha">
       <div>
         <label for="pl-periodo">Data das aulas</label>
@@ -6303,6 +6316,42 @@ $("pl-turma").addEventListener("change",function(){
   if($("pl-serie").value!==s){$("pl-serie").value=s;$("pl-serie").dispatchEvent(new Event("change"));}
 });
 
+/* ---- quinzenais: número e período de cada uma (2º semestre de 2026, SESI Ibura).
+   Para um novo semestre, basta trocar esta lista. ---- */
+var QUINZENAIS=[[11,"20/07","31/07"],[12,"03/08","14/08"],[13,"17/08","28/08"],[14,"31/08","11/09"],[15,"14/09","25/09"],
+  [16,"28/09","09/10"],[17,"12/10","23/10"],[18,"26/10","06/11"],[19,"09/11","19/11"],[20,"23/11","26/11"]],
+  ANO_QUINZENAIS=2026, CHAVE_QUINZENAL="bancoQuestoes.quinzenal.v1";
+(function(){
+  function data(t){var p=t.split("/");return new Date(ANO_QUINZENAIS,+p[1]-1,+p[0]);}
+  function texto(q){return q[1]+" a "+q[2];}
+  function render(){
+    var escolhida=+(ler(CHAVE_QUINZENAL)||0), hoje=new Date();hoje.setHours(0,0,0,0);
+    $("lista-quinzenais").innerHTML=QUINZENAIS.map(function(q){
+      var atual=hoje>=data(q[1])&&hoje<=data(q[2]);
+      return '<button type="button" class="quinzenal'+(atual?" atual":"")+(q[0]===escolhida?" escolhida":"")+'" data-q="'+q[0]+'">'+
+        "<strong>"+q[0]+"º quinzenal</strong><span>"+texto(q)+"</span></button>";
+    }).join("");
+    var q=QUINZENAIS.filter(function(x){return x[0]===escolhida;})[0];
+    $("resumo-quinzenal").textContent=q?"— "+q[0]+"º · "+texto(q):"— escolha para preencher as datas";
+  }
+  $("lista-quinzenais").addEventListener("click",function(ev){
+    var b=ev.target.closest("[data-q]");if(!b)return;
+    var q=QUINZENAIS.filter(function(x){return x[0]===+b.dataset.q;})[0];
+    gravar(CHAVE_QUINZENAL,String(q[0]));
+    $("pl-periodo").value=texto(q);
+    render();
+    setTimeout(function(){$("det-quinzenal").open=false;},250);
+  });
+  // se a data for mudada à mão para outro período, a quinzenal escolhida deixa de valer
+  $("pl-periodo").addEventListener("input",function(){
+    var q=QUINZENAIS.filter(function(x){return x[0]===+(ler(CHAVE_QUINZENAL)||0);})[0];
+    if(q&&this.value.trim()!==texto(q)){gravar(CHAVE_QUINZENAL,"");render();}
+  });
+  render();
+  var guardada=QUINZENAIS.filter(function(x){return x[0]===+(ler(CHAVE_QUINZENAL)||0);})[0];
+  if(guardada&&!$("pl-periodo").value.trim())$("pl-periodo").value=texto(guardada);
+})();
+
 /* ---- calendário da data das aulas: primeiro clique é o início, o segundo é o fim.
    O campo continua aceitando texto livre; o calendário só o preenche como "14/09 a 25/09". ---- */
 (function(){
@@ -6323,7 +6372,7 @@ $("pl-turma").addEventListener("change",function(){
     ini=m[0]?data(m[0]):null;fim=m[1]?data(m[1]):null;
     if(ini&&fim&&fim<ini)fim.setFullYear(ano+1);
   }
-  function escrever(){campo.value=ini?(fim&&!mesmoDia(ini,fim)?texto(ini)+" a "+texto(fim):texto(ini)):"";}
+  function escrever(){campo.value=ini?(fim&&!mesmoDia(ini,fim)?texto(ini)+" a "+texto(fim):texto(ini)):"";campo.dispatchEvent(new Event("input"));}
   function desenhar(){
     var hoje=new Date();hoje.setHours(0,0,0,0);
     var primeiro=new Date(visto.getFullYear(),visto.getMonth(),1), vazio=primeiro.getDay(),
@@ -6487,6 +6536,7 @@ $("btn-cancelar-plano").addEventListener("click",function(){
 });
 $("btn-limpar-plano").addEventListener("click",function(){
   ["pl-tema","pl-divisao","pl-observacoes","hab-plano-extra","pl-periodo"].forEach(function(id){$(id).value="";});
+  $("pl-periodo").dispatchEvent(new Event("input"));
   habPlano={};renderHabPlano();
   pmLimpar();
 });
