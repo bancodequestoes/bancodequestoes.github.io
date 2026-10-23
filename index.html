@@ -360,6 +360,14 @@ input[type=file]{font-size:13px}
               <select id="ls-tipo"><option value="">Aluno e professor</option><option value="aluno">Caderno do aluno</option><option value="professor">Caderno do professor</option></select>
             </div>
             <div id="ls-marcados"></div>
+            <label for="livro-estilo">Estrutura das questões objetivas</label>
+            <select id="livro-estilo">
+              <option value="objetiva">Simples, fiel ao livro</option>
+              <option value="enem">Igual ao ENEM</option>
+              <option value="ssa">Igual ao SSA</option>
+              <option value="passe">Igual ao PASSE</option>
+            </select>
+            <p class="ajuda" style="margin-top:4px">O conteúdo sai dos capítulos marcados; aqui você escolhe só o formato da questão.</p>
             <details id="det-ls-lista">
               <summary><span><strong>Livros da série</strong> <span class="sumario" id="ls-resumo-lista">— escolha a série acima</span></span></summary>
               <div id="ls-lista"></div>
@@ -2150,7 +2158,7 @@ function montarPrompt(p,quantidades,jaFeitas,passo,evitar){
   (p.unidade?", "+p.unidade:"")+", sobre o seguinte recorte: "+p.assunto+".",
 "",
 matriz,
-(p.modelos&&p.modelos.length)?("QUESTÕES REAIS DO "+(p.matriz.indexOf("SSA")===0?"SSA":p.matriz)+" USADAS COMO MODELO — imite a estrutura delas: tipo e extensão do texto-base, forma de citar a fonte, formulação do comando, estilo e extensão das alternativas e nível de exigência. NÃO copie, não parafraseie e não reaproveite os textos, os temas específicos nem as alternativas: as questões novas devem ser inéditas e tratar do recorte pedido.\n\n"+p.modelos.join("\n\n")+"\n"):"",
+(p.modelos&&p.modelos.length)?("QUESTÕES REAIS DO "+(p.estiloObjetiva&&ORIGENS[p.estiloObjetiva]?ORIGENS[p.estiloObjetiva].nome:p.matriz.indexOf("SSA")===0?"SSA":p.matriz)+" USADAS COMO MODELO — imite a estrutura delas: tipo e extensão do texto-base, forma de citar a fonte, formulação do comando, estilo e extensão das alternativas e nível de exigência. NÃO copie, não parafraseie e não reaproveite os textos, os temas específicos nem as alternativas: as questões novas devem ser inéditas e tratar do recorte pedido.\n\n"+p.modelos.join("\n\n")+"\n"):"",
 p.dificuldadeAlvo?("DIFICULDADE ALVO: "+p.dificuldadeAlvo+", como os modelos acima, que o INEP mediu pela TRI. Calibre o texto-base, o comando e os distratores para esse nível."):"",
 "Quantidades neste lote: "+pedidos.join("; ")+".",
 "Devolva EXATAMENTE esse número de objetos no array JSON — nem um a mais, nem um a menos. Conte antes de responder.",
@@ -2696,7 +2704,7 @@ var ORIGENS={
   passe:{nome:"PASSE",objetiva:"passe",nota:"no molde do PASSE"}
 };
 var FAIXAS_MODELO={facil:[1,2],media:[3],dificil:[4,5]};
-var CHAVE_ORIGEM="bancoQuestoes.origemGerar.v1", MAX_MODELOS=4, acervoCache=null;
+var CHAVE_ORIGEM="bancoQuestoes.origemGerar.v1", CHAVE_ESTILO_LIVRO="bancoQuestoes.estiloLivro.v1", MAX_MODELOS=4, acervoCache=null;
 function origemAtual(){
   var r=document.querySelector('input[name="origem"]:checked');
   return r&&ORIGENS[r.value]?r.value:"livro";
@@ -2704,11 +2712,20 @@ function origemAtual(){
 function matrizDaOrigem(o){
   return o==="enem"?"ENEM":o==="ssa"?"SSA "+$("ssa-etapa").value:o==="passe"?"PASSE":"Livro didático SESI";
 }
+// no Livro SESI o professor escolhe a estrutura da objetiva (simples, ENEM, SSA ou PASSE)
+function estiloDoLivro(){
+  var v=$("livro-estilo").value;
+  return ORIGENS[v]?ORIGENS[v].objetiva:"objetiva";
+}
+function notaDoLivro(){
+  var e=estiloDoLivro();
+  return e==="objetiva"?ORIGENS.livro.nota:"conteúdo do livro, no molde do "+ORIGENS[e].nome;
+}
 // as três quantidades da tela viram os tipos internos: a objetiva assume o molde da origem
-function quantidadesDoFormato(prefixo,origem){
+function quantidadesDoFormato(prefixo,origem,estilo){
   var q={}, total=0;
   TIPOS_VALIDOS.forEach(function(t){q[t]=0;});
-  [["objetiva",ORIGENS[origem].objetiva],["dissertativa","dissertativa"],["adaptada","adaptada"]].forEach(function(par){
+  [["objetiva",origem==="livro"?(estilo||"objetiva"):ORIGENS[origem].objetiva],["dissertativa","dissertativa"],["adaptada","adaptada"]].forEach(function(par){
     var c=$(prefixo+par[0]), n=c?(parseInt(c.value,10)||0):0;
     q[par[1]]+=n;total+=n;
   });
@@ -2738,7 +2755,7 @@ function habsEnemDoFiltro(){
 }
 function questoesModelo(provas,p){
   var origem=p.origem, cand=[];
-  var habs=origem==="enem"?habsEnemDoFiltro():null, conj={};
+  var habs=origem==="enem"&&!p.soEstrutura?habsEnemDoFiltro():null, conj={};
   if(habs)habs.forEach(function(h){conj[h]=1;});
   provas.forEach(function(prova){
     if(!provaDaOrigem(prova,origem))return;
@@ -2747,11 +2764,11 @@ function questoesModelo(provas,p){
       if(!q.comando&&!(q.partes||[]).length)return;
       if(q.gabarito==="Anulada"||!(q.alternativas||[]).length)return;
       if(habs&&!conj[q.matriz])return;
-      if(origem==="enem"&&$("en-dif").value&&FAIXAS_MODELO[$("en-dif").value].indexOf(q.faixa)<0)return;
+      if(origem==="enem"&&!p.soEstrutura&&$("en-dif").value&&FAIXAS_MODELO[$("en-dif").value].indexOf(q.faixa)<0)return;
       var peso=0;
       if((q.materias||[]).indexOf(p.componente)>=0)peso+=4;
       if(!q.temFigura&&!(q.partes||[]).some(function(x){return x.tipo!=="texto";}))peso+=2;
-      if(ssaN&&ssaN[1]===$("ssa-etapa").value)peso+=3;
+      if(ssaN&&ssaN[1]===(p.etapaSsa||$("ssa-etapa").value))peso+=3;
       cand.push({prova:prova,q:q,peso:peso+Math.random()});
     });
   });
@@ -2773,9 +2790,12 @@ function textoModelo(c,i){
   return linhas.join("\n");
 }
 function prepararModelos(p){
-  if(p.origem==="livro")return Promise.resolve([]);
+  var e=p.estiloObjetiva;
+  if(p.origem==="livro"&&(!e||e==="objetiva"))return Promise.resolve([]);
+  // livro com estrutura de exame: modelos reais do exame, só pela forma
+  var alvo=p.origem==="livro"?{origem:e,componente:p.componente,soEstrutura:true,etapaSsa:(/^([123])/.exec(p.serie||"")||[])[1]}:p;
   return acervo().then(function(provas){
-    return questoesModelo(provas,p).slice(0,MAX_MODELOS).map(textoModelo);
+    return questoesModelo(provas,alvo).slice(0,MAX_MODELOS).map(textoModelo);
   });
 }
 function opcoesSelect(sel,lista,vazio){
@@ -2817,7 +2837,7 @@ function infoAcervo(){
 function origemMudou(guardar){
   var o=origemAtual();
   Object.keys(ORIGENS).forEach(function(k){$("painel-"+k).hidden=k!==o;});
-  $("nota-objetiva").textContent=ORIGENS[o].nota;
+  $("nota-objetiva").textContent=o==="livro"?notaDoLivro():ORIGENS[o].nota;
   if(o!=="livro"&&$("etapa").value!=="Ensino Médio"){$("etapa").value="Ensino Médio";$("etapa").dispatchEvent(new Event("change"));}
   if(o==="ssa"){$("serie").value=$("ssa-etapa").value+"ª série";$("serie").dispatchEvent(new Event("change"));}
   if(o==="enem")renderFiltroEnem();else infoAcervo();
@@ -2832,6 +2852,8 @@ $("en-comp").addEventListener("change",function(){$("en-hab").value="";renderFil
 $("en-hab").addEventListener("change",infoAcervo);
 $("en-dif").addEventListener("change",infoAcervo);
 $("ssa-etapa").addEventListener("change",function(){origemMudou(false);});
+$("livro-estilo").addEventListener("change",function(){gravar(CHAVE_ESTILO_LIVRO,this.value);acervoCache=null;origemMudou(false);});
+(function(){var v=ler(CHAVE_ESTILO_LIVRO);if(v&&ORIGENS[v])$("livro-estilo").value=v;})();
 (function(){
   var salva=ler(CHAVE_ORIGEM), r=salva&&document.querySelector('input[name="origem"][value="'+salva+'"]');
   if(r)r.checked=true;
@@ -2843,7 +2865,7 @@ var PLURAL_TIPO={objetiva:["objetiva","objetivas"],dissertativa:["dissertativa",
   passe:["PASSE","PASSE"],adaptada:["adaptada","adaptadas"],
   enem:["estilo ENEM","estilo ENEM"],ssa:["estilo SSA","estilo SSA"]};
 function atualizarTotalPedido(){
-  var q=quantidadesDoFormato("q-",origemAtual()), partes=[];
+  var q=quantidadesDoFormato("q-",origemAtual(),estiloDoLivro()), partes=[];
   TIPOS_VALIDOS.forEach(function(t){if(q[t])partes.push(q[t]+" "+PLURAL_TIPO[t][q[t]===1?0:1]);});
   $("total-pedido").textContent=q._total
     ? ("Total do pedido: "+q._total+" "+(q._total===1?"questão":"questões")+" — "+partes.join(", ")+".")
@@ -2861,6 +2883,7 @@ $("btn-gerar").addEventListener("click",function(){
   var etapa=$("etapa").value, comp=$("componente").value, origem=origemAtual(), botao=this;
   var p={
     origem:origem,
+    estiloObjetiva:origem==="livro"?estiloDoLivro():"",
     dificuldadeAlvo:origem==="enem"&&$("en-dif").value?$("en-dif").options[$("en-dif").selectedIndex].text.toLowerCase():"",
     assunto:$("assunto").value.trim(),
     etapa:etapa,
@@ -2886,7 +2909,7 @@ $("btn-gerar").addEventListener("click",function(){
     if($("en-hab").value){p.detalheHabilidades=lista;p.habilidades="";}
     else if(!p.detalheHabilidades.length&&!p.habilidades)p.matrizDisponivel=lista;
   }
-  var quantidades=quantidadesDoFormato("q-",origem), total=quantidades._total;
+  var quantidades=quantidadesDoFormato("q-",origem,p.estiloObjetiva), total=quantidades._total;
 
   if(!conf.chave){msg("retorno-geracao","Falta cadastrar a sua chave de acesso à IA.","erro");abrirAssistenteChave();return;}
   if(!p.assunto&&!ativos().length&&!p.textoExtra&&!(origem==="enem"&&$("en-hab").value)){
@@ -3449,7 +3472,7 @@ $("btn-completar").addEventListener("click",function(){
     msg("retorno-completar","Faça uma primeira geração na aba Gerar para definir os parâmetros.","erro");
     return;
   }
-  var quantidades=quantidadesDoFormato("c-",origemDoPedido(ultimoPedido));
+  var quantidades=quantidadesDoFormato("c-",origemDoPedido(ultimoPedido),ultimoPedido.estiloObjetiva);
   if(!quantidades._total){msg("retorno-completar","Defina quantas questões novas você quer.","erro");return;}
   if(!conf.chave){msg("retorno-completar","Nenhuma chave de API salva. Cadastre-a em Ajustes.","erro");abrirAssistenteChave();return;}
   if(quantidades._total>20){msg("retorno-completar","O limite é de 20 questões por geração. Complete a prova em rodadas.","erro");return;}
