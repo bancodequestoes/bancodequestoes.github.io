@@ -163,6 +163,9 @@ input[type=file]{font-size:13px}
 .painel-origem{margin-top:12px;padding:12px 14px;border:1px solid var(--regua);border-radius:10px;background:#FBFCFA}
 .origens-provas{grid-template-columns:repeat(auto-fill,minmax(118px,1fr))}
 .origem.vazia{opacity:.55}
+.estilo-livro{border:1.5px solid var(--verde);border-radius:10px;padding:12px;margin:10px 0 12px;background:#F7FBF8}
+.estilo-titulo{margin:0 0 8px}.estilo-titulo span{font-size:12px;color:var(--cinza)}
+.estilos .origem{padding:9px 10px 8px}
 /* quinzenais do planejamento */
 .quinzenais{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
 .quinzenal{font:inherit;text-align:left;border:1.5px solid var(--regua);border-radius:10px;background:#fff;padding:9px 12px;cursor:pointer;transition:border-color .12s,background .12s}
@@ -354,20 +357,27 @@ input[type=file]{font-size:13px}
     <div class="painel-origem livros-sesi" id="painel-livro">
       <p class="ajuda" style="margin-top:0"><strong>Livros SESI</strong> <span id="resumo-biblioteca" class="sumario"></span></p>
       <p class="ajuda">Os cadernos do portal SESI Educação, guardados na nuvem do grupo. Escolha a série e marque os capítulos que devem alimentar a próxima geração. O texto de cada capítulo é baixado só quando você o marca.</p>
+      <div class="estilo-livro">
+        <p class="estilo-titulo"><strong>Estrutura das questões objetivas</strong> <span>— o conteúdo sai dos capítulos marcados; aqui você escolhe o formato da questão</span></p>
+        <div class="origens estilos" role="radiogroup" aria-label="Estrutura das questões objetivas">
+          <label class="origem"><input type="radio" name="estilo-livro" value="objetiva" checked><strong>Simples</strong><span>fiel ao livro</span></label>
+          <label class="origem"><input type="radio" name="estilo-livro" value="enem"><strong>ENEM</strong><span>estrutura do ENEM</span></label>
+          <label class="origem"><input type="radio" name="estilo-livro" value="ssa"><strong>SSA</strong><span>estrutura do SSA/UPE</span></label>
+          <label class="origem"><input type="radio" name="estilo-livro" value="passe"><strong>PASSE</strong><span>estrutura do PASSE</span></label>
+        </div>
+        <select id="livro-estilo" hidden>
+          <option value="objetiva">Simples, fiel ao livro</option>
+          <option value="enem">Igual ao ENEM</option>
+          <option value="ssa">Igual ao SSA</option>
+          <option value="passe">Igual ao PASSE</option>
+        </select>
+      </div>
             <div class="filtros" style="margin:8px 0 4px">
               <select id="ls-serie"><option value="">Escolha a série</option></select>
               <select id="ls-area"><option value="">Todas as áreas</option></select>
               <select id="ls-tipo"><option value="">Aluno e professor</option><option value="aluno">Caderno do aluno</option><option value="professor">Caderno do professor</option></select>
             </div>
             <div id="ls-marcados"></div>
-            <label for="livro-estilo">Estrutura das questões objetivas</label>
-            <select id="livro-estilo">
-              <option value="objetiva">Simples, fiel ao livro</option>
-              <option value="enem">Igual ao ENEM</option>
-              <option value="ssa">Igual ao SSA</option>
-              <option value="passe">Igual ao PASSE</option>
-            </select>
-            <p class="ajuda" style="margin-top:4px">O conteúdo sai dos capítulos marcados; aqui você escolhe só o formato da questão.</p>
             <details id="det-ls-lista">
               <summary><span><strong>Livros da série</strong> <span class="sumario" id="ls-resumo-lista">— escolha a série acima</span></span></summary>
               <div id="ls-lista"></div>
@@ -2853,7 +2863,10 @@ $("en-hab").addEventListener("change",infoAcervo);
 $("en-dif").addEventListener("change",infoAcervo);
 $("ssa-etapa").addEventListener("change",function(){origemMudou(false);});
 $("livro-estilo").addEventListener("change",function(){gravar(CHAVE_ESTILO_LIVRO,this.value);acervoCache=null;origemMudou(false);});
-(function(){var v=ler(CHAVE_ESTILO_LIVRO);if(v&&ORIGENS[v])$("livro-estilo").value=v;})();
+// os cartões de estrutura espelham o select escondido #livro-estilo, que continua sendo a fonte
+function marcarEstiloLivro(){var v=$("livro-estilo").value;document.querySelectorAll('input[name="estilo-livro"]').forEach(function(r){r.checked=r.value===v;});}
+document.querySelectorAll('input[name="estilo-livro"]').forEach(function(r){r.addEventListener("change",function(){if(!this.checked)return;$("livro-estilo").value=this.value;$("livro-estilo").dispatchEvent(new Event("change"));});});
+(function(){var v=ler(CHAVE_ESTILO_LIVRO);if(v&&ORIGENS[v])$("livro-estilo").value=v;marcarEstiloLivro();})();
 (function(){
   var salva=ler(CHAVE_ORIGEM), r=salva&&document.querySelector('input[name="origem"][value="'+salva+'"]');
   if(r)r.checked=true;
