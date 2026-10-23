@@ -208,6 +208,7 @@ input[type=file]{font-size:13px}
 .hab{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--regua);font-size:13px}
 .hab:last-child{border-bottom:none}
 .hab input{width:16px;height:16px;margin-top:2px;accent-color:var(--verde);cursor:pointer;flex:none}
+.titulo-hab{font-size:12px;font-weight:700;color:var(--verde-escuro);text-transform:uppercase;letter-spacing:.03em;margin:12px 0 4px;padding-bottom:4px;border-bottom:1px solid var(--regua)}
 .hab .cod{font-weight:700;color:var(--verde)}
 .hab-resumo{font-size:12.5px;color:var(--cinza);margin-top:8px}
 
@@ -6116,17 +6117,43 @@ $("arquivo-modelo-plano").addEventListener("change",function(ev){
 function matrizDoPlano(){
   return HABILIDADES[chaveDaMatriz($("pl-etapa").value,$("pl-componente").value,$("pl-serie").value)]||[];
 }
+/* os capítulos do livro SESI citam as habilidades da BNCC no próprio texto (EM13CHS101, EF09HI13…):
+   elas aparecem primeiro e já marcadas; as demais da série ficam abaixo */
+var RE_COD_BNCC=/E[FM]\d{2}[A-Z]{2,3}\d{2,3}/g, habRecusadas={};
+function codBncc(c){var m=String(c||"").match(RE_COD_BNCC);return m?m[0]:"";}
+function codigosDoMaterial(){
+  var cods={};
+  PM.ordem.filter(function(id){return PM.marcados[id]&&PM.textos[id];}).forEach(function(id){
+    (String(PM.textos[id]).match(RE_COD_BNCC)||[]).forEach(function(c){cods[c]=1;});
+  });
+  return cods;
+}
+function habDoMaterial(){
+  var cods=codigosDoMaterial();
+  return matrizDoPlano().filter(function(h){return cods[codBncc(h.c)];});
+}
+// marca as citadas, menos as que o professor desmarcou de propósito
+function aplicarHabDoMaterial(){
+  habDoMaterial().forEach(function(h){if(!habRecusadas[h.c])habPlano[h.c]=true;});
+  renderHabPlano();
+}
 function renderHabPlano(){
   var alvo=$("lista-hab-plano");
   if(!alvo)return;
   var lista=matrizDoPlano();
   var filtro=semAcento($("busca-hab-plano").value);
   if(filtro)lista=lista.filter(function(h){return semAcento(h.c+" "+h.t).indexOf(filtro)>=0;});
+  var cods=codigosDoMaterial(), citadas=lista.filter(function(h){return cods[codBncc(h.c)];}),
+      outras=lista.filter(function(h){return !cods[codBncc(h.c)];});
+  function item(h){
+    return '<label class="hab"><input type="checkbox" data-hab-plano="'+esc(h.c)+'"'+(habPlano[h.c]?" checked":"")+'>'+
+      '<span><span class="cod">'+esc(h.c)+"</span> "+esc(h.t)+"</span></label>";
+  }
   alvo.innerHTML=lista.length
-    ? lista.map(function(h){
-        return '<label class="hab"><input type="checkbox" data-hab-plano="'+esc(h.c)+'"'+(habPlano[h.c]?" checked":"")+'>'+
-          '<span><span class="cod">'+esc(h.c)+"</span> "+esc(h.t)+"</span></label>";
-      }).join("")
+    ? (citadas.length
+        ? '<p class="titulo-hab">Citadas nos capítulos escolhidos ('+citadas.length+")</p>"+citadas.map(item).join("")+
+          '<p class="titulo-hab">Outras habilidades da série</p>'
+        : "")+outras.map(item).join("")
     : '<p class="ajuda" style="margin:10px 0">Nenhuma habilidade carregada para esta combinação. Use o campo de códigos abaixo.</p>';
   var n=Object.keys(habPlano).filter(function(k){return habPlano[k];}).length;
   $("resumo-hab-plano").textContent=n?("— "+n+" marcada"+(n>1?"s":"")):"— nenhuma marcada";
@@ -6135,6 +6162,7 @@ $("lista-hab-plano").addEventListener("change",function(ev){
   var cb=ev.target;
   if(!cb.dataset||!cb.dataset.habPlano)return;
   habPlano[cb.dataset.habPlano]=cb.checked;
+  if(cb.checked)delete habRecusadas[cb.dataset.habPlano];else habRecusadas[cb.dataset.habPlano]=1;
   renderHabPlano();
 });
 $("busca-hab-plano").addEventListener("input",function(){renderHabPlano();});
@@ -6144,7 +6172,7 @@ $("busca-hab-plano").addEventListener("input",function(){renderHabPlano();});
       preencherLista("pl-componente",COMPONENTES[$("pl-etapa").value]||[]);
       preencherLista("pl-serie",SERIES[$("pl-etapa").value]||[]);
     }
-    habPlano={};renderHabPlano();
+    habPlano={};habRecusadas={};renderHabPlano();
     if(id==="pl-serie"&&$("pl-serie").value)$("pl-turma").value=$("pl-serie").value;
     renderMaterialPlano();
   });
@@ -6178,6 +6206,10 @@ function iniciarPlano(){
   if(!tp.value)tp.selectedIndex=0;
   if(tp.value!==$("pl-serie").value)tp.dispatchEvent(new Event("change"));
   renderMaterialPlano();
+  // capítulos guardados de antes: traz o texto para mostrar as habilidades citadas neles
+  var guardados=PM.ordem.filter(function(id){return PM.marcados[id];});
+  if(guardados.length)Promise.all(guardados.map(function(id){return pmTextoCapitulo(id).catch(function(){});}))
+    .then(function(){pmRenderMarcados();aplicarHabDoMaterial();});
 }
 
 
@@ -6271,14 +6303,21 @@ function renderMaterialPlano(){
       if(!this.checked){pmTirar(id);renderMaterialPlano();return;}
       PM.marcados[id]={livro:nomeCaderno(L),cap:c.nome};PM.ordem.push(id);pmGuardar();
       renderMaterialPlano();
-      pmTextoCapitulo(id).then(pmRenderMarcados).catch(function(e){
+      pmTextoCapitulo(id).then(function(){pmRenderMarcados();aplicarHabDoMaterial();}).catch(function(e){
         caixa.checked=false;pmTirar(id);renderMaterialPlano();
         msg("pm-marcados","Não foi possível baixar o capítulo: "+esc(e&&e.message||e)+".","erro");
       });
     });
   });
 }
-function pmTirar(id){delete PM.marcados[id];delete PM.textos[id];PM.ordem=PM.ordem.filter(function(x){return x!==id;});pmGuardar();}
+function pmTirar(id){
+  // as habilidades que só este capítulo trazia saem junto
+  var antes=habDoMaterial();
+  delete PM.marcados[id];delete PM.textos[id];PM.ordem=PM.ordem.filter(function(x){return x!==id;});pmGuardar();
+  var ficam={};habDoMaterial().forEach(function(h){ficam[h.c]=1;});
+  antes.forEach(function(h){if(!ficam[h.c])delete habPlano[h.c];});
+  renderHabPlano();
+}
 function pmRenderMarcados(){
   var ids=PM.ordem.filter(function(id){return PM.marcados[id];}), alvo=$("pm-marcados");
   $("resumo-material-plano").textContent=ids.length?"— "+ids.length+" "+(ids.length===1?"capítulo escolhido":"capítulos escolhidos"):"— nenhum capítulo escolhido";
@@ -6292,7 +6331,10 @@ function pmRenderMarcados(){
     b.addEventListener("click",function(){pmTirar(this.dataset.pmTirar);renderMaterialPlano();});
   });
 }
-function pmLimpar(){PM.marcados={};PM.ordem=[];PM.textos={};pmGuardar();renderMaterialPlano();}
+function pmLimpar(){
+  habDoMaterial().forEach(function(h){delete habPlano[h.c];});
+  PM.marcados={};PM.ordem=[];PM.textos={};pmGuardar();renderMaterialPlano();renderHabPlano();
+}
 // texto que vai para a IA, na ordem em que os capítulos foram marcados
 function materialDoPlano(){
   var ids=PM.ordem.filter(function(id){return PM.marcados[id];});
