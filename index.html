@@ -6,24 +6,32 @@
 <title>Banco de Questões</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=Nunito+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Roboto+Condensed:wght@600;700&display=swap" rel="stylesheet">
 <style>
 :root{
-  --papel:#F4F7F3;
+  /* identidade no estilo do Adaptativo SESI: barra verde, menu lateral cinza-claro, conteúdo branco */
+  --papel:#FFFFFF;
   --carta:#FFFFFF;
-  --tinta:#1C1C1A;
-  --verde:#2F6F4E;
-  --verde-escuro:#234F38;
-  --verde-fundo:#E7F0EA;
-  --ambar:#B7791F;
-  --ambar-fundo:#FBF0DD;
-  --vermelho:#7A1F2B;
-  --vermelho-fundo:#FBE9EA;
-  --regua:rgba(0,0,0,.10);
-  --cinza:rgba(28,28,26,.55);
-  --raio:12px;
-  --serif:"Sora","Segoe UI",system-ui,sans-serif;
-  --sans:"Nunito Sans","Segoe UI",system-ui,sans-serif;
+  --lateral:#F6F6F6;
+  --tinta:#262626;
+  --marca:#30AF4A;
+  --verde:#1E984F;
+  --verde-escuro:#1A7C46;
+  --verde-fundo:#E6F4EA;
+  --ambar:#CA6700;
+  --ambar-fundo:#FDF1E4;
+  --laranja:#D95727;
+  --vermelho:#B0322A;
+  --vermelho-fundo:#FCEBE8;
+  --regua:#DFDFDF;
+  --cinza:#646464;
+  --raio:8px;
+  --sombra:0 2px 8px rgba(25,39,52,.08);
+  --altura-topo:72px;
+  --largura-lateral:264px;
+  --serif:"Inter",-apple-system,system-ui,"Segoe UI",sans-serif;
+  --sans:"Inter",-apple-system,system-ui,"Segoe UI",sans-serif;
+  --titulo:"Roboto Condensed","Arial Narrow",system-ui,sans-serif;
 }
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
@@ -31,40 +39,89 @@ body{background:var(--papel);color:var(--tinta);font-family:var(--sans);font-siz
 h1,h2,h3,summary{font-family:var(--serif);margin:0;line-height:1.25}
 button,input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
 ::-webkit-scrollbar{width:8px;height:8px}
-::-webkit-scrollbar-thumb{background:#c9d1c5;border-radius:8px}
+::-webkit-scrollbar-thumb{background:#cfcfcf;border-radius:8px}
 
-/* ---------- cabeçalho ---------- */
-.topo{background:var(--carta);border-bottom:1px solid var(--regua);position:sticky;top:0;z-index:40}
-.topo-interno{max-width:1400px;margin:0 auto;padding:14px 20px 0}
-.marca{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
-.marca h1{font-size:18px;font-weight:700;letter-spacing:-.01em}
-.marca h1 span{display:block;font-family:var(--sans);font-size:11px;font-weight:400;color:var(--cinza);margin-top:2px}
+/* ---------- cabeçalho: barra verde fixa ---------- */
+.topo{background:var(--marca);color:#fff;position:sticky;top:0;z-index:50;height:var(--altura-topo)}
+.topo-interno{height:100%;padding:0 24px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.marca{display:flex;align-items:center;gap:14px;min-width:0}
+.marca-sinal{flex:none;width:40px;height:40px;border-radius:10px;background:#fff;color:var(--marca);display:flex;align-items:center;justify-content:center}
+.marca-sinal svg{width:24px;height:24px}
+.marca h1{font-family:var(--titulo);font-size:24px;font-weight:700;letter-spacing:.01em;text-transform:uppercase;white-space:nowrap}
+.marca-divisor{flex:none;width:1px;height:34px;background:rgba(255,255,255,.75)}
+.marca-sub{font-size:13.5px;line-height:1.3;color:#fff}
+.topo-dir{display:flex;align-items:center;gap:10px;flex-wrap:nowrap}
+.pilula-topo{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.22);border-radius:999px;padding:5px 6px 5px 14px}
+#versao-app{font-size:11.5px;color:rgba(255,255,255,.9);white-space:nowrap}
+.menu-botao{display:none;flex:none;background:none;border:none;color:#fff;cursor:pointer;padding:6px;border-radius:8px}
+.menu-botao svg{width:24px;height:24px;display:block}
+@media(max-width:900px){
+  .topo-interno{padding:0 12px}
+  .marca-divisor,.marca-sub,#versao-app,#resumo-topo{display:none}
+  .marca h1{font-size:18px;overflow:hidden;text-overflow:ellipsis}
+  .marca-sinal{display:none}
+  .marca{gap:8px}
+  .pilula-topo{background:none;padding:0}
+  .menu-botao{display:block}
+}
 /* com a nuvem, importar, exportar e apagar ficam só com o administrador */
 .so-admin{display:none}
-.aviso-chave-topo{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;background:var(--ambar-fundo);color:#5c3d0a;border-radius:var(--raio);padding:14px 18px;margin-bottom:16px;font-size:14px}
+.aviso-chave-topo{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;background:#fff;color:#28323C;border:1px solid #ECECEC;border-left:4px solid var(--laranja);box-shadow:var(--sombra);border-radius:var(--raio);padding:16px 20px;margin-bottom:18px;font-size:14px}
 .fundo-janela{position:fixed;inset:0;z-index:90;background:rgba(0,0,0,.45);display:flex;align-items:flex-start;justify-content:center;padding:40px 16px;overflow:auto}
-.janela{background:var(--carta);border-radius:var(--raio);max-width:560px;width:100%;padding:24px 26px;box-shadow:0 20px 50px rgba(0,0,0,.25)}
+.janela{background:var(--carta);border-radius:14px;max-width:560px;width:100%;padding:24px 26px;box-shadow:0 20px 50px rgba(0,0,0,.25)}
 .janela h2{margin-top:0}
-.portao{background:var(--papel);align-items:center}
-.portao .janela{max-width:440px;text-align:center}
+.portao{background:radial-gradient(circle at 18% 22%,rgba(228,243,91,.28) 0,transparent 34%),radial-gradient(circle at 85% 80%,rgba(48,175,74,.55) 0,transparent 42%),linear-gradient(135deg,#0B6E7A 0%,#1A7C46 100%);align-items:center}
+.portao .janela{max-width:440px;text-align:center;padding:30px 30px 26px}
+.portao .janela h2{font-family:var(--titulo);font-size:30px;text-transform:uppercase;color:var(--verde-escuro);margin-bottom:10px}
 .portao .botoes{justify-content:center}
 .passos-chave{padding-left:20px;margin:12px 0;font-size:14px;line-height:1.7}
 .passos-chave li{margin-bottom:8px}
 body.pode-admin .so-admin{display:block}
-.nuvem-chip{font:inherit;font-size:12px;font-weight:700;padding:6px 14px;border-radius:999px;border:1px solid var(--regua);background:var(--carta);color:var(--cinza);cursor:pointer}
+.nuvem-chip{font:inherit;font-size:12px;font-weight:700;padding:6px 14px;border-radius:999px;border:1px solid transparent;background:#fff;color:var(--cinza);cursor:pointer;white-space:nowrap}
 .nuvem-chip.ok{background:var(--verde-fundo);color:var(--verde-escuro);border-color:transparent}
 .nuvem-chip.enviando,.nuvem-chip.baixando,.nuvem-chip.carregando{background:var(--ambar-fundo);color:#7a5210;border-color:transparent}
 .nuvem-chip.erro,.nuvem-chip.semacesso{background:var(--vermelho-fundo);color:var(--vermelho);border-color:transparent}
-#resumo-topo{background:var(--verde-fundo);color:var(--verde-escuro);font-size:12px;font-weight:700;padding:6px 14px;border-radius:999px}
-.abas{display:flex;gap:4px;overflow-x:auto}
-.aba{background:none;border:none;border-bottom:2px solid transparent;padding:10px 16px;cursor:pointer;
-  color:var(--cinza);font-size:14px;font-weight:600;white-space:nowrap;border-radius:8px 8px 0 0}
-.aba:hover{color:var(--tinta);background:rgba(0,0,0,.03)}
-.aba[aria-selected="true"]{color:var(--verde);border-bottom-color:var(--verde)}
+#resumo-topo{color:#fff;font-size:12.5px;font-weight:600;white-space:nowrap}
+
+/* ---------- menu lateral ---------- */
+.lateral{position:fixed;top:var(--altura-topo);left:0;bottom:0;width:var(--largura-lateral);background:var(--lateral);
+  box-shadow:1px 0 12px rgba(16,24,40,.04);border-right:1px solid #ECECEC;z-index:45;display:flex;flex-direction:column;transition:width .18s}
+.abas{display:flex;flex-direction:column;gap:2px;padding:12px 8px;overflow-y:auto;flex:1}
+.aba{display:flex;align-items:center;gap:14px;width:100%;height:44px;background:none;border:none;padding:10px 12px;cursor:pointer;
+  color:var(--tinta);font-size:14px;font-weight:500;white-space:nowrap;border-radius:6px;text-align:left}
+.aba svg{flex:none;width:18px;height:18px;color:#3C3C3C}
+.aba:hover{background:rgba(16,24,40,.04)}
+.aba[aria-selected="true"]{background:rgba(16,24,40,.07);color:var(--marca);font-weight:700}
+.aba[aria-selected="true"] svg{color:var(--marca)}
+.recolher{position:absolute;top:20px;right:-14px;width:28px;height:28px;border-radius:50%;background:#fff;border:1px solid #E3E3E3;
+  box-shadow:0 2px 6px rgba(16,24,40,.12);cursor:pointer;display:flex;align-items:center;justify-content:center;color:#3C3C3C;padding:0}
+.recolher svg{width:14px;height:14px;transition:transform .18s}
+.lateral-pe{border-top:1px solid #E3E3E3;padding:14px 20px;font-size:12px;color:var(--cinza);line-height:1.45}
+.lateral-pe strong{color:var(--marca);font-weight:700;display:block}
+body.menu-recolhido{--largura-lateral:72px}
+body.menu-recolhido .aba span,body.menu-recolhido .lateral-pe{display:none}
+body.menu-recolhido .aba{justify-content:center;padding:10px 0}
+body.menu-recolhido .recolher svg{transform:rotate(180deg)}
+.fundo-menu{display:none}
+@media(max-width:900px){
+  .lateral{transform:translateX(-100%);width:264px;transition:transform .2s;box-shadow:8px 0 28px rgba(0,0,0,.18)}
+  body.menu-aberto .lateral{transform:none}
+  body.menu-aberto .fundo-menu{display:block;position:fixed;inset:var(--altura-topo) 0 0 0;background:rgba(0,0,0,.3);z-index:44}
+  .recolher{display:none}
+  body.menu-recolhido .aba span,body.menu-recolhido .lateral-pe{display:revert}
+  body.menu-recolhido .aba{justify-content:flex-start;padding:10px 12px}
+}
+
+/* ---------- título de cada página ---------- */
+.cabeca-vista{margin:0 0 22px;padding-bottom:16px;border-bottom:1px solid var(--regua)}
+.cabeca-vista h1{font-family:var(--titulo);font-size:38px;font-weight:700;text-transform:uppercase;color:var(--verde-escuro);letter-spacing:.005em;line-height:1.1}
+.cabeca-vista p{margin:6px 0 0;font-size:14px;color:var(--cinza)}
+@media(max-width:640px){.cabeca-vista h1{font-size:30px}}
 :focus-visible{outline:2px solid var(--verde);outline-offset:2px}
 
 /* ---------- estrutura ---------- */
-main{max-width:1400px;margin:0 auto;padding:24px 20px 90px}
+main{margin-left:var(--largura-lateral);padding:32px 40px 90px;max-width:calc(1400px + var(--largura-lateral));transition:margin-left .18s}
+@media(max-width:900px){main{margin-left:0;padding:22px 16px 80px}}
 .vista{display:none}
 .vista.ativa{display:block}
 .duas-colunas{display:grid;grid-template-columns:minmax(0,340px) minmax(0,1fr);gap:20px;align-items:start}
@@ -72,55 +129,58 @@ main{max-width:1400px;margin:0 auto;padding:24px 20px 90px}
 
 .bloco{background:var(--carta);border:1px solid var(--regua);border-radius:var(--raio);padding:20px}
 .bloco + .bloco{margin-top:16px}
-.bloco h2{font-size:17px;font-weight:700;margin-bottom:4px}
+.bloco h2{font-size:18px;font-weight:700;margin-bottom:4px;color:#1A1A1A}
+.bloco>h2:first-child{border-left:4px solid var(--marca);padding-left:12px;margin-left:-2px}
 .bloco p.ajuda{font-size:12.5px;color:var(--cinza);margin:2px 0 18px}
 .nota-hab{color:rgba(28,28,26,.78) !important;margin:8px 0 18px !important}
-.pilha{position:sticky;top:96px}
+.pilha{position:sticky;top:calc(var(--altura-topo) + 16px)}
 
 /* recolhíveis: parecem botão, com seta e "Clique para abrir", para ninguém deixar de ver */
 details>summary{cursor:pointer;font-size:14px;font-weight:600;list-style:none;display:flex;
-  align-items:center;gap:12px;padding:11px 14px;border:1.5px solid rgba(47,111,78,.35);border-radius:10px;
+  align-items:center;gap:12px;padding:11px 14px;border:1.5px solid rgba(30,152,79,.35);border-radius:8px;
   background:var(--verde-fundo);transition:background .15s,border-color .15s,box-shadow .15s;user-select:none}
 details>summary>span:first-child{flex:1;min-width:0}
-details>summary:hover{background:#D7E8DD;border-color:var(--verde);box-shadow:0 2px 6px rgba(47,111,78,.15)}
+details>summary:hover{background:#D5EEDD;border-color:var(--verde);box-shadow:0 2px 6px rgba(30,152,79,.15)}
 details>summary:focus-visible{outline:2px solid var(--verde);outline-offset:2px}
 details>summary::-webkit-details-marker{display:none}
 details>summary::before{content:"▸";flex:none;display:inline-flex;align-items:center;justify-content:center;
   width:26px;height:26px;border-radius:50%;background:var(--verde);color:#fff;font-size:15px;line-height:1;transition:transform .2s}
 details[open]>summary::before{transform:rotate(90deg)}
 details>summary::after{content:"Clique para abrir";flex:none;font-family:var(--sans);font-size:11.5px;font-weight:700;
-  color:var(--verde-escuro);background:#fff;border:1px solid rgba(47,111,78,.35);border-radius:999px;padding:3px 10px;white-space:nowrap}
+  color:var(--verde-escuro);background:#fff;border:1px solid rgba(30,152,79,.35);border-radius:999px;padding:3px 10px;white-space:nowrap}
 details[open]>summary::after{content:"✕ Fechar";color:#fff;background:var(--verde);border-color:var(--verde);font-size:12px;padding:4px 12px}
 details[open]>summary{background:#fff;border-color:var(--verde)}
 @media(max-width:640px){details>summary::after{content:"Abrir"}details[open]>summary::after{content:"✕ Fechar"}}
 .sumario{font-weight:400;color:var(--cinza);font-size:12.5px}
 details>summary+*{margin-top:14px}
 
-label{display:block;font-size:12px;font-weight:700;margin:14px 0 6px}
+label{display:block;font-size:12.5px;font-weight:700;margin:14px 0 6px}
+label[for]{color:var(--verde-escuro)}
 input[type=text],input[type=number],input[type=password],select,textarea{
-  width:100%;padding:10px 12px;border:1px solid rgba(0,0,0,.15);border-radius:8px;background:var(--carta)}
+  width:100%;padding:10px 12px;border:1px solid #D1D5DB;border-radius:6px;background:var(--carta)}
+input[type=text]:focus,input[type=number]:focus,input[type=password]:focus,select:focus,textarea:focus{border-color:var(--verde);outline:none;box-shadow:0 0 0 3px rgba(30,152,79,.15)}
 textarea{min-height:76px;resize:vertical}
 input[type=file]{font-size:13px}
 .linha{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .quatro{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
 @media(max-width:640px){.linha,.quatro{grid-template-columns:1fr}}
 
-.botao{background:var(--verde);color:#fff;border:none;border-radius:8px;padding:11px 20px;
+.botao{background:var(--verde);color:#fff;border:2px solid var(--verde);border-radius:8px;padding:10px 18px;
   font-weight:700;font-size:14px;cursor:pointer;transition:background .15s}
-.botao:hover{background:var(--verde-escuro)}
-.botao[disabled]{background:var(--cinza);cursor:progress}
-.botao.secundario{background:none;color:var(--tinta);border:1px solid rgba(0,0,0,.15)}
+.botao:hover{background:var(--verde-escuro);border-color:var(--verde-escuro)}
+.botao[disabled]{background:var(--cinza);border-color:var(--cinza);cursor:progress}
+.botao.secundario{background:#fff;color:var(--tinta);border:1px solid #C9CDD2}
 .botao.secundario:hover{background:rgba(0,0,0,.04)}
-.botao.perigo{background:none;color:var(--vermelho);border:1px solid rgba(122,31,43,.3)}
+.botao.perigo{background:#fff;color:var(--vermelho);border:1px solid rgba(176,50,42,.35)}
 .botao.perigo:hover{background:var(--vermelho-fundo)}
 .botoes{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;padding-top:16px;border-top:1px solid var(--regua)}
 
 .aviso{border-radius:8px;padding:11px 14px;font-size:13.5px;margin:14px 0;
-  background:var(--ambar-fundo);color:#7a5210;border:1px solid rgba(183,121,31,.25)}
-.aviso.erro{background:var(--vermelho-fundo);color:var(--vermelho);border-color:rgba(122,31,43,.25)}
-.aviso.ok{background:var(--verde-fundo);color:var(--verde-escuro);border-color:rgba(47,111,78,.25)}
+  background:var(--ambar-fundo);color:#7a4410;border:1px solid rgba(202,103,0,.2);border-left:4px solid var(--laranja)}
+.aviso.erro{background:var(--vermelho-fundo);color:var(--vermelho);border-color:rgba(176,50,42,.25);border-left-color:var(--vermelho)}
+.aviso.ok{background:var(--verde-fundo);color:var(--verde-escuro);border-color:rgba(30,152,79,.25);border-left-color:var(--verde)}
 .progresso{display:none;margin-top:14px;font-size:13.5px;font-weight:600;color:var(--verde-escuro);
-  background:var(--verde-fundo);border:1px solid rgba(47,111,78,.25);border-radius:8px;padding:12px 14px}
+  background:var(--verde-fundo);border:1px solid rgba(30,152,79,.25);border-radius:8px;padding:12px 14px}
 .progresso.ativo{display:block}
 
 /* ---------- biblioteca e habilidades ---------- */
@@ -152,20 +212,83 @@ input[type=file]{font-size:13px}
 .livros-sesi label.cap .sub{color:var(--cinza);font-size:12px}
 
 .passo{font-size:15px;margin:22px 0 8px;display:flex;align-items:center;gap:8px}
-.passo span{display:inline-flex;width:24px;height:24px;border-radius:50%;background:var(--verde);color:#fff;font-size:13px;align-items:center;justify-content:center}
+.passo span{display:inline-flex;width:24px;height:24px;border-radius:50%;background:var(--marca);color:#fff;font-size:13px;align-items:center;justify-content:center}
 .origens{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
-.origem{display:flex;flex-direction:column;gap:2px;border:1.5px solid var(--regua);border-radius:10px;padding:12px 12px 10px;cursor:pointer;margin:0;background:#fff}
+.origem{position:relative;display:flex;flex-direction:column;gap:2px;border:1px solid #E3E3E3;border-radius:8px;padding:12px 12px 10px;cursor:pointer;margin:0;background:#fff;color:var(--tinta);transition:border-color .12s,background .12s}
+.origem:hover{border-color:var(--verde)}
 .origem input{position:absolute;opacity:0;pointer-events:none}
 .origem strong{font-size:15px}
 .origem span{font-weight:400;font-size:12px;color:var(--cinza)}
-.origem:has(input:checked){border-color:var(--verde);background:#F1F7F3;box-shadow:0 0 0 1px var(--verde) inset}
+.origem:has(input:checked){border-color:var(--verde);background:var(--verde-fundo);box-shadow:0 0 0 1px var(--verde) inset}
 .origem:has(input:focus-visible){outline:2px solid var(--verde);outline-offset:2px}
-.painel-origem{margin-top:12px;padding:12px 14px;border:1px solid var(--regua);border-radius:10px;background:#FBFCFA}
+.painel-origem{margin-top:12px;padding:14px 16px;border:1px solid var(--regua);border-radius:8px;background:#FAFAFA}
 .origens-provas{grid-template-columns:repeat(auto-fill,minmax(118px,1fr))}
 .origem.vazia{opacity:.55}
-.estilo-livro{border:1.5px solid var(--verde);border-radius:10px;padding:12px;margin:10px 0 12px;background:#F7FBF8}
+.estilo-livro{border:1.5px solid var(--verde);border-radius:8px;padding:12px;margin:10px 0 12px;background:#F5FBF7}
 .estilo-titulo{margin:0 0 8px}.estilo-titulo span{font-size:12px;color:var(--cinza)}
 .estilos .origem{padding:9px 10px 8px}
+
+/* ---------- capas em miniatura (livros SESI e provas), no jeito da Biblioteca do Adaptativo ---------- */
+.capa{--c:#1E984F;--c2:#0E6B78;position:relative;display:block;aspect-ratio:3/4;overflow:hidden;background:#E3E7E5;
+  border-radius:6px 6px 0 0;color:#1A1A1A;font-family:var(--sans);text-align:left;user-select:none}
+.capa::before{content:"";position:absolute;left:-34%;bottom:-20%;width:78%;height:66%;border-radius:50%;background:var(--c)}
+.capa::after{content:"";position:absolute;right:-12%;top:-10%;width:40%;height:30%;border-radius:50%;background:var(--c);opacity:.18}
+.capa>*{position:absolute;z-index:1}
+.capa-selo{top:7%;left:9%;font-family:var(--titulo);font-weight:700;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--c)}
+.capa-titulo{top:17%;left:9%;right:7%;font-family:var(--titulo);font-weight:700;font-size:15px;line-height:1.05;text-transform:uppercase;
+  display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
+.capa-faixa{top:52%;left:9%;right:0;background:var(--c2);color:#fff;font-size:9.5px;font-weight:700;line-height:1.2;text-transform:uppercase;padding:5px 8px;
+  border-radius:3px 0 0 3px}
+.capa-pe{right:7%;bottom:6%;font-size:9.5px;font-weight:700;background:rgba(255,255,255,.92);border-radius:3px;padding:2px 6px;color:#333}
+/* provas: capa cheia na cor do caderno */
+.capa.prova{background:var(--c);color:#fff}
+.capa.prova::before{left:auto;right:-30%;bottom:-16%;width:90%;height:56%;background:#fff;opacity:.13}
+.capa.prova::after{right:auto;left:-18%;top:auto;bottom:22%;width:46%;height:34%;background:#fff;opacity:.10}
+.capa.prova .capa-selo{color:rgba(255,255,255,.85)}
+.capa.prova .capa-titulo{font-size:30px;letter-spacing:.01em;top:14%}
+.capa.prova .capa-ano{top:31%;left:9%;font-family:var(--titulo);font-weight:700;font-size:22px;line-height:1}
+.capa.prova .capa-faixa{top:52%;background:#fff;color:var(--c)}
+.capa.prova.clara{color:#1A1A1A}.capa.prova.clara .capa-selo{color:rgba(0,0,0,.55)}
+.capa.prova.clara .capa-faixa{background:#1A1A1A;color:#fff}
+/* miniatura pequena dentro dos cartões de origem */
+.mini-capa{display:block;width:34px;height:44px;border-radius:4px;background:var(--c,#1E984F);color:#fff;font-style:normal;
+  font-family:var(--titulo);font-weight:700;font-size:9px;line-height:44px;text-align:center;letter-spacing:.02em;white-space:nowrap;margin-bottom:6px;
+  box-shadow:0 2px 6px rgba(0,0,0,.12);overflow:hidden;position:relative}
+.mini-capa::after{content:"";position:absolute;right:-8px;bottom:-8px;width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,.22)}
+/* grade de cartões com capa */
+.grade-capas{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:16px;margin-top:12px}
+.card-capa{display:flex;flex-direction:column;background:#fff;border:1px solid #ECECEC;border-radius:6px;box-shadow:0 1px 4px rgba(16,24,40,.08);
+  overflow:hidden;font:inherit;color:inherit;text-align:left;padding:0;cursor:pointer;transition:box-shadow .15s,border-color .15s}
+.card-capa:hover{box-shadow:0 6px 18px rgba(16,24,40,.14)}
+.card-capa .card-nome{display:block;padding:10px 10px 4px;font-size:13px;font-weight:600;line-height:1.3;color:#1A1A1A}
+.card-capa .card-sub{display:block;padding:0 10px 10px;font-size:11.5px;color:var(--cinza);font-weight:400}
+.card-capa .card-acao{display:block;margin:auto 10px 10px;border:1px solid #E0E0E0;border-radius:4px;padding:5px 8px;font-size:12px;font-weight:600;text-align:center;color:#3C3C3C;background:#fff}
+.card-capa.escolhida{border-color:var(--verde);box-shadow:0 0 0 2px var(--verde)}
+.card-capa.escolhida .card-acao{background:var(--verde);border-color:var(--verde);color:#fff}
+/* os cadernos do Livro SESI viram cartões; aberto, o cartão ocupa a linha toda e mostra os capítulos */
+#ls-lista{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:16px;margin-top:12px}
+#ls-lista>.aviso{grid-column:1/-1}
+.livros-sesi .caderno.card-capa{display:block;padding:0;border-bottom:1px solid #ECECEC;cursor:default}
+.livros-sesi .caderno.card-capa>summary{display:flex;flex-direction:column;align-items:stretch;gap:0;padding:0;border:none;border-radius:0;background:#fff;box-shadow:none;font-weight:600}
+.livros-sesi .caderno.card-capa>summary::before{display:none}
+.livros-sesi .caderno.card-capa>summary>.capa{flex:none;aspect-ratio:auto;height:0;padding-bottom:133.33%}
+.livros-sesi .caderno.card-capa>summary::after{content:"Ver capítulos";margin:auto 10px 10px;border:1px solid #E0E0E0;border-radius:4px;padding:5px 8px;
+  font-size:12px;text-align:center;color:#3C3C3C;background:#fff;white-space:normal}
+.livros-sesi .caderno.card-capa>summary:hover{background:#fff}
+.livros-sesi .caderno.card-capa>summary:hover::after{border-color:var(--verde);color:var(--verde-escuro)}
+.livros-sesi .caderno.card-capa>summary .card-nome{display:block;padding:10px 10px 2px;font-size:13px;line-height:1.3}
+.livros-sesi .caderno.card-capa>summary .sub{padding:0 10px 10px;display:block}
+.livros-sesi .caderno.card-capa.tem-marcados{border-color:var(--verde);box-shadow:0 0 0 2px var(--verde)}
+.livros-sesi .caderno.card-capa[open]{grid-column:1/-1;padding-bottom:10px}
+.livros-sesi .caderno.card-capa[open]>summary{flex-direction:row;align-items:center;gap:14px;padding:10px;border-bottom:1px solid var(--regua);margin-bottom:8px}
+.livros-sesi .caderno.card-capa[open]>summary>.capa{width:72px;height:96px;padding:0;border-radius:4px}
+.livros-sesi .caderno.card-capa[open]>summary>.capa>*{display:none}
+.livros-sesi .caderno.card-capa[open]>summary .card-nome{padding:0;font-size:15px}
+.livros-sesi .caderno.card-capa[open]>summary .sub{padding:0}
+.livros-sesi .caderno.card-capa[open]>summary>.textos{flex:1;min-width:0}
+.livros-sesi .caderno.card-capa[open]>summary::after{content:"✕ Fechar capítulos";margin:0;background:var(--verde);border-color:var(--verde);color:#fff;flex:none}
+.livros-sesi .caderno.card-capa>label.cap{margin:0 12px}
+@media(max-width:640px){.grade-capas,#ls-lista{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}}
 /* quinzenais do planejamento */
 .quinzenais{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
 .quinzenal{font:inherit;text-align:left;border:1.5px solid var(--regua);border-radius:10px;background:#fff;padding:9px 12px;cursor:pointer;transition:border-color .12s,background .12s}
@@ -173,7 +296,7 @@ input[type=file]{font-size:13px}
 .quinzenal strong{display:block;font-size:14.5px}
 .quinzenal span{font-size:12.5px;color:var(--cinza)}
 .quinzenal.atual span::after{content:" · agora";color:var(--verde);font-weight:700}
-.quinzenal.escolhida{border-color:var(--verde);background:#F1F7F3;box-shadow:0 0 0 1px var(--verde) inset}
+.quinzenal.escolhida{border-color:var(--verde);background:var(--verde-fundo);box-shadow:0 0 0 1px var(--verde) inset}
 /* calendário flutuante da data das aulas */
 .campo-data{position:relative}
 .campo-data input{padding-right:42px;cursor:pointer}
@@ -188,7 +311,7 @@ input[type=file]{font-size:13px}
 .cal-topo{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
 .cal-topo strong{font-family:var(--serif);font-size:14.5px}
 .cal-nav{border:none;background:var(--verde-fundo);color:var(--verde-escuro);width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:15px;font-weight:700}
-.cal-nav:hover{background:#D7E8DD}
+.cal-nav:hover{background:#D5EEDD}
 .cal-dica{font-size:12px;color:var(--cinza);margin:0 0 8px;text-align:center}
 .cal-grade{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center}
 .cal-grade .sem{font-size:11px;font-weight:700;color:var(--cinza);padding:4px 0}
@@ -219,7 +342,7 @@ input[type=file]{font-size:13px}
 .filtros{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;
   background:var(--carta);border:1px solid var(--regua);border-radius:var(--raio);padding:16px;margin-bottom:14px}
 .filtros input,.filtros select{width:100%}
-.filtros .filtro-principal{grid-column:1/-1;font-weight:700;border-color:rgba(47,111,78,.45);background:var(--verde-fundo)}
+.filtros .filtro-principal{grid-column:1/-1;font-weight:700;border-color:rgba(30,152,79,.45);background:var(--verde-fundo)}
 .filtros .busca-fim{grid-column:1/-1}
 .contador{font-size:13.5px;color:var(--cinza);margin-bottom:12px}
 .q-oficial{font-size:14.5px;line-height:1.55}
@@ -236,16 +359,16 @@ input[type=file]{font-size:13px}
 .alts-oficial li span{display:inline-block;width:26px;text-indent:0;font-weight:700}
 .comum-oficial{border-left:3px solid var(--verde-fundo);padding-left:14px;margin:0 0 16px}
 .rotulo-comum{font-weight:700;font-size:13px;margin:0 0 10px}
-#barra-oficiais{position:sticky;top:104px;z-index:30;background:var(--verde-escuro);color:#fff;
+#barra-oficiais{position:sticky;top:calc(var(--altura-topo) + 12px);z-index:30;background:var(--verde-escuro);color:#fff;
   border-radius:10px;padding:14px 18px;margin-bottom:14px;
   align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;
-  box-shadow:0 2px 10px rgba(35,79,56,.25)}
+  box-shadow:0 2px 10px rgba(26,124,70,.25)}
 #barra-oficiais .botao{background:#fff;color:var(--verde-escuro);padding:7px 12px;font-size:12.5px}
 #barra-oficiais .botao.secundario{background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.4)}
-#barra-selecao{position:sticky;top:104px;z-index:30;background:var(--verde-escuro);color:#fff;
+#barra-selecao{position:sticky;top:calc(var(--altura-topo) + 12px);z-index:30;background:var(--verde-escuro);color:#fff;
   border:none;border-radius:10px;padding:14px 18px;margin-bottom:14px;
   align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;
-  box-shadow:0 2px 10px rgba(35,79,56,.25)}
+  box-shadow:0 2px 10px rgba(26,124,70,.25)}
 #barra-selecao strong{color:#fff}
 #barra-selecao .botao{background:#fff;color:var(--verde-escuro);padding:7px 12px;font-size:12.5px}
 #barra-selecao .botao:hover{background:rgba(255,255,255,.88)}
@@ -281,7 +404,7 @@ input[type=file]{font-size:13px}
 .acoes-ficha button[data-excluir]:hover{color:var(--vermelho)}
 .vazio{text-align:center;padding:48px 20px;color:var(--cinza);border:1px dashed rgba(0,0,0,.15);
   border-radius:var(--raio);background:var(--carta)}
-.vazio strong{display:block;font-family:var(--serif);font-size:16px;color:var(--tinta);margin-bottom:6px}
+.vazio strong{display:block;font-family:var(--titulo);text-transform:uppercase;letter-spacing:.02em;font-size:16px;color:var(--tinta);margin-bottom:6px}
 .editor{background:#FBFCFA;border:1px solid var(--verde);border-radius:10px;padding:18px}
 .editor label:first-child{margin-top:0}
 .editor .alts-edit{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;min-height:120px}
@@ -300,9 +423,9 @@ input[type=file]{font-size:13px}
 .chave-grade span{border:1px solid var(--regua);padding:3px 10px;border-radius:6px}
 
 @media print{
-  .topo,.abas,.botoes,.nao-imprime,.acoes-ficha,#barra-selecao{display:none !important}
+  .topo,.lateral,.fundo-menu,.cabeca-vista,.abas,.botoes,.nao-imprime,.acoes-ficha,#barra-selecao{display:none !important}
   body{background:#fff}
-  main{padding:0;max-width:none}
+  main{padding:0;max-width:none;margin:0}
   #folha{border:none;padding:0;border-radius:0}
   .q-prova{page-break-inside:avoid}
   .quebra{page-break-before:always}
@@ -316,28 +439,40 @@ input[type=file]{font-size:13px}
 <header class="topo">
   <div class="topo-interno">
     <div class="marca">
-      <h1>Banco de Questões<span>Ferramenta local para elaboração de avaliações</span></h1>
-      <div style="display:flex;align-items:center;gap:14px">
+      <button type="button" class="menu-botao" id="menu-botao" aria-label="Abrir o menu" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+      <span class="marca-sinal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5V5a2 2 0 0 1 2-2h4v18H6a2 2 0 0 1-2-1.5z"/><path d="M10 3h4v18h-4"/><path d="M15.5 4.2l3.7-1 2.6 16.4-3.7 1z"/></svg></span>
+      <h1>Banco de Questões</h1>
+      <span class="marca-divisor"></span>
+      <span class="marca-sub">Elaboração de<br>avaliações</span>
+    </div>
+    <div class="topo-dir">
+      <div class="pilula-topo">
         <span id="resumo-topo">nenhuma questão arquivada</span>
         <button type="button" id="nuvem-chip" class="nuvem-chip desligada">☁ Nuvem</button>
-        <span id="versao-app" style="font-size:11.5px;color:var(--cinza)">versão de 7 out 2026</span>
       </div>
+      <span id="versao-app">versão de 7 out 2026</span>
     </div>
-    <nav class="abas" role="tablist">
-      <button class="aba" role="tab" aria-selected="true" data-vista="gerar">Gerar</button>
-      <button class="aba" role="tab" aria-selected="false" data-vista="banco">Banco</button>
-      <button class="aba" role="tab" aria-selected="false" data-vista="prova">Montar prova</button>
-      <button class="aba" role="tab" aria-selected="false" data-vista="oficiais">Provas oficiais</button>
-      <button class="aba" role="tab" aria-selected="false" data-vista="plano">Planejamento</button>
-      <button class="aba" role="tab" aria-selected="false" data-vista="ajustes">Ajustes</button>
-    </nav>
   </div>
 </header>
+<aside class="lateral" id="lateral">
+  <button type="button" class="recolher" id="btn-recolher" aria-label="Recolher o menu" title="Recolher o menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></button>
+  <nav class="abas" role="tablist" aria-label="Seções">
+      <button class="aba" role="tab" aria-selected="true" data-vista="gerar" title="Gerar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.9 4.6L18.5 9.5l-4.6 1.9L12 16l-1.9-4.6L5.5 9.5l4.6-1.9z"/><path d="M19 15l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z"/></svg><span>Gerar</span></button>
+      <button class="aba" role="tab" aria-selected="false" data-vista="banco" title="Banco"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="5" rx="1.5"/><path d="M5 9v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9"/><path d="M10 13h4"/></svg><span>Banco</span></button>
+      <button class="aba" role="tab" aria-selected="false" data-vista="prova" title="Montar prova"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13l2 2 4-4"/></svg><span>Montar prova</span></button>
+      <button class="aba" role="tab" aria-selected="false" data-vista="oficiais" title="Provas oficiais"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5V5a2 2 0 0 1 2-2h4v18H6a2 2 0 0 1-2-1.5z"/><path d="M10 3h4v18h-4"/><path d="M15.5 4.2l3.7-1 2.6 16.4-3.7 1z"/></svg><span>Provas oficiais</span></button>
+      <button class="aba" role="tab" aria-selected="false" data-vista="plano" title="Planejamento"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/><path d="M8 14h3M8 17h6"/></svg><span>Planejamento</span></button>
+      <button class="aba" role="tab" aria-selected="false" data-vista="ajustes" title="Ajustes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg><span>Ajustes</span></button>
+  </nav>
+  <div class="lateral-pe"><strong>Banco de Questões</strong>Provas, questões e planejamento</div>
+</aside>
+<div class="fundo-menu" id="fundo-menu"></div>
 
 <main>
 
 <!-- ============ GERAR ============ -->
 <section class="vista ativa" id="vista-gerar">
+  <div class="cabeca-vista"><h1>Gerar questões</h1><p>Crie questões novas a partir do Livro SESI, do ENEM, do SSA ou do PASSE.</p></div>
   <div class="aviso-chave-topo" id="aviso-sem-chave" style="display:none">
     <span><strong>Falta a sua chave de acesso à IA.</strong> Ela é gratuita, cada professor usa a sua, e leva dois minutos.</span>
     <button class="botao" type="button" data-abrir-assistente="1">Cadastrar minha chave</button>
@@ -348,10 +483,10 @@ input[type=file]{font-size:13px}
 
     <h3 class="passo"><span>1</span> Criar a partir de</h3>
     <div class="origens" role="radiogroup" aria-label="Criar a partir de">
-      <label class="origem"><input type="radio" name="origem" value="livro" checked><strong>Livro SESI</strong><span>capítulos do livro da série</span></label>
-      <label class="origem"><input type="radio" name="origem" value="enem"><strong>ENEM</strong><span>molde das provas do acervo</span></label>
-      <label class="origem"><input type="radio" name="origem" value="ssa"><strong>SSA</strong><span>molde da UPE, 1ª a 3ª série</span></label>
-      <label class="origem"><input type="radio" name="origem" value="passe"><strong>PASSE</strong><span>molde das provas PASSE</span></label>
+      <label class="origem"><i class="mini-capa" style="--c:#1E984F" aria-hidden="true">SESI</i><input type="radio" name="origem" value="livro" checked><strong>Livro SESI</strong><span>capítulos do livro da série</span></label>
+      <label class="origem"><i class="mini-capa" style="--c:#1F5FAE" aria-hidden="true">ENEM</i><input type="radio" name="origem" value="enem"><strong>ENEM</strong><span>molde das provas do acervo</span></label>
+      <label class="origem"><i class="mini-capa" style="--c:#B3262E" aria-hidden="true">SSA</i><input type="radio" name="origem" value="ssa"><strong>SSA</strong><span>molde da UPE, 1ª a 3ª série</span></label>
+      <label class="origem"><i class="mini-capa" style="--c:#E07A1F" aria-hidden="true">PASSE</i><input type="radio" name="origem" value="passe"><strong>PASSE</strong><span>molde das provas PASSE</span></label>
     </div>
 
     <div class="painel-origem livros-sesi" id="painel-livro">
@@ -514,6 +649,7 @@ input[type=file]{font-size:13px}
 
 <!-- ============ BANCO ============ -->
 <section class="vista" id="vista-banco">
+  <div class="cabeca-vista"><h1>Banco</h1><p>Todas as questões guardadas. Filtre, revise e marque as que vão para a prova.</p></div>
   <div class="filtros">
     <select id="filtro-assunto-banco" class="filtro-principal"><option value="">Todos os assuntos</option></select>
     <select id="filtro-etapa"><option value="">Todos os níveis</option></select>
@@ -549,6 +685,7 @@ input[type=file]{font-size:13px}
 
 <!-- ============ PROVA ============ -->
 <section class="vista" id="vista-prova">
+  <div class="cabeca-vista"><h1>Montar prova</h1><p>Organize as questões marcadas, escolha a série e baixe a prova pronta.</p></div>
   <div class="bloco nao-imprime">
     <details id="det-turma-prova">
       <summary><span><strong>Série ou ano da prova</strong> <span class="sumario" id="resumo-turma-prova">— nenhuma escolhida</span></span></summary>
@@ -632,6 +769,7 @@ input[type=file]{font-size:13px}
 <!-- ============ AJUSTES ============ -->
 <!-- ============ PROVAS OFICIAIS ============ -->
 <section class="vista" id="vista-oficiais">
+  <div class="cabeca-vista"><h1>Provas oficiais</h1><p>O acervo de provas do ENEM, do SSA e de outras bancas, com as questões como no original.</p></div>
   <div class="bloco nao-imprime">
     <details id="det-importar">
       <summary><span><strong>Importar uma prova oficial</strong> <span class="sumario">— envie o caderno e o gabarito em PDF</span></span></summary>
@@ -686,8 +824,9 @@ input[type=file]{font-size:13px}
     <div class="painel-origem" id="painel-prova" hidden>
       <div class="linha" id="linha-prova">
         <div><label for="prova-ano">Ano</label><select id="prova-ano"></select></div>
-        <div><label for="prova-caderno">Caderno</label><select id="prova-caderno"></select></div>
+        <div hidden><label for="prova-caderno">Caderno</label><select id="prova-caderno"></select></div>
       </div>
+      <div class="grade-capas" id="capas-provas" aria-label="Cadernos do ano"></div>
       <p class="ajuda nota-hab" id="info-prova" style="margin-bottom:0"></p>
     </div>
     <select id="prova-escolhida" hidden aria-hidden="true"><option value="">— nenhuma prova importada —</option></select>
@@ -758,6 +897,7 @@ input[type=file]{font-size:13px}
 
 <!-- ============ PLANEJAMENTO ============ -->
 <section class="vista" id="vista-plano">
+  <div class="cabeca-vista"><h1>Planejamento</h1><p>Monte o planejamento da quinzena a partir do livro da série.</p></div>
   <div class="bloco nao-imprime">
     <details id="det-modelo-plano">
       <summary><span><strong>Modelo timbrado do planejamento</strong> <span class="sumario" id="resumo-modelo-plano">— nenhum anexado</span></span></summary>
@@ -857,6 +997,7 @@ input[type=file]{font-size:13px}
 </section>
 
 <section class="vista" id="vista-ajustes">
+  <div class="cabeca-vista"><h1>Ajustes</h1><p>Nuvem compartilhada, chave da IA, importação e cópias de segurança.</p></div>
   <div class="bloco" id="bloco-nuvem">
     <h2>Nuvem compartilhada</h2>
     <p class="ajuda">Com a nuvem ligada, as questões, as figuras, a biblioteca de materiais, as provas oficiais e os modelos ficam guardados no Google e aparecem para todos os professores liberados. Quem salvar, editar ou excluir algo muda para todos. A chave de acesso à IA continua só neste aparelho. Importar, exportar e apagar tudo ficam visíveis só para o administrador.</p>
@@ -1584,6 +1725,45 @@ function areaDoComponente(etapa,comp){
 var NOME_TIPO={objetiva:"Objetiva",dissertativa:"Dissertativa",passe:"PASSE",adaptada:"Adaptada",enem:"Estilo ENEM",ssa:"Estilo SSA"};
 var TIPOS_VALIDOS=["objetiva","dissertativa","passe","adaptada","enem","ssa"];
 
+/* ---------------- capas em miniatura ----------------
+   Desenhadas aqui mesmo (nada de imagem baixada): a cor segue a área do livro ou a banca e o caderno da prova. */
+function corDaArea(area){
+  var a=(area||"").toUpperCase();
+  if(/MATEM/.test(a))return ["#C2412D","#0E6B78"];
+  if(/PORTUGU|LINGUAGE|INGL|ESPANH|ARTE|EDUCA[ÇC][ÃA]O F/.test(a))return ["#E0A526","#0E6B78"];
+  if(/HUMANA|HIST|GEOGR|FILOS|SOCIOL|SOCIAL|ECONOM/.test(a))return ["#2A7FA6","#B3532A"];
+  if(/NATUREZA|CI[ÊE]NCIA|BIOTEC|BIOLOG|F[ÍI]SICA|QU[ÍI]MICA/.test(a))return ["#2E9B4F","#0E6B78"];
+  return ["#7A5BA6","#0E6B78"];
+}
+function capaLivro(L,serie){
+  var c=corDaArea(L.area), n=/(\d+)\s*$/.exec(L.titulo||"");
+  return '<span class="capa" style="--c:'+c[0]+";--c2:"+c[1]+'"><span class="capa-selo">Livro SESI</span>'+
+    '<span class="capa-titulo">'+esc((L.area||"").replace(/^MAP\s*\|\s*/i,""))+"</span>"+
+    '<span class="capa-faixa">'+(n?"Caderno "+n[1]:"Caderno")+(L.tipo==="professor"?" · professor":" · aluno")+"</span>"+
+    (serie?'<span class="capa-pe">'+esc(serie)+"</span>":"")+"</span>";
+}
+var CORES_BANCA={enem:"#1F5FAE",ssa:"#B3262E",passe:"#E07A1F",unicamp:"#2B3A67",fuvest:"#6B2C91",cebraspe:"#1B7F8C",outro:"#5F6B73",
+  livro:"#1E984F"};
+var CORES_CADERNO={azul:"#1F5FAE",amarelo:"#E8B820",rosa:"#E0679B",branco:"#F2F2F2",cinza:"#8A9096",verde:"#2E9B4F",laranja:"#E07A1F",roxo:"#6B2C91"};
+function miniCapa(chave,rotulo){return '<i class="mini-capa" style="--c:'+(CORES_BANCA[chave]||CORES_BANCA.outro)+'" aria-hidden="true">'+esc(rotulo)+"</i>";}
+function capaProva(p){
+  var o=origemDaProva(p), cor=CORES_BANCA[o]||CORES_BANCA.outro, clara=false;
+  var m=/caderno\s+(azul|amarelo|rosa|branco|cinza|verde|laranja|roxo)/i.exec(p.nome||"");
+  if(m){cor=CORES_CADERNO[m[1].toLowerCase()];clara=/amarelo|branco/i.test(m[1]);}
+  var rot=ORIGENS_PROVA.filter(function(x){return x[0]===o;})[0];
+  return '<span class="capa prova'+(clara?" clara":"")+'" style="--c:'+cor+'"><span class="capa-selo">'+esc(rot&&rot[2]?rot[2]:"Prova oficial")+"</span>"+
+    '<span class="capa-titulo">'+esc(rot&&o!=="outro"?rot[1]:"Prova")+"</span>"+
+    '<span class="capa-ano">'+esc(anoDaProva(p))+"</span>"+
+    '<span class="capa-faixa">'+esc(trechoCaderno(p))+"</span>"+
+    '<span class="capa-pe">'+p.questoes.length+" questões</span></span>";
+}
+/* "ENEM 2019 — 1º dia (caderno azul)" vira "1º dia (caderno azul)" */
+function trechoCaderno(p){
+  var r=(p.nome||"").replace(/\b(19|20)\d{2}\b/,"").replace(/\b(ENEM|SSA|UPE|PASSE|UNICAMP|Fuvest|CEBRASPE)\b/gi,"")
+    .replace(/^[\s—–\-:,]+|[\s—–\-:,]+$/g,"").replace(/\s{2,}/g," ");
+  return /[a-zà-ú0-9]{2}/i.test(r)?r:"Caderno único";
+}
+
 /* ---------------- navegação ---------------- */
 var abas=document.querySelectorAll(".aba");
 for(var i=0;i<abas.length;i++){
@@ -1601,6 +1781,21 @@ for(var i=0;i<abas.length;i++){
     window.scrollTo(0,0);
   });
 }
+/* menu lateral: recolhe para só os ícones (lembrado) e, no celular, abre por cima do conteúdo */
+var CHAVE_MENU="bancoQuestoes.menuRecolhido.v1";
+if(ler(CHAVE_MENU)==="1")document.body.classList.add("menu-recolhido");
+$("btn-recolher").addEventListener("click",function(){
+  var r=document.body.classList.toggle("menu-recolhido");
+  gravar(CHAVE_MENU,r?"1":"0");
+  this.setAttribute("aria-label",r?"Abrir o menu":"Recolher o menu");this.title=this.getAttribute("aria-label");
+});
+function menuCelular(abrir){
+  document.body.classList.toggle("menu-aberto",abrir);
+  $("menu-botao").setAttribute("aria-expanded",abrir?"true":"false");
+}
+$("menu-botao").addEventListener("click",function(){menuCelular(!document.body.classList.contains("menu-aberto"));});
+$("fundo-menu").addEventListener("click",function(){menuCelular(false);});
+for(var m=0;m<abas.length;m++)abas[m].addEventListener("click",function(){menuCelular(false);});
 function irPara(nome){
   for(var j=0;j<abas.length;j++){if(abas[j].dataset.vista===nome)abas[j].click();}
 }
@@ -1880,8 +2075,9 @@ function livrosRender(){
   var html=ind.livros.map(function(L,i){
     if((atualA&&L.area!==atualA)||(ft&&L.tipo!==ft))return "";
     var marc=L.caps.filter(function(c){return LS.marcados[c.id];}).length;
-    return '<details class="caderno"'+(marc?" open":"")+"><summary>"+esc(nomeCaderno(L))+
-      ' <span class="sub">'+L.caps.length+" "+(L.caps.length===1?"capítulo":"capítulos")+(marc?", "+marc+" "+(marc===1?"marcado":"marcados"):"")+"</span></summary>"+
+    return '<details class="caderno card-capa'+(marc?" tem-marcados":"")+'"'+(marc?" open":"")+"><summary>"+capaLivro(L,nomeSerieSesi(ind.chave))+
+      '<span class="textos"><span class="card-nome">'+esc(nomeCaderno(L))+
+      '</span> <span class="sub">'+L.caps.length+" "+(L.caps.length===1?"capítulo":"capítulos")+(marc?", "+marc+" "+(marc===1?"marcado":"marcados"):"")+"</span></span></summary>"+
       L.caps.map(function(c){
         return '<label class="cap"><input type="checkbox" data-cap="'+esc(c.id)+'" data-livro="'+i+'"'+(LS.marcados[c.id]?" checked":"")+">"+
           "<span>"+esc(c.nome)+' <span class="sub">'+(c.palavras||0).toLocaleString("pt-BR")+" palavras"+
@@ -5291,12 +5487,13 @@ function renderEscolhaProva(){
   $("origens-provas").innerHTML=ORIGENS_PROVA.map(function(x){
     var n=(grupos[x[0]]||[]).length;
     return '<label class="origem'+(n?"":" vazia")+'"><input type="radio" name="origem-oficial" value="'+x[0]+'"'+(x[0]===o?" checked":"")+
-      "><strong>"+x[1]+"</strong><span>"+(n?n+(n===1?" prova":" provas"):"nenhuma ainda")+(x[2]?" · "+x[2]:"")+"</span></label>";
+      ">"+miniCapa(x[0],{unicamp:"UNI",fuvest:"FUV",cebraspe:"CESPE",outro:"…"}[x[0]]||x[1])+"<strong>"+x[1]+"</strong><span>"+(n?n+(n===1?" prova":" provas"):"nenhuma ainda")+(x[2]?" · "+x[2]:"")+"</span></label>";
   }).join("");
   var lista=(grupos[o]||[]).slice(), painel=$("painel-prova");
   painel.hidden=!o;
   if(!lista.length){
     $("linha-prova").hidden=true;
+    $("capas-provas").innerHTML="";
     $("info-prova").innerHTML="Nenhuma prova desta origem ainda. Envie o caderno em <strong>Importar uma prova oficial</strong>, no alto da página.";
     return;
   }
@@ -5310,6 +5507,12 @@ function renderEscolhaProva(){
     .sort(function(a,b){return (a.nome||"").localeCompare(b.nome||"","pt-BR",{numeric:true});});
   $("prova-caderno").innerHTML=doAno.map(function(p){return '<option value="'+p.id+'">'+esc(rotuloCaderno(p))+"</option>";}).join("");
   if(provaAtual&&doAno.indexOf(provaAtual)>=0)$("prova-caderno").value=provaAtual.id;
+  $("capas-provas").innerHTML=doAno.map(function(p){
+    var esta=provaAtual&&provaAtual.id===p.id;
+    return '<button type="button" class="card-capa'+(esta?" escolhida":"")+'" data-prova="'+esc(p.id)+'" aria-pressed="'+(esta?"true":"false")+'">'+capaProva(p)+
+      '<span class="card-nome">'+esc(trechoCaderno(p))+'</span><span class="card-sub">'+p.questoes.length+" questões</span>"+
+      '<span class="card-acao">'+(esta?"✓ Aberta":"Abrir")+"</span></button>";
+  }).join("");
   $("info-prova").textContent=lista.length+(lista.length===1?" prova":" provas")+" desta origem, de "+listaAnos.length+(listaAnos.length===1?" ano.":" anos.");
 }
 function escolherProva(idProva){
@@ -5334,6 +5537,9 @@ $("prova-ano").addEventListener("change",function(){
   if(p)escolherProva(p.id);
 });
 $("prova-caderno").addEventListener("change",function(){escolherProva(this.value);});
+$("capas-provas").addEventListener("click",function(ev){
+  var b=ev.target.closest("[data-prova]");if(b)escolherProva(b.dataset.prova);
+});
 function preencherFiltrosOficiais(){
   var questoes=provaAtual?provaAtual.questoes:[];
   var materias={};
