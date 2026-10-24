@@ -90,6 +90,15 @@ button,input,select,textarea{font-family:inherit;font-size:inherit;color:inherit
 .portao .janela{position:relative;z-index:1;border:1px solid var(--regua);border-radius:24px;box-shadow:0 18px 50px rgba(120,72,40,.15)}
 .portao .janela h2{font-family:var(--titulo);font-weight:700;font-size:26px;color:var(--barra);margin-bottom:10px}
 .portao .botoes{justify-content:center}
+/* depois do login, sem chave: a janela da chave vira uma tela própria, no mesmo estilo da entrada */
+.portao.portao-chave{align-items:flex-start}
+.portao.portao-chave .janela{max-width:560px;text-align:left;margin:auto}
+.portao.portao-chave .janela h2{text-align:center}
+.portao.portao-chave .botoes{justify-content:flex-start}
+.portao-chave-so{display:none}
+.link-botao{background:none;border:none;padding:0;font:inherit;color:var(--primaria);text-decoration:underline;cursor:pointer}
+.portao-chave .portao-chave-so{display:block}
+.portao-chave .fora-do-portao{display:none}
 .passos-chave{padding-left:20px;margin:12px 0;font-size:14px;line-height:1.7}
 .passos-chave li{margin-bottom:8px}
 body.pode-admin .so-admin{display:block}
@@ -706,7 +715,7 @@ input[type=file]{font-size:13px}
   <div class="bloco nao-imprime">
     <details id="det-turma-prova">
       <summary><span><strong>Série ou ano da prova</strong> <span class="sumario" id="resumo-turma-prova">— nenhuma escolhida</span></span></summary>
-      <p class="ajuda">Escolha uma vez. Ela entra no timbrado, na versão sem timbre e no nome do arquivo.</p>
+      <p class="ajuda">Escolha uma vez. Ela entra no timbrado, na versão sem timbre e no nome do arquivo. Ela também define as alternativas: Ensino Fundamental sai com 4 (A a D) e Ensino Médio com 5 (A a E).</p>
       <label for="p-turma">Série ou ano</label><select id="p-turma"></select>
       <input type="hidden" id="p-serie-turma">
       <details id="det-minhas-turmas" style="margin-top:12px;display:none">
@@ -815,9 +824,6 @@ input[type=file]{font-size:13px}
           <option>ENEM</option>
           <option>SSA — UPE</option>
           <option>PASSE</option>
-          <option>UNICAMP</option>
-          <option>Fuvest</option>
-          <option>CEBRASPE</option>
           <option>Outro vestibular</option>
           <option>Simulado</option>
         </select>
@@ -1125,6 +1131,7 @@ input[type=file]{font-size:13px}
 <div id="assistente-chave" class="fundo-janela" style="display:none" role="dialog" aria-modal="true" aria-labelledby="titulo-assistente">
   <div class="janela">
     <h2 id="titulo-assistente">Cadastre a sua chave de acesso à IA</h2>
+    <p class="portao-chave-so" style="text-align:center;font-weight:600">Falta só um passo: o site abre por inteiro assim que a sua chave for salva e testada.</p>
     <p class="ajuda">Para gerar questões, o site usa a inteligência artificial do Google (Gemini). A chave é gratuita e pessoal: cada professor usa a sua, porque o limite diário é por conta.</p>
     <ol class="passos-chave">
       <li><button class="botao" type="button" id="btn-abrir-aistudio">Abrir o site da chave</button> <span class="ajuda">abre em outra aba</span></li>
@@ -1138,9 +1145,10 @@ input[type=file]{font-size:13px}
     <div id="retorno-assistente"></div>
     <div class="botoes">
       <button class="botao" type="button" id="btn-salvar-assistente">Salvar e testar</button>
-      <button class="botao secundario" type="button" id="btn-fechar-assistente">Fechar</button>
+      <button class="botao secundario fora-do-portao" type="button" id="btn-fechar-assistente">Fechar</button>
     </div>
     <p class="ajuda" style="margin-top:10px">A chave fica salva só neste aparelho. Depois ela também aparece em Ajustes, onde dá para trocar.</p>
+    <p class="ajuda portao-chave-so" style="margin-top:6px">Conectado como <strong id="portao-chave-email"></strong>. <button type="button" class="link-botao" id="btn-portao-chave-trocar">Entrar com outra conta</button></p>
   </div>
 </div>
 
@@ -1180,8 +1188,28 @@ function mostrarFalha(texto,onde){
 var CHAVE_BANCO="bancoQuestoes.v2", CHAVE_CONF="bancoQuestoes.conf.v1";
 var memoria={};
 function ler(k){try{var v=localStorage.getItem(k);return v!==null?v:(memoria[k]||null);}catch(e){return memoria[k]||null;}}
-function gravar(k,v){memoria[k]=v;try{localStorage.setItem(k,v);}catch(e){}if(k===CHAVE_MODELO||k===CHAVE_MODELO_PLANO)nuvemMudou();}
+function gravar(k,v){memoria[k]=v;try{localStorage.setItem(k,v);}catch(e){}if(k===CHAVE_MODELO||k===CHAVE_MODELO_PLANO)nuvemMudou();marcarElaborado(k);}
 function apagar(k){delete memoria[k];try{localStorage.removeItem(k);}catch(e){}if(k===CHAVE_MODELO||k===CHAVE_MODELO_PLANO)nuvemMudou();}
+/* o que é elaborado na hora (o planejamento gerado e o que foi escolhido só para ele:
+   capítulos do livro e quinzenal) some ao recarregar a página se ficou mais de 5 minutos
+   sem ser mexido. Banco de questões, ajustes, chave, provas e nuvem não entram aqui. */
+var ELABORADOS=["bancoQuestoes.plano.v1","bancoQuestoes.planoMaterial.v1","bancoQuestoes.quinzenal.v1"],
+  CHAVE_ELABORADO="bancoQuestoes.elaborado.v1", VALIDADE_ELABORADO=5*60*1000;
+function marcarElaborado(k){
+  if(!ELABORADOS||ELABORADOS.indexOf(k)<0)return;
+  var marcas={};try{marcas=JSON.parse(localStorage.getItem(CHAVE_ELABORADO)||"{}")||{};}catch(e){}
+  marcas[k]=Date.now();
+  try{localStorage.setItem(CHAVE_ELABORADO,JSON.stringify(marcas));}catch(e){}
+}
+(function limparElaboradosAntigos(){
+  var marcas={}, agora=Date.now(), ficam={};
+  try{marcas=JSON.parse(localStorage.getItem(CHAVE_ELABORADO)||"{}")||{};}catch(e){}
+  ELABORADOS.forEach(function(k){
+    if(marcas[k]&&agora-marcas[k]<=VALIDADE_ELABORADO)ficam[k]=marcas[k];
+    else apagar(k);
+  });
+  try{localStorage.setItem(CHAVE_ELABORADO,JSON.stringify(ficam));}catch(e){}
+})();
 // o acervo de testes foi descartado a pedido; a partir daqui o banco recomeça vazio
 apagar("bancoQuestoes.v1");
 
@@ -1669,13 +1697,25 @@ function chaveDaMatriz(etapa,comp,serie){
   var area=areaDoComponente(etapa,comp);
   return area?area+"|"+serie:"";
 }
-// número de alternativas por etapa (provas internas) — ENEM e SSA seguem sempre 5, por simularem prova externa
+// número de alternativas — regra da rede, em qualquer estilo (inclusive ENEM, SSA e PASSE):
+// Ensino Médio tem 5 (A a E) e Ensino Fundamental tem 4 (A a D). A adaptada fica com 3.
 var ALTERNATIVAS={"Ensino Fundamental":4,"Ensino Médio":5};
 function limiteAlternativas(tipo,etapa){
   if(tipo==="adaptada")return 3;
-  if(tipo==="enem"||tipo==="ssa")return 5;
   if(tipo==="dissertativa")return 0;
   return ALTERNATIVAS[etapa]||5;
+}
+function etapaDaQuestao(q){return q.etapa||etapaDaSerie(q.serie||"");}
+// corta o excedente sem perder a alternativa correta (e as figuras das alternativas, se houver)
+function cortarAlternativas(q,teto){
+  if(!teto||q.alternativas.length<=teto)return false;
+  var fig=temFigAlt(q), ordem=[];
+  for(var i=0;i<q.alternativas.length&&ordem.length<teto;i++)ordem.push(i);
+  if(q.correta>=teto){ordem[teto-1]=q.correta;}
+  if(fig)q.figAlt=ordem.map(function(i){return q.figAlt[i];});
+  q.alternativas=ordem.map(function(i){return q.alternativas[i];});
+  q.correta=q.correta>=teto?teto-1:q.correta;
+  return true;
 }
 var SERIES={"Ensino Fundamental":["6º ano","7º ano","8º ano","9º ano"],"Ensino Médio":["1ª série","2ª série","3ª série"]};
 var EXATAS=["Matemática","Física","Química"];
@@ -1691,7 +1731,7 @@ var PADRAO_EXATAS=[
 "- Os distratores correspondem a ERROS PREVISÍVEIS do estudante, nunca a números aleatórios: sinal trocado, esquecer de dividir ou multiplicar por um fator, usar o dado bruto sem converter, inverter a razão, somar em vez de subtrair, arredondar cedo demais. Cada alternativa errada deve ser o resultado de um desses caminhos.",
 "- Enunciado curto e direto: cerca de 60 palavras, no máximo 170, sem texto literário. O contexto, quando existir, é uma situação-problema objetiva (obra, compra, terreno, produção, trajeto).",
 "- Todos os dados necessários ficam dentro do enunciado. NÃO use linha iniciada por \"Dados:\" — as fichas da rede não usam.",
-"- Nas objetivas, cinco alternativas contendo apenas o valor pedido, em ordem crescente, com a unidade quando o contexto tiver unidade. Decimais com vírgula e o mesmo número de casas em todas.",
+"- Nas objetivas, alternativas (na quantidade da regra da rede indicada no pedido) contendo apenas o valor pedido, em ordem crescente, com a unidade quando o contexto tiver unidade. Decimais com vírgula e o mesmo número de casas em todas.",
 "- Comandos preferidos, nesta ordem de frequência: \"Qual é...\", \"Quantos/Quantas...\", \"Determine...\", \"Calcule...\", \"Resolva...\".",
 "- Nas dissertativas de exatas, peça o valor exato ou a demonstração do procedimento, e traga em respostaEsperada o resultado final acompanhado dos passos.",
 "- Escreva a RESOLUÇÃO no campo resolucao: passos curtos, um por linha, na ordem fórmula, substituição, contas intermediárias e resultado final. É material do professor e nunca aparece na prova do estudante.",
@@ -2706,7 +2746,7 @@ function normalizar(bruta,p){
   if(isNaN(correta))correta=0;
   if(tipo==="dissertativa"){alts=[];correta=-1;}
   else{
-    var limite=limiteAlternativas(tipo,p.etapa);
+    var limite=limiteAlternativas(tipo,p.etapa||etapaDaSerie(p.serie||""));
     if(limite&&alts.length>limite){
       // preserva a alternativa correta ao cortar o excedente
       if(correta>limite-1){var certa=alts[correta];alts=alts.slice(0,limite-1);alts.push(certa);correta=limite-1;}
@@ -3336,7 +3376,10 @@ function fichaEditor(q){
     (chavesDeFigura(q).length&&!q.figuraDesc?'<p class="ajuda">Esta questão tem '+chavesDeFigura(q).length+' figura(s), que são mantidas ao salvar.</p>':"")+
     (temFigAlt(q)
       ?'<p class="ajuda">As alternativas desta questão são figuras; escolha abaixo só a letra correta.</p>'
-      :'<label for="ed-alts">Alternativas — uma por linha</label>'+
+      :'<label for="ed-alts">Alternativas — uma por linha'+(function(){
+         var n=limiteAlternativas(q.tipo,etapaDaQuestao(q));
+         return n?' <span style="font-weight:400;color:var(--cinza)">— '+(etapaDaQuestao(q)?etapaDaQuestao(q)+": ":"")+n+" alternativas, de A a "+LETRAS[n-1]+"</span>":"";
+       })()+'</label>'+
        '<textarea id="ed-alts" class="alts-edit" placeholder="Deixe vazio para questão dissertativa.">'+esc(q.alternativas.join("\n"))+"</textarea>")+
     '<div class="dupla">'+
       '<div><label for="ed-correta">Alternativa correta</label><select id="ed-correta">'+
@@ -3378,6 +3421,10 @@ function ligarEditor(alvo){
       var enunciado=$("ed-enunciado").value.trim();
       if(!enunciado){msg("ed-aviso","O enunciado não pode ficar vazio.","erro");return;}
       if(alts.length===1){msg("ed-aviso","Uma questão objetiva precisa de pelo menos duas alternativas — ou nenhuma, se for dissertativa.","erro");return;}
+      var etapaEd=etapaDaQuestao(q), tetoEd=limiteAlternativas($("ed-tipo").value,etapaEd);
+      if(!temFigAlt(q)&&tetoEd&&alts.length>tetoEd){
+        msg("ed-aviso",(etapaEd?"No "+etapaEd:"Neste estilo")+" a questão tem no máximo "+tetoEd+" alternativas (de A a "+LETRAS[tetoEd-1]+"). Apague "+
+          (alts.length-tetoEd===1?"uma linha":(alts.length-tetoEd)+" linhas")+" das alternativas.","erro");return;}
       // figura desenhada pelo app: a descrição editada é conferida antes de salvar qualquer coisa
       var novaFig=null, mexeuFig=false;
       if($("ed-figura")){
@@ -3580,11 +3627,7 @@ function limitarAoPedido(lista,quantidades,etapa){
     if(!vaga)return;
     restante[vaga]--;
     q.tipo=vaga;
-    var teto=limiteAlternativas(vaga,etapa);
-    if(q.alternativas.length>teto){
-      if(q.correta>=teto){var certa=q.alternativas[q.correta];q.alternativas=q.alternativas.slice(0,teto-1);q.alternativas.push(certa);q.correta=teto-1;}
-      else q.alternativas=q.alternativas.slice(0,teto);
-    }
+    cortarAlternativas(q,limiteAlternativas(vaga,etapa));
     aceitas.push(q);
   });
   return aceitas;
@@ -3625,9 +3668,17 @@ function embaralharSemRepetir(lista,usosExternos){
   });
   return lista;
 }
+// cópias das questões marcadas, já com o número de alternativas da etapa da prova
+// (Fundamental 4, Médio 5); sem série escolhida, vale a etapa de cada questão
 function selecaoAtual(){
+  var etapaProva=etapaDaSerie($("p-serie-turma").value||serieDaTurma($("p-turma").value||""));
   return questoes.filter(function(q){return selecionadas[q.id];})
-    .map(function(q){return JSON.parse(JSON.stringify(q));});
+    .map(function(q){
+      var c=JSON.parse(JSON.stringify(q));
+      if(c.tipo!=="dissertativa"&&c.alternativas&&c.alternativas.length)
+        cortarAlternativas(c,limiteAlternativas(c.tipo,etapaProva||etapaDaQuestao(c)));
+      return c;
+    });
 }
 $("btn-montar").addEventListener("click",function(){
   var lista=embaralharSemRepetir(selecaoAtual());
@@ -3794,13 +3845,33 @@ $("chave").addEventListener("input",ajustarBotoesChave);
 function atualizarAvisoChave(){
   var aviso=$("aviso-sem-chave");
   if(aviso)aviso.style.display=conf.chave?"none":"";
+  // se a chave foi apagada em Ajustes, a tela da chave volta
+  if(precisaPortaoChave())atualizarPortaoChave();
 }
 function abrirAssistenteChave(){
   $("chave-assistente").value="";
   $("retorno-assistente").innerHTML="";
   $("assistente-chave").style.display="";
 }
-function fecharAssistenteChave(){$("assistente-chave").style.display="none";}
+function fecharAssistenteChave(){if(!precisaPortaoChave())$("assistente-chave").style.display="none";}
+/* com a nuvem: depois de entrar com o Google e ser liberado, quem ainda não tem chave
+   vê só a tela da chave; o site abre por inteiro quando a chave é salva e testada.
+   Aberto como arquivo, sem nuvem, vale o mesmo. */
+function precisaPortaoChave(){
+  if(conf.chave||typeof NV==="undefined"||!NV)return false;
+  return NV.estado==="arquivo"||(!!NV.usuario&&NV.membro&&NV.estado!=="semacesso");
+}
+function atualizarPortaoChave(){
+  var tela=$("assistente-chave"), precisa=precisaPortaoChave(), era=tela.classList.contains("portao-chave");
+  tela.classList.toggle("portao",precisa);
+  tela.classList.toggle("portao-chave",precisa);
+  if(precisa){
+    if(!era){$("chave-assistente").value="";$("retorno-assistente").innerHTML="";}
+    $("portao-chave-email").textContent=NV.usuario?NV.usuario.email:"";
+    $("btn-portao-chave-trocar").parentNode.style.display=NV.usuario?"":"none";
+    tela.style.display="";
+  }else if(era)tela.style.display="none";
+}
 document.querySelectorAll("[data-abrir-assistente]").forEach(function(b){b.addEventListener("click",abrirAssistenteChave);});
 $("btn-abrir-aistudio").addEventListener("click",function(){
   window.open("https://aistudio.google.com/apikey","_blank","noopener");
@@ -3821,8 +3892,9 @@ $("btn-salvar-assistente").addEventListener("click",function(){
     salvarConf();
     $("provedor").value=conf.provedor;$("modelo").value=conf.modelo;$("chave").value=conf.chave;
     ajustarBotoesChave();atualizarAvisoChave();
-    msg("retorno-assistente","Chave funcionando e salva. Já pode gerar questões.","ok");
-    setTimeout(fecharAssistenteChave,1600);
+    var eraPortao=$("assistente-chave").classList.contains("portao-chave");
+    msg("retorno-assistente","Chave funcionando e salva. "+(eraPortao?"Abrindo o site…":"Já pode gerar questões."),"ok");
+    setTimeout(function(){atualizarPortaoChave();fecharAssistenteChave();},eraPortao?900:1600);
   }).catch(function(e){
     conf.provedor=antes.provedor;conf.modelo=antes.modelo;conf.chave=antes.chave;
     msg("retorno-assistente","A chave não funcionou: "+esc(e.message)+" Confira se copiou a chave inteira.","erro");
@@ -5474,8 +5546,11 @@ function recarregarProvas(){
 }
 /* escolher a prova em três toques, como o "Criar a partir de" do Gerar:
    origem (cartões) › ano › caderno. O select escondido continua sendo a fonte. */
+/* ENEM e SSA aparecem sempre (são as provas importadas para todos); as outras origens
+   só ganham cartão quando há alguma prova delas no acervo */
 var ORIGENS_PROVA=[["enem","ENEM","INEP"],["ssa","SSA","UPE"],["passe","PASSE",""],["unicamp","UNICAMP",""],
   ["fuvest","Fuvest",""],["cebraspe","CEBRASPE",""],["outro","Outras","outras bancas"]],
+  ORIGENS_SEMPRE=["enem","ssa"],
   CHAVE_ORIGEM_PROVA="bancoQuestoes.origemOficiais.v1";
 function origemDaProva(p){
   var t=((p.origem||"")+" "+(p.nome||"")).toLowerCase();
@@ -5501,7 +5576,9 @@ function renderEscolhaProva(){
   var o=provaAtual?origemDaProva(provaAtual):(origemEscolhida()||ler(CHAVE_ORIGEM_PROVA)||"");
   var conhecidas=ORIGENS_PROVA.map(function(x){return x[0];});
   if(conhecidas.indexOf(o)<0)o=conhecidas.filter(function(k){return grupos[k];})[0]||"";
-  $("origens-provas").innerHTML=ORIGENS_PROVA.map(function(x){
+  $("origens-provas").innerHTML=ORIGENS_PROVA.filter(function(x){
+    return grupos[x[0]]||ORIGENS_SEMPRE.indexOf(x[0])>=0;
+  }).map(function(x){
     var n=(grupos[x[0]]||[]).length;
     return '<label class="origem'+(n?"":" vazia")+'"><input type="radio" name="origem-oficial" value="'+x[0]+'"'+(x[0]===o?" checked":"")+
       ">"+miniCapa(x[0],{unicamp:"UNI",fuvest:"FUV",cebraspe:"CESPE",outro:"…"}[x[0]]||x[1])+"<strong>"+x[1]+"</strong><span>"+(n?n+(n===1?" prova":" provas"):"nenhuma ainda")+(x[2]?" · "+x[2]:"")+"</span></label>";
@@ -7126,6 +7203,7 @@ function nuvemEstado(qual,detalhe){
     if(NV.usuario)$("portao-email").textContent=NV.usuario.email;
     if(!semLogin&&!barrado)$("portao-msg").innerHTML="";
   }
+  atualizarPortaoChave();
 }
 
 /* ---- conexão ---- */
@@ -7444,6 +7522,10 @@ $("btn-nuvem-entrar").addEventListener("click",nuvemEntrar);
 $("btn-portao-entrar").addEventListener("click",nuvemEntrar);
 $("btn-portao-tentar").addEventListener("click",function(){if(NV.usuario)nuvemVerificarAcesso();});
 $("btn-portao-trocar").addEventListener("click",function(){
+  if(!NV.auth)return;
+  NV.sdk.signOut(NV.auth).then(nuvemEntrar).catch(function(){});
+});
+$("btn-portao-chave-trocar").addEventListener("click",function(){
   if(!NV.auth)return;
   NV.sdk.signOut(NV.auth).then(nuvemEntrar).catch(function(){});
 });
