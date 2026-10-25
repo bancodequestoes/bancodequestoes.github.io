@@ -5805,11 +5805,14 @@ function renderOficiais(){
       '<span class="tag">página '+q.pagina+"</span>"+
       (q.temFigura?'<span class="tag habilidade">com figura</span>':"")+
       (q.gabarito==="Anulada"?'<span class="tag">questão anulada pelo INEP</span>':
+       q.gabarito&&q.gabaritoNaoOficial?'<span class="tag" title="O caderno veio sem gabarito; a resposta foi resolvida à parte">gabarito '+q.gabarito+" · não oficial</span>":
        q.gabarito?'<span class="tag habilidade">gabarito '+q.gabarito+"</span>":'<span class="tag">sem gabarito</span>');
     return '<article class="ficha'+(oficiaisSelecionadas[q.chave]?" marcada":"")+'">'+
       '<div class="lombada"><input type="checkbox" data-oficial="'+esc(q.chave)+'"'+(oficiaisSelecionadas[q.chave]?" checked":"")+'></div>'+
       '<div class="corpo"><div class="meta">'+etiquetas+"</div>"+
-      corpoDaQuestao(q,rotuloQuestao(q.numero)+(q.variante?" — "+q.variante:""),true)+"</div></article>";
+      corpoDaQuestao(q,rotuloQuestao(q.numero)+(q.variante?" — "+q.variante:""),true)+
+      (q.resolucao?'<div class="resolucao"><strong>Sobre o gabarito</strong> <span>material do professor; não vai para a prova</span>'+esc(q.resolucao)+"</div>":"")+
+      "</div></article>";
   }).join("")+(function(){
     var restam=lista.length-visiveisOficiais;
     if(restam<=0)return "";
@@ -6247,8 +6250,10 @@ function corpoOficialXml(lista,ctx,comGabarito){
   if(comGabarito){
     out+=parOficial("GABARITO",ctx,{negrito:true,quebra:true,alinhar:"center"});
     out+=linhaVazia(ctx);
-    var chave=lista.map(function(q,i){return numeroQuestao(i)+" – "+(q.gabarito==="Anulada"?"anulada":(q.gabarito||"?"));}).join("     ");
+    var chave=lista.map(function(q,i){return numeroQuestao(i)+" – "+(q.gabarito==="Anulada"?"anulada":(q.gabarito||"?")+(q.gabaritoNaoOficial?"*":""));}).join("     ");
     out+=parOficial(chave,ctx,{});
+    if(lista.some(function(q){return q.gabaritoNaoOficial;}))
+      out+=parOficial("* gabarito não oficial: o caderno original veio sem gabarito.",ctx,{tamanho:menor});
     out+=linhaVazia(ctx);
     out+=parOficial("Fonte: "+provaAtual.nome+". Numeração original: "+
       lista.map(function(q,i){return numeroQuestao(i)+" = "+q.numero+(q.variante?" ("+q.variante.toLowerCase()+")":"");}).join("; ")+".",
