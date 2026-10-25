@@ -188,6 +188,7 @@ input[type=text]:focus,input[type=number]:focus,input[type=password]:focus,selec
 textarea{min-height:76px;resize:vertical}
 input[type=file]{font-size:13px}
 .linha{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+#linha-prova{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
 .quatro{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
 @media(max-width:640px){.linha,.quatro{grid-template-columns:1fr}}
 
@@ -847,6 +848,8 @@ input[type=file]{font-size:13px}
     <div class="painel-origem" id="painel-prova" hidden>
       <div class="linha" id="linha-prova">
         <div><label for="prova-ano">Ano</label><select id="prova-ano"></select></div>
+        <div id="caixa-prova-turma" hidden><label for="prova-turma">Turma</label><select id="prova-turma"></select></div>
+        <div id="caixa-prova-area" hidden><label for="prova-area">Área / disciplina</label><select id="prova-area"></select></div>
         <div hidden><label for="prova-caderno">Caderno</label><select id="prova-caderno"></select></div>
       </div>
       <div class="grade-capas" id="capas-provas" aria-label="Cadernos do ano"></div>
@@ -5569,6 +5572,45 @@ function rotuloCaderno(p){
   if(!/[a-zà-ú]{3}/i.test(r))r=p.nome||"Prova";
   return r+" — "+p.questoes.length+" questões";
 }
+/* turma e área saem do nome do caderno ("PASSE 2023 — Avalia SESI 1 — 6º ano — Matemática");
+   no SSA a fase é a série (1ª fase = 1ª série). Servem para filtrar os cadernos do ano. */
+var AREAS_PROVA=["Ciências Humanas","Ciências da Natureza","Linguagens","Matemática","Redação"];
+function turmaDaProva(p){
+  var n=p.nome||"", m=/\b([6-9])º\s*ano\b/i.exec(n);
+  if(m)return m[1]+"º ano";
+  m=/\b([1-3])ª\s*série\b/i.exec(n);
+  if(m)return m[1]+"ª série";
+  m=/\b([1-3])ª\s*fase\b/i.exec(n);
+  if(m&&origemDaProva(p)==="ssa")return m[1]+"ª série";
+  return "";
+}
+function ordemTurma(t){var n=parseInt(t,10)||0;return /ano/.test(t)?n:10+n;}
+function areaDaProva(p){
+  var n=(p.nome||"").toLowerCase();
+  return AREAS_PROVA.filter(function(a){return n.indexOf(a.toLowerCase())>=0;})[0]||"";
+}
+/* cadernos em ordem de turma (6º ano … 3ª série), depois de área, depois pelo nome */
+function compararCadernos(a,b){
+  var ta=turmaDaProva(a), tb=turmaDaProva(b);
+  if(ta!==tb)return ta&&tb?ordemTurma(ta)-ordemTurma(tb):(ta?-1:1);
+  var aa=AREAS_PROVA.indexOf(areaDaProva(a)), ab=AREAS_PROVA.indexOf(areaDaProva(b));
+  if(aa!==ab)return aa-ab;
+  return (a.nome||"").localeCompare(b.nome||"","pt-BR",{numeric:true});
+}
+function passaFiltroCaderno(p){
+  var t=$("prova-turma").value, a=$("prova-area").value;
+  return (!t||turmaDaProva(p)===t)&&(!a||areaDaProva(p)===a);
+}
+/* com filtro: os que passam; se nenhum passar, a lista toda */
+function preferirFiltrados(lista){
+  var f=lista.filter(passaFiltroCaderno);return f.length?f:lista;
+}
+function encherFiltroCaderno(id,valores,rotulo){
+  var sel=$(id), atual=sel.value;
+  $("caixa-"+id).hidden=valores.length<2;
+  sel.innerHTML='<option value="">'+rotulo+"</option>"+valores.map(function(v){return '<option value="'+esc(v)+'">'+esc(v)+"</option>";}).join("");
+  sel.value=valores.length>1&&valores.indexOf(atual)>=0?atual:"";
+}
 function origemEscolhida(){var r=document.querySelector('input[name="origem-oficial"]:checked');return r?r.value:"";}
 function renderEscolhaProva(){
   var grupos={};
@@ -5598,16 +5640,28 @@ function renderEscolhaProva(){
   $("prova-ano").innerHTML=listaAnos.map(function(a){return "<option>"+esc(a)+"</option>";}).join("");
   $("prova-ano").value=ano;
   var doAno=lista.filter(function(p){return (anoDaProva(p)||"Sem ano")===ano;})
-    .sort(function(a,b){return (a.nome||"").localeCompare(b.nome||"","pt-BR",{numeric:true});});
+    .sort(compararCadernos);
   $("prova-caderno").innerHTML=doAno.map(function(p){return '<option value="'+p.id+'">'+esc(rotuloCaderno(p))+"</option>";}).join("");
   if(provaAtual&&doAno.indexOf(provaAtual)>=0)$("prova-caderno").value=provaAtual.id;
-  $("capas-provas").innerHTML=doAno.map(function(p){
+  var turmas={}, areas={};
+  doAno.forEach(function(p){var t=turmaDaProva(p), a=areaDaProva(p);if(t)turmas[t]=1;if(a)areas[a]=1;});
+  encherFiltroCaderno("prova-turma",Object.keys(turmas).sort(function(a,b){return ordemTurma(a)-ordemTurma(b);}),"Todas as turmas");
+  encherFiltroCaderno("prova-area",AREAS_PROVA.filter(function(a){return areas[a];}),"Todas as áreas");
+  // a prova aberta sempre aparece: o filtro que a esconderia volta para "todas"
+  if(provaAtual&&doAno.indexOf(provaAtual)>=0){
+    if($("prova-turma").value&&turmaDaProva(provaAtual)!==$("prova-turma").value)$("prova-turma").value="";
+    if($("prova-area").value&&areaDaProva(provaAtual)!==$("prova-area").value)$("prova-area").value="";
+  }
+  var visiveis=doAno.filter(passaFiltroCaderno);
+  $("capas-provas").innerHTML=visiveis.map(function(p){
     var esta=provaAtual&&provaAtual.id===p.id;
     return '<button type="button" class="card-capa'+(esta?" escolhida":"")+'" data-prova="'+esc(p.id)+'" aria-pressed="'+(esta?"true":"false")+'">'+capaProva(p)+
       '<span class="card-nome">'+esc(trechoCaderno(p))+'</span><span class="card-sub">'+p.questoes.length+" questões</span>"+
       '<span class="card-acao">'+(esta?"✓ Aberta":"Abrir")+"</span></button>";
   }).join("");
-  $("info-prova").textContent=lista.length+(lista.length===1?" prova":" provas")+" desta origem, de "+listaAnos.length+(listaAnos.length===1?" ano.":" anos.");
+  $("info-prova").textContent=(visiveis.length<doAno.length
+      ? "Mostrando "+visiveis.length+" de "+doAno.length+" cadernos de "+ano+". "
+      : "")+lista.length+(lista.length===1?" prova":" provas")+" desta origem, de "+listaAnos.length+(listaAnos.length===1?" ano.":" anos.");
 }
 function escolherProva(idProva){
   var sel=$("prova-escolhida");
@@ -5621,14 +5675,25 @@ $("origens-provas").addEventListener("change",function(ev){
   if(!daOrigem.length){provaAtual=null;$("prova-escolhida").value="";oficiaisSelecionadas={};
     renderEscolhaProva();preencherFiltrosOficiais();renderOficiais();return;}
   // a mais recente: maior ano, primeiro caderno
-  daOrigem.sort(function(a,b){return (anoDaProva(b)).localeCompare(anoDaProva(a))||(a.nome||"").localeCompare(b.nome||"","pt-BR",{numeric:true});});
-  escolherProva(daOrigem[0].id);
+  daOrigem.sort(function(a,b){return (anoDaProva(b)).localeCompare(anoDaProva(a))||compararCadernos(a,b);});
+  escolherProva(preferirFiltrados(daOrigem)[0].id);
 });
 $("prova-ano").addEventListener("change",function(){
   var o=origemEscolhida(), ano=this.value;
-  var p=provasCarregadas.filter(function(p){return origemDaProva(p)===o&&(anoDaProva(p)||"Sem ano")===ano;})
-    .sort(function(a,b){return (a.nome||"").localeCompare(b.nome||"","pt-BR",{numeric:true});})[0];
-  if(p)escolherProva(p.id);
+  var doAno=provasCarregadas.filter(function(p){return origemDaProva(p)===o&&(anoDaProva(p)||"Sem ano")===ano;})
+    .sort(compararCadernos);
+  if(doAno.length)escolherProva(preferirFiltrados(doAno)[0].id);
+});
+/* mudar turma ou área abre o primeiro caderno que passa no filtro */
+["prova-turma","prova-area"].forEach(function(id){
+  $(id).addEventListener("change",function(){
+    var o=origemEscolhida(), ano=$("prova-ano").value;
+    var doAno=provasCarregadas.filter(function(p){return origemDaProva(p)===o&&(anoDaProva(p)||"Sem ano")===ano;})
+      .sort(compararCadernos);
+    var vis=doAno.filter(passaFiltroCaderno);
+    if(!vis.length||(provaAtual&&vis.indexOf(provaAtual)>=0)){renderEscolhaProva();return;}
+    escolherProva(vis[0].id);
+  });
 });
 $("prova-caderno").addEventListener("change",function(){escolherProva(this.value);});
 $("capas-provas").addEventListener("click",function(ev){
