@@ -5129,8 +5129,67 @@ function provaLeve(pr){
   });
   return c;
 }
-function registroLeve(pr){
-  return {id:pr.id,p:provaLeve(pr),r:resumoDe(JSON.stringify(semArquivo(pr)))};
+/* Na nuvem, cada prova vai em duas partes: o texto (p, a versão leve) e as figuras (g).
+   Assim, classificar ou corrigir uma prova reenvia só o texto, não os MB de figuras.
+   O registro leve guarda os resumos das duas partes (rt e rg) e o da prova inteira (r),
+   que é o formato antigo, ainda na nuvem para as provas que ninguém mexeu desde então. */
+function textoDaLeve(l){
+  var c={};
+  Object.keys(l).forEach(function(k){if(k!=="leve"&&k!=="hidratando")c[k]=l[k];});
+  return JSON.stringify(c);
+}
+function figurasDaProva(pr){
+  var lista=[];
+  [["questoes",0],["comuns",1]].forEach(function(par){
+    (pr[par[0]]||[]).forEach(function(q,i){
+      var ch=q.chave||q.id||("#"+i);
+      (q.partes||[]).forEach(function(b,j){if(b&&b.tipo==="figura"&&b.imagem)lista.push([par[1],ch,j,b.imagem,i]);});
+      if(q.alternativasFigura&&q.alternativasFigura!=="leve")lista.push([par[1],ch,-1,q.alternativasFigura,i]);
+    });
+  });
+  return lista.length?JSON.stringify(lista):"";
+}
+function aplicarFiguras(pr,lista){
+  var porChave=[{},{}], campos=[pr.questoes||[],pr.comuns||[]];
+  campos.forEach(function(arr,c){
+    arr.forEach(function(q,i){porChave[c][q.chave||q.id||("#"+i)]=q;});
+  });
+  (lista||[]).forEach(function(f){
+    // a questão na mesma posição, se for a mesma; senão, a de mesma chave
+    var q=campos[f[0]]&&campos[f[0]][f[4]];
+    if(!q||(q.chave||q.id||("#"+f[4]))!==f[1])q=porChave[f[0]]&&porChave[f[0]][f[1]];
+    if(!q)return;
+    if(f[2]<0)q.alternativasFigura=f[3];
+    else if(q.partes&&q.partes[f[2]]&&q.partes[f[2]].tipo==="figura")q.partes[f[2]].imagem=f[3];
+  });
+  return pr;
+}
+function temFiguras(pr){
+  return ["questoes","comuns"].some(function(c){
+    return (pr[c]||[]).some(function(q){
+      return (q.alternativasFigura&&q.alternativasFigura!=="leve")||(q.partes||[]).some(function(b){return b&&b.tipo==="figura"&&b.imagem;});
+    });
+  });
+}
+function faltamFiguras(pr){
+  return ["questoes","comuns"].some(function(c){
+    return (pr[c]||[]).some(function(q){
+      return q.alternativasFigura==="leve"||(q.partes||[]).some(function(b){return b&&b.tipo==="figura"&&!b.imagem;});
+    });
+  });
+}
+/* resumos das provas na memória, para a nuvem não reler a loja leve a cada envio */
+var RESUMOS_PROVAS=null;
+function registroLeve(pr,fixos){
+  fixos=fixos||{};
+  var leve=provaLeve(pr), figs=fixos.rg===undefined?figurasDaProva(pr):"";
+  var reg={id:pr.id,p:leve,r:resumoDe(JSON.stringify(semArquivo(pr))),
+           rt:fixos.rt||resumoDe(textoDaLeve(leve)),
+           rg:fixos.rg!==undefined?fixos.rg:(figs?resumoDe(figs):"")};
+  return reg;
+}
+function guardarResumo(reg){
+  if(RESUMOS_PROVAS)RESUMOS_PROVAS[reg.id]={r:reg.r,rt:reg.rt,rg:reg.rg};
 }
 /* uma prova leve que volta para ser gravada recupera as figuras da versão inteira guardada */
 function devolverFiguras(leve,cheia){
@@ -5156,16 +5215,17 @@ function devolverFiguras(leve,cheia){
   if(cheia&&cheia.arquivo&&!c.arquivo)c.arquivo=cheia.arquivo;
   return c;
 }
-function gravarProva(prova){
+/* fixos: resumos já conhecidos (o da versão que veio da nuvem), para não reenviar o eco */
+function gravarProva(prova,fixos){
   var pronta=prova.leve?lerProva(prova.id).then(function(cheia){return devolverFiguras(prova,cheia);}):Promise.resolve(prova);
   return pronta.then(function(cheia){
-    var reg=registroLeve(cheia);
+    var reg=registroLeve(cheia,fixos);
     return abrirBD().then(function(db){
       return new Promise(function(ok,erro){
         var t=db.transaction([BD_LOJA,BD_LEVES],"readwrite");
         t.objectStore(BD_LOJA).put(cheia);
         t.objectStore(BD_LEVES).put(reg);
-        t.oncomplete=function(){acervoCache=null;nuvemMudou();ok();};
+        t.oncomplete=function(){acervoCache=null;guardarResumo(reg);nuvemMudou();ok();};
         t.onerror=function(){erro(t.error);};
       });
     });
@@ -5221,6 +5281,20 @@ function listarRegistrosLeves(){
           r.onsuccess=function(){ok(r.result||[]);};
           r.onerror=function(){erro(r.error);};
         });
+      }).then(function(regs){
+        // registros de antes da divisão texto/figuras ganham o resumo do texto (o das figuras
+        // fica para quando a prova for gravada de novo)
+        var velhos=regs.filter(function(reg){return !reg.rt;});
+        velhos.forEach(function(reg){reg.rt=resumoDe(textoDaLeve(reg.p));});
+        var resumos={};
+        regs.forEach(function(reg){resumos[reg.id]={r:reg.r,rt:reg.rt,rg:reg.rg};});
+        RESUMOS_PROVAS=resumos;
+        if(!velhos.length)return regs;
+        return new Promise(function(ok){
+          var t=db.transaction(BD_LEVES,"readwrite");
+          velhos.forEach(function(reg){t.objectStore(BD_LEVES).put(reg);});
+          t.oncomplete=t.onerror=function(){ok(regs);};
+        });
       });
     });
   });
@@ -5259,7 +5333,7 @@ function apagarProvaBD(idProva){
       var t=db.transaction([BD_LOJA,BD_LEVES],"readwrite");
       t.objectStore(BD_LOJA).delete(idProva);
       t.objectStore(BD_LEVES).delete(idProva);
-      t.oncomplete=function(){acervoCache=null;nuvemMudou();ok();};
+      t.oncomplete=function(){acervoCache=null;if(RESUMOS_PROVAS)delete RESUMOS_PROVAS[idProva];nuvemMudou();ok();};
       t.onerror=function(){erro(t.error);};
     });
   });
@@ -6053,6 +6127,8 @@ function trocarProvaAtual(p){
   provaAtual=p;
   if(p&&p.leve)hidratarProva(p).then(function(){
     if(provaAtual===p)renderOficiais();
+    // figuras que faltam aqui (a prova chegou sem elas) são buscadas na nuvem
+    if(!p.leve&&faltamFiguras(p))buscarFigurasDaNuvem(p).then(function(ok){if(ok&&provaAtual===p)renderOficiais();});
   },function(){
     if(provaAtual===p)msg("retorno-prova","Não foi possível abrir as figuras desta prova neste aparelho.","erro");
   });
@@ -7961,9 +8037,21 @@ var NV={sdk:null,auth:null,db:null,usuario:null,membro:false,admin:false,pronto:
         versoes:{},aplicado:{},fila:Promise.resolve(),teste:false};
 try{
   var nuvemSalva=JSON.parse(ler(CHAVE_NUVEM)||"null");
-  if(nuvemSalva){NV.marco=nuvemSalva.marco||0;NV.h=nuvemSalva.h||{};}
+  if(nuvemSalva){
+    NV.marco=nuvemSalva.marco||0;NV.h=nuvemSalva.h||{};
+    // o marco das versões antigas era usado com 5 minutos de folga; na primeira vez, recua uma vez
+    if(nuvemSalva.v!==2)NV.marco=Math.max(0,NV.marco-FOLGA_MARCO);
+  }
 }catch(e){}
-function nuvemGuardar(){gravar(CHAVE_NUVEM,JSON.stringify({marco:NV.marco,h:NV.h}));}
+function nuvemGuardar(){gravar(CHAVE_NUVEM,JSON.stringify({v:2,marco:NV.marco,h:NV.h}));}
+/* o resumo de um texto que não mudou desde o último envio sai da memória, sem refazer a conta */
+var RESUMO_CACHE={};
+function resumoGuardado(k,s){
+  var c=RESUMO_CACHE[k];
+  if(c&&c.s===s)return c.r;
+  var r=resumoDe(s);RESUMO_CACHE[k]={s:s,r:r};
+  return r;
+}
 function resumoDe(s){
   var h=0x811c9dc5;
   for(var i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,0x01000193);}
@@ -8027,7 +8115,7 @@ function nuvemIniciar(){
   var emulador=/[?&]emulador=1/.test(location.search)&&/^(localhost|127\.0\.0\.1)$/.test(location.hostname);
   if(location.protocol==="file:"&&!emulador){nuvemEstado("arquivo");return;}
   nuvemEstado("carregando");
-  import("./firebase-sdk.js?v=3").then(function(S){
+  import("./firebase-sdk.js?v=4").then(function(S){
     NV.sdk=S;
     var cfg=emulador?{apiKey:"teste",authDomain:"localhost",projectId:"demo-banco"}:NUVEM_CONFIG;
     var app=S.initializeApp(cfg);
@@ -8086,17 +8174,21 @@ function nuvemParar(){
 }
 
 /* ---- recebimento ----
-   Primeiro, o atraso é baixado em páginas pequenas, cada uma gravada no aparelho antes
-   da próxima: num aparelho novo a nuvem inteira passa de 250 MB (as provas oficiais com
-   as figuras) e, pedida de uma vez, derrubava o Safari do iPhone. Depois, um ouvinte só,
-   a partir do último marco, traz o que os colegas forem salvando.                      */
+   Tudo o que muda na nuvem é baixado pela versão "lite" do Firestore, em páginas pequenas,
+   cada uma gravada no aparelho antes da próxima: num aparelho novo a nuvem inteira passa
+   de 250 MB e, pedida de uma vez, derrubava o Safari do iPhone. A versão completa só
+   mantém um ouvinte de UM documento (o primeiro depois do marco), que serve de aviso de
+   que há novidade; aí as páginas são baixadas de novo a partir do marco. Assim a memória
+   não guarda cópia do que já foi baixado, e nada é baixado duas vezes.
+   O marco é a hora (do servidor) da última gravação recebida por inteiro. As gravações
+   deste aparelho (NV.meus, a hora de cada envio) ficam de fora da busca: são o eco.      */
 var PAGINA_NUVEM=40;
-function nuvemOuvir(){
+function nuvemOuvir(silencioso){
   if(NV.ouvinte){NV.ouvinte();NV.ouvinte=null;}
   var geracao=NV.geracao=(NV.geracao||0)+1;
-  NV.atualizando=true;NV.provasMudaram=false;
-  nuvemEstado("baixando");
-  nuvemPagina(Math.max(0,NV.marco-FOLGA_MARCO),null,geracao,0).then(function(){
+  NV.atualizando=true;NV.provasMudaram=false;NV.puxarDeNovo=false;
+  if(!silencioso)nuvemEstado("baixando");
+  nuvemBaixar(geracao).then(function(){
     if(geracao!==NV.geracao)return;
     NV.atualizando=false;
     if(NV.provasMudaram){NV.provasMudaram=false;recarregarProvas().catch(function(){});}
@@ -8108,56 +8200,90 @@ function nuvemOuvir(){
     if(!(e&&e.code==="permission-denied"))setTimeout(function(){if(NV.membro&&!NV.ouvinte&&geracao===NV.geracao)nuvemOuvir();},30000);
   });
 }
-function nuvemPagina(desde,ultimo,geracao,feitos){
+/* baixa, intervalo por intervalo entre os envios deste aparelho, tudo o que veio depois do marco */
+function nuvemBaixar(geracao){
+  NV.meus=(NV.meus||[]).filter(function(t){return t>NV.marco;}).sort(function(a,b){return a-b;});
+  var ate=NV.meus.length?NV.meus[0]:0;
+  NV.feitos=NV.feitos||0;
+  return nuvemPagina(NV.marco,ate,null,geracao,null).then(function(){
+    if(geracao!==NV.geracao)return;
+    if(!ate)return;
+    // tudo antes deste envio já chegou, e o que tem a hora dele é deste aparelho
+    if(ate>NV.marco){NV.marco=ate;nuvemGuardar();}
+    return nuvemBaixar(geracao);
+  });
+}
+function nuvemConsulta(desde,ate,ultimo){
   var S=NV.sdk;
-  // pela versão "lite": a completa guarda no cache cada documento lido e a memória enchia do mesmo jeito
-  var partes=[S.liteCollection(NV.dbLite,"dados"),S.liteWhere("t",">",S.liteTimestamp.fromMillis(desde)),S.liteOrderBy("t")];
+  var partes=[S.liteCollection(NV.dbLite,"dados"),S.liteWhere("t",">",S.liteTimestamp.fromMillis(desde))];
+  if(ate)partes.push(S.liteWhere("t","<",S.liteTimestamp.fromMillis(ate)));
+  partes.push(S.liteOrderBy("t"));
   if(ultimo)partes.push(S.liteStartAfter(ultimo));
   partes.push(S.liteLimit(PAGINA_NUVEM));
-  return S.liteGetDocs(S.liteQuery.apply(null,partes)).then(function(snap){
+  return S.liteGetDocs(S.liteQuery.apply(null,partes));
+}
+/* a próxima página já vem pela rede enquanto a atual é gravada (no máximo duas na memória) */
+function nuvemPagina(desde,ate,ultimo,geracao,pedida){
+  return (pedida||nuvemConsulta(desde,ate,ultimo)).then(function(snap){
     if(geracao!==NV.geracao)return;
-    var docs=snap.docs, lista=docs.map(function(d){return d.data();}), fim=docs[docs.length-1];
-    feitos+=lista.length;
-    if(feitos>PAGINA_NUVEM)nuvemEstado("baixando",feitos+" partes recebidas");
-    var n=docs.length, etapa=NV.fila.then(function(){var l=lista;lista=null;return aplicarDaNuvem(l);});
+    var docs=snap.docs, n=docs.length, fim=docs[n-1];
+    var lista=docs.map(function(d){return d.data();});
+    var proxima=n===PAGINA_NUVEM?nuvemConsulta(desde,ate,fim):null;
+    if(proxima)proxima.catch(function(){});
+    NV.feitos+=n;
+    if(NV.feitos>PAGINA_NUVEM)nuvemEstado("baixando",NV.feitos+" partes recebidas");
+    // o marco só passa de uma gravação quando ela chegou inteira: se a página acabou no meio
+    // de um envio (todos com a mesma hora), ele fica na hora anterior
+    var horas=lista.map(function(d){return d&&d.t?d.t.toMillis():0;}), ultimaHora=horas.length?horas[horas.length-1]:0;
+    var marco=NV.marco;
+    if(!proxima)marco=Math.max(marco,ultimaHora);
+    else horas.forEach(function(h){if(h<ultimaHora&&h>marco)marco=h;});
+    var etapa=NV.fila.then(function(){var l=lista;lista=null;return aplicarDaNuvem(l,marco);});
     NV.fila=etapa.catch(function(){});
     docs=null;snap=null;
     return etapa.then(function(){
-      if(n<PAGINA_NUVEM||geracao!==NV.geracao)return;
-      return nuvemPagina(desde,fim,geracao,feitos);
+      if(!proxima||geracao!==NV.geracao)return;
+      return nuvemPagina(desde,ate,fim,geracao,proxima);
     });
   });
 }
 function nuvemEscutar(geracao){
-  var S=NV.sdk;
-  var desde=Math.max(0,NV.marco-FOLGA_MARCO), primeira=true;
-  var q=S.query(S.collection(NV.db,"dados"),S.where("t",">",S.Timestamp.fromMillis(desde)));
+  var S=NV.sdk, primeira=true;
+  var q=S.query(S.collection(NV.db,"dados"),S.where("t",">",S.Timestamp.fromMillis(NV.marco)),S.orderBy("t"),S.limit(1));
   NV.ouvinte=S.onSnapshot(q,function(snap){
-    var lista=[];
-    // gravações deste aparelho ainda não confirmadas pelo servidor ficam de fora
-    snap.docChanges().forEach(function(c){if(c.type!=="removed"&&!c.doc.metadata.hasPendingWrites)lista.push(c.doc.data());});
-    NV.recebidos=(NV.recebidos||0)+lista.length;
-    NV.fila=NV.fila.then(function(){return aplicarDaNuvem(lista);}).catch(function(e){
-      nuvemEstado("erro",e&&e.message);
-    }).then(function(){
-      if(primeira){
-        primeira=false;NV.pronto=true;
-        nuvemEstado("ok");
-        nuvemEnviar();
-      }
-    });
+    if(geracao!==NV.geracao)return;
+    if(primeira){
+      primeira=false;NV.pronto=true;NV.feitos=0;
+      nuvemEstado("ok");
+      nuvemEnviar();
+    }
+    // gravações deste aparelho ainda não confirmadas pelo servidor não contam como novidade
+    if(snap.empty||snap.docs[0].metadata.hasPendingWrites)return;
+    nuvemPuxar(geracao);
   },function(e){
     NV.ouvinte=null;NV.pronto=false;
     nuvemEstado(e&&e.code==="permission-denied"?"semacesso":"erro",e&&e.code);
     if(!(e&&e.code==="permission-denied"))setTimeout(function(){if(NV.membro&&!NV.ouvinte&&geracao===NV.geracao)nuvemOuvir();},30000);
   });
 }
-function aplicarDaNuvem(lista){
-  var maior=NV.marco, tocados={};
+/* há novidade: espera o envio em curso (para saber a hora dele e não baixar o eco) e baixa */
+function nuvemPuxar(geracao){
+  clearTimeout(NV.puxada);
+  NV.puxada=setTimeout(function(){
+    if(geracao!==NV.geracao)return;
+    if(NV.enviando){NV.enviando.then(function(){nuvemPuxar(geracao);});return;}
+    nuvemOuvir(true);
+  },400);
+}
+function aplicarDaNuvem(lista,marco){
+  var tocados={};
   lista.forEach(function(d){
-    if(!d||!d.t||!d.tipo||d.ref==null)return;   // gravação deste aparelho ainda sem a hora do servidor
-    var ms=d.t.toMillis(); if(ms>maior)maior=ms;
-    var k=d.tipo+"~"+d.ref, porV=NV.versoes[k]||(NV.versoes[k]={});
+    if(!d||!d.t||!d.tipo)return;   // gravação deste aparelho ainda sem a hora do servidor
+    // as figuras de uma prova (g) não têm "ref", para que as versões antigas do site as ignorem
+    var k=d.tipo==="g"?(d.alvo?"g~"+d.alvo:null):(d.ref==null?null:d.tipo+"~"+d.ref);
+    if(!k)return;
+    var ms=d.t.toMillis();
+    var porV=NV.versoes[k]||(NV.versoes[k]={});
     var ver=porV[d.v]||(porV[d.v]={n:d.n,p:{},t:0,apagado:false});
     ver.p[d.i]=d.s||"";
     if(d.i===0){ver.t=ms;ver.apagado=!!d.apagado;ver.n=d.n;}
@@ -8210,8 +8336,8 @@ function aplicarDaNuvem(lista){
           if(pm>-1)materiais[pm]=mat;else materiais.push(mat);
         }
         mudou.m=true;
-      }else if(tipo==="p"){
-        provas.push({ref:ref,apagado:it.apagado,s:it.s});
+      }else if(tipo==="p"||tipo==="g"){
+        provas.push({tipo:tipo,ref:ref,apagado:it.apagado,s:it.s,r:r});
         mudou.p=true;
       }else if(tipo==="x"&&ref==="timbrado"){
         if(it.apagado){apagar(CHAVE_MODELO);}
@@ -8228,11 +8354,30 @@ function aplicarDaNuvem(lista){
   var etapaProvas=Promise.resolve();
   provas.forEach(function(pr){
     etapaProvas=etapaProvas.then(function(){
+      if(pr.tipo==="g"){
+        // as figuras apagadas só importam junto com a prova, que vem como p apagada
+        if(pr.apagado)return;
+        var figs=JSON.parse(pr.s);pr.s=null;
+        return lerProva(pr.ref).catch(function(){return null;}).then(function(atual){
+          // a prova nova chega logo depois das figuras, no mesmo envio
+          if(!atual){NV.figurasEsperando=NV.figurasEsperando||{};NV.figurasEsperando[pr.ref]={f:figs,r:pr.r};return;}
+          var rs=RESUMOS_PROVAS&&RESUMOS_PROVAS[pr.ref];
+          return gravarProva(aplicarFiguras(atual,figs),{rt:rs&&rs.rt,rg:pr.r});
+        });
+      }
       if(pr.apagado)return apagarProvaBD(pr.ref);
       var nova=JSON.parse(pr.s);pr.s=null;
       return lerProva(pr.ref).catch(function(){return null;}).then(function(atual){
-        if(atual&&atual.arquivo)nova.arquivo=atual.arquivo;   // o PDF original continua só aqui
-        return gravarProva(nova);
+        // formato antigo: a prova inteira, com as figuras
+        if(!faltamFiguras(nova)||temFiguras(nova)){
+          if(atual&&atual.arquivo)nova.arquivo=atual.arquivo;   // o PDF original continua só aqui
+          return gravarProva(nova);
+        }
+        // só o texto: as figuras continuam as que já estão aqui (ou as que chegaram antes)
+        var cheia=atual?devolverFiguras(nova,atual):nova;
+        var esperando=NV.figurasEsperando&&NV.figurasEsperando[pr.ref], rs=RESUMOS_PROVAS&&RESUMOS_PROVAS[pr.ref];
+        if(esperando){aplicarFiguras(cheia,esperando.f);delete NV.figurasEsperando[pr.ref];}
+        return gravarProva(cheia,{rt:pr.r,rg:esperando?esperando.r:(atual&&rs&&rs.rg!==undefined?rs.rg:undefined)});
       });
     });
   });
@@ -8242,7 +8387,7 @@ function aplicarDaNuvem(lista){
   });
   return Promise.all(esperas.concat([etapaProvas])).catch(function(){}).then(function(){
     if(mudou.q&&!editando)renderBanco();
-    NV.marco=maior;
+    if(marco>NV.marco)NV.marco=marco;
     nuvemGuardar();
   });
 }
@@ -8260,23 +8405,53 @@ function itensLocais(){
   materiais.forEach(function(m){mapa["m~"+m.id]=JSON.stringify(semAtivo(m));});
   var tb=ler(CHAVE_MODELO); if(tb)mapa["x~timbrado"]=tb;
   var pl=ler(CHAVE_MODELO_PLANO); if(pl)mapa["x~plano"]=pl;
-  // das provas vem só o resumo guardado na versão leve; o conteúdo é lido se precisar subir
-  var resumos={};
-  return listarRegistrosLeves().then(function(regs){
-    regs.forEach(function(reg){mapa["p~"+reg.id]="";resumos["p~"+reg.id]=reg.r;});
+  // das provas vem só o resumo guardado (na memória, desde a última leitura da loja leve);
+  // o conteúdo é lido se precisar subir. As figuras (g) vão antes do texto (p) da mesma prova.
+  var resumos={}, mudou=false;
+  var lidos=RESUMOS_PROVAS?Promise.resolve():listarRegistrosLeves();
+  return lidos.then(function(){
+    Object.keys(RESUMOS_PROVAS).forEach(function(id){
+      var rs=RESUMOS_PROVAS[id], kp="p~"+id, kg="g~"+id;
+      // na nuvem está a prova inteira, igual à daqui (formato antigo): já está em dia
+      if(NV.h[kp]===rs.r&&rs.r!==rs.rt){NV.h[kp]=rs.rt;mudou=true;}
+      var sobeTexto=NV.h[kp]!==rs.rt, temNaNuvem=NV.h[kg]!==undefined&&NV.h[kg]!=="x";
+      if(rs.rg===undefined){
+        // resumo das figuras ainda desconhecido: é calculado se o texto subir
+        if(sobeTexto){mapa[kg]="";resumos[kg]="?";}
+        else if(temNaNuvem){mapa[kg]="";resumos[kg]=NV.h[kg];}
+      }else if(rs.rg){
+        // as figuras sobem com o primeiro texto no formato novo, ou quando mudaram
+        if(sobeTexto||temNaNuvem){mapa[kg]="";resumos[kg]=rs.rg;}
+      }else if(temNaNuvem){
+        // sem figuras aqui (não chegaram, por exemplo): nunca apaga as da nuvem; só a prova
+        // apagada leva as figuras junto
+        mapa[kg]="";resumos[kg]=NV.h[kg];
+      }
+      mapa[kp]="";resumos[kp]=rs.rt;
+    });
+    if(mudou)nuvemGuardar();
     return {mapa:mapa,resumos:resumos,semProvas:false};
   },function(){return {mapa:mapa,resumos:resumos,semProvas:true};});
 }
 function carregarEscritasDeProvas(escritas){
-  var cadeia=Promise.resolve();
+  var cadeia=Promise.resolve(), ultima=null;
+  function ler(id){
+    if(ultima&&ultima.id===id)return Promise.resolve(ultima.pr);
+    return lerProva(id).then(function(pr){ultima={id:id,pr:pr};return pr;});
+  }
   escritas.forEach(function(e){
-    if(e.s!==""||e.k.indexOf("p~")!==0)return;
-    cadeia=cadeia.then(function(){return lerProva(e.k.slice(2));}).then(function(pr){
-      e.s=pr?JSON.stringify(semArquivo(pr)):null;
-      e.r=pr?resumoDe(e.s):"x";
+    if(e.s!=="")return;
+    var tipo=e.k.slice(0,2);
+    if(tipo!=="p~"&&tipo!=="g~")return;
+    cadeia=cadeia.then(function(){return ler(e.k.slice(2));}).then(function(pr){
+      if(!pr){e.s=null;e.r="x";return;}
+      e.s=tipo==="p~"?textoDaLeve(provaLeve(pr)):(figurasDaProva(pr)||null);
+      e.r=e.s?resumoDe(e.s):"x";
+      e.prova=pr.id;
+      if(NV.h[e.k]===e.r||(e.s===null&&NV.h[e.k]===undefined))e.pular=true;
     });
   });
-  return cadeia.then(function(){return escritas;});
+  return cadeia.then(function(){ultima=null;return escritas.filter(function(e){return !e.pular;});});
 }
 function nuvemEnviar(){
   if(!NV.pronto||!NV.membro)return Promise.resolve();
@@ -8285,7 +8460,7 @@ function nuvemEnviar(){
   NV.enviando=itensLocais().then(function(r){
     var mapa=r.mapa, escritas=[], sumidos={};
     Object.keys(mapa).forEach(function(k){
-      var rs=r.resumos[k]||resumoDe(mapa[k]);
+      var rs=r.resumos[k]||resumoGuardado(k,mapa[k]);
       if(NV.h[k]!==rs&&!(NV.grandes&&NV.grandes[k]))escritas.push({k:k,s:mapa[k],r:rs});
     });
     Object.keys(NV.h).forEach(function(k){
@@ -8307,6 +8482,7 @@ function nuvemEnviar(){
     if(!escritas.length)return;
     nuvemEstado("enviando");
     return carregarEscritasDeProvas(escritas).then(gravarNaNuvem).then(function(){
+      nuvemGuardarResumosEnviados();
       var g=Object.keys(NV.grandes||{}).length;
       nuvemEstado("ok",g?(g===1?"1 item grande demais ficou só neste aparelho":g+" itens grandes demais ficaram só neste aparelho"):"");
     });
@@ -8333,8 +8509,11 @@ function gravarNaNuvem(escritas){
     if(e.s===null)partes=[""];
     else for(var i=0;i===0||i<e.s.length;i+=FATIA)partes.push(e.s.slice(i,i+FATIA));
     var docs=partes.map(function(s,i){
-      return {id:tipo+"~"+ref+"~"+i,dados:{tipo:tipo,ref:ref,i:i,n:partes.length,v:v,s:s,
-              apagado:e.s===null,por:NV.usuario.email,t:S.serverTimestamp()}};
+      var dados={tipo:tipo,ref:ref,i:i,n:partes.length,v:v,s:s,
+                 apagado:e.s===null,por:NV.usuario.email,t:S.serverTimestamp()};
+      // figuras de prova: sem "ref", para que as versões antigas do site não as vejam
+      if(tipo==="g"){delete dados.ref;dados.alvo=ref;}
+      return {id:tipo+"~"+ref+"~"+i,dados:dados};
     });
     var peso=(e.s?e.s.length:0)+docs.length*300;
     // um item nunca fica dividido entre dois lotes
@@ -8350,12 +8529,68 @@ function gravarNaNuvem(escritas){
       var b=S.writeBatch(NV.db);
       l.docs.forEach(function(d){b.set(S.doc(NV.db,"dados",d.id),d.dados);});
       return b.commit().then(function(){
-        l.itens.forEach(function(e){NV.h[e.k]=e.r;});
+        l.itens.forEach(function(e){NV.h[e.k]=e.r;if(e.prova)(NV.resumosEnviados=NV.resumosEnviados||{})[e.prova]=1;});
         nuvemGuardar();
+        // a hora que o servidor deu a este envio: a busca de novidades pula esse instante (o eco)
+        var menor=l.docs.reduce(function(a,d){return !a||d.dados.s.length<a.dados.s.length?d:a;},null);
+        return S.liteGetDoc(S.liteDoc(NV.dbLite,"dados",menor.id)).then(function(d){
+          var t=d.exists()&&d.data().t;
+          if(t&&d.data().v===menor.dados.v)(NV.meus=NV.meus||[]).push(t.toMillis());
+        }).catch(function(){});
       });
     });
   });
   return corrente;
+}
+
+/* figuras de uma prova lidas direto da nuvem, pelo nome dos documentos (g~prova~0, 1, ...) */
+var FIGURAS_BUSCADAS={};
+function buscarFigurasDaNuvem(p){
+  if(!NV.pronto||!NV.dbLite||!p||!p.id||FIGURAS_BUSCADAS[p.id])return Promise.resolve(false);
+  FIGURAS_BUSCADAS[p.id]=1;
+  var S=NV.sdk, base="g~"+p.id+"~";
+  function pedir(i){return S.liteGetDoc(S.liteDoc(NV.dbLite,"dados",base+i));}
+  return pedir(0).then(function(d0){
+    var x=d0.exists()&&d0.data();
+    if(!x||x.apagado||!x.n)return false;
+    var pedidos=[];
+    for(var i=1;i<x.n;i++)pedidos.push(pedir(i));
+    return Promise.all(pedidos).then(function(resto){
+      var partes=[x.s];
+      for(var j=0;j<resto.length;j++){
+        var y=resto[j].exists()&&resto[j].data();
+        if(!y||y.v!==x.v)return false;   // uma gravação nova no meio da leitura: fica para a próxima
+        partes.push(y.s);
+      }
+      var s=partes.join(""), figs=JSON.parse(s), r=resumoDe(s);
+      partes=null;
+      return lerProva(p.id).then(function(cheia){
+        if(!cheia)return false;
+        var rs=RESUMOS_PROVAS&&RESUMOS_PROVAS[p.id];
+        NV.h["g~"+p.id]=r;nuvemGuardar();
+        if(!p.leve)aplicarFiguras(p,figs);
+        return gravarProva(aplicarFiguras(cheia,figs),{rt:rs&&rs.rt,rg:r}).then(function(){return true;});
+      });
+    });
+  }).catch(function(){return false;});
+}
+
+/* o que subiu passa a ser o resumo guardado da prova (texto e figuras), para que a próxima
+   abertura compare com o mesmo valor que foi para a nuvem */
+function nuvemGuardarResumosEnviados(){
+  var ids=Object.keys(NV.resumosEnviados||{});NV.resumosEnviados={};
+  if(!ids.length||!RESUMOS_PROVAS)return;
+  abrirBD().then(function(db){
+    var t=db.transaction(BD_LEVES,"readwrite"), loja=t.objectStore(BD_LEVES);
+    ids.forEach(function(id){
+      var rs=RESUMOS_PROVAS[id];if(!rs)return;
+      var hp=NV.h["p~"+id], hg=NV.h["g~"+id];
+      if(hp&&hp!=="x")rs.rt=hp;
+      if(hg!==undefined)rs.rg=hg==="x"?"":hg;
+      var r=loja.get(id);
+      r.onsuccess=function(){var reg=r.result;if(!reg)return;reg.rt=rs.rt;reg.rg=rs.rg;loja.put(reg);};
+    });
+  }).catch(function(){});
 }
 
 /* ---- professores liberados (só o administrador vê) ---- */
