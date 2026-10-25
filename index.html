@@ -2164,6 +2164,13 @@ function livrosRender(){
     });
   });
 }
+/* clicar em qualquer lugar fora de um livro aberto fecha a lista de capítulos dele;
+   os capítulos marcados continuam marcados */
+document.addEventListener("click",function(ev){
+  document.querySelectorAll("#ls-lista details.caderno[open]").forEach(function(d){
+    if(!d.contains(ev.target))d.open=false;
+  });
+});
 // chamado quando a nuvem muda de estado: abre a lista pendente e traz os textos que faltam
 function livrosNuvemMudou(){
   if(!livrosNaNuvem())return;
