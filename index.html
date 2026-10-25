@@ -3028,7 +3028,8 @@ function quantidadesDoFormato(prefixo,origem,estilo){
 }
 function acervo(){
   if(acervoCache)return Promise.resolve(acervoCache);
-  return listarProvas().catch(function(){return [];}).then(function(l){acervoCache=l;return l;});
+  if(provasCarregadas&&provasCarregadas.length){acervoCache=provasCarregadas;return Promise.resolve(acervoCache);}
+  return listarProvasLeves().catch(function(){return [];}).then(function(l){acervoCache=l;return l;});
 }
 function provaDaOrigem(prova,origem){
   var o=(prova.origem||"")+" "+(prova.nome||"");
@@ -4751,28 +4752,169 @@ var figurasProntas=carregarFiguras().then(function(){
    Extrai as questões do caderno como estão: o texto é transcrito e apenas as
    figuras são recortadas da página. A IA só classifica matéria e assunto.     */
 
-var BD_NOME="bancoQuestoes.provas", BD_LOJA="provas", VERSAO_EXTRACAO=5;
+/* As figuras (base64) são quase todo o peso das provas: só o ENEM, o SSA e o PASSE
+   passam de 250 MB. Para caber na memória do celular, cada prova tem também uma
+   versão "leve" (sem figuras e sem o PDF, com o resumo usado pela nuvem) na loja
+   BD_LEVES. A tela e o Gerar trabalham com as leves; só a prova aberta em Provas
+   oficiais é lida inteira.                                                       */
+var BD_NOME="bancoQuestoes.provas", BD_LOJA="provas", BD_LEVES="leves", VERSAO_EXTRACAO=5;
+var bdAberto=null;
 function abrirBD(){
-  return new Promise(function(ok,erro){
+  if(bdAberto)return bdAberto;
+  bdAberto=new Promise(function(ok,erro){
     var req;
-    try{req=indexedDB.open(BD_NOME,1);}catch(e){erro(e);return;}
+    try{req=indexedDB.open(BD_NOME,2);}catch(e){erro(e);return;}
     req.onupgradeneeded=function(){
       var db=req.result;
       if(!db.objectStoreNames.contains(BD_LOJA))db.createObjectStore(BD_LOJA,{keyPath:"id"});
+      if(!db.objectStoreNames.contains(BD_LEVES))db.createObjectStore(BD_LEVES,{keyPath:"id"});
     };
-    req.onsuccess=function(){ok(req.result);};
+    req.onsuccess=function(){
+      var db=req.result;
+      db.onversionchange=function(){db.close();bdAberto=null;};
+      ok(db);
+    };
     req.onerror=function(){erro(req.error||new Error("armazenamento indisponível"));};
   });
+  bdAberto.catch(function(){bdAberto=null;});
+  return bdAberto;
 }
-function gravarProva(prova){
-  return abrirBD().then(function(db){
-    return new Promise(function(ok,erro){
-      var t=db.transaction(BD_LOJA,"readwrite");
-      t.objectStore(BD_LOJA).put(prova);
-      t.oncomplete=function(){acervoCache=null;nuvemMudou();ok();};
-      t.onerror=function(){erro(t.error);};
+function partesLeves(partes){
+  return (partes||[]).map(function(b){
+    if(b.tipo!=="figura")return b;
+    var c={};Object.keys(b).forEach(function(k){c[k]=k==="imagem"?"":b[k];});
+    return c;
+  });
+}
+function blocoLeve(q){
+  var c={};
+  Object.keys(q).forEach(function(k){c[k]=q[k];});
+  if(q.partes)c.partes=partesLeves(q.partes);
+  if(q.alternativasFigura)c.alternativasFigura="leve";
+  return c;
+}
+function provaLeve(pr){
+  var c={leve:true};
+  Object.keys(pr).forEach(function(k){
+    if(k==="arquivo")return;
+    c[k]=k==="questoes"||k==="comuns"?(pr[k]||[]).map(blocoLeve):pr[k];
+  });
+  return c;
+}
+function registroLeve(pr){
+  return {id:pr.id,p:provaLeve(pr),r:resumoDe(JSON.stringify(semArquivo(pr)))};
+}
+/* uma prova leve que volta para ser gravada recupera as figuras da versão inteira guardada */
+function devolverFiguras(leve,cheia){
+  var c={};
+  Object.keys(leve).forEach(function(k){if(k!=="leve")c[k]=leve[k];});
+  ["questoes","comuns"].forEach(function(campo){
+    var antes=(cheia&&cheia[campo])||[], porChave={};
+    antes.forEach(function(q){var ch=q.chave||q.id;if(ch)porChave[ch]=q;});
+    c[campo]=(leve[campo]||[]).map(function(q,i){
+      var velha=porChave[q.chave||q.id]||antes[i]||{}, nova={};
+      Object.keys(q).forEach(function(k){nova[k]=q[k];});
+      if(q.partes)nova.partes=q.partes.map(function(b,j){
+        if(b.tipo!=="figura"||b.imagem)return b;
+        var v=(velha.partes||[])[j];
+        var r={};Object.keys(b).forEach(function(k){r[k]=b[k];});
+        r.imagem=v&&v.tipo==="figura"?v.imagem:"";
+        return r;
+      });
+      if(q.alternativasFigura==="leve")nova.alternativasFigura=velha.alternativasFigura||"";
+      return nova;
     });
   });
+  if(cheia&&cheia.arquivo&&!c.arquivo)c.arquivo=cheia.arquivo;
+  return c;
+}
+function gravarProva(prova){
+  var pronta=prova.leve?lerProva(prova.id).then(function(cheia){return devolverFiguras(prova,cheia);}):Promise.resolve(prova);
+  return pronta.then(function(cheia){
+    var reg=registroLeve(cheia);
+    return abrirBD().then(function(db){
+      return new Promise(function(ok,erro){
+        var t=db.transaction([BD_LOJA,BD_LEVES],"readwrite");
+        t.objectStore(BD_LOJA).put(cheia);
+        t.objectStore(BD_LEVES).put(reg);
+        t.oncomplete=function(){acervoCache=null;nuvemMudou();ok();};
+        t.onerror=function(){erro(t.error);};
+      });
+    });
+  });
+}
+function lerProva(idProva){
+  return abrirBD().then(function(db){
+    return new Promise(function(ok,erro){
+      var r=db.transaction(BD_LOJA,"readonly").objectStore(BD_LOJA).get(idProva);
+      r.onsuccess=function(){ok(r.result||null);};
+      r.onerror=function(){erro(r.error);};
+    });
+  });
+}
+function chavesDa(db,loja){
+  return new Promise(function(ok,erro){
+    var r=db.transaction(loja,"readonly").objectStore(loja).getAllKeys();
+    r.onsuccess=function(){ok(r.result||[]);};
+    r.onerror=function(){erro(r.error);};
+  });
+}
+/* registros leves {id,p,r}; provas antigas, gravadas antes da loja leve, ganham o seu
+   aqui, uma de cada vez, para nunca ter todas as figuras na memória ao mesmo tempo */
+function listarRegistrosLeves(){
+  return abrirBD().then(function(db){
+    return Promise.all([chavesDa(db,BD_LOJA),chavesDa(db,BD_LEVES)]).then(function(ch){
+      var tem={};ch[1].forEach(function(k){tem[k]=1;});
+      var faltam=ch[0].filter(function(k){return !tem[k];}), sobram=[];
+      var naLoja={};ch[0].forEach(function(k){naLoja[k]=1;});
+      ch[1].forEach(function(k){if(!naLoja[k])sobram.push(k);});
+      var cadeia=Promise.resolve();
+      faltam.forEach(function(k){
+        cadeia=cadeia.then(function(){return lerProva(k);}).then(function(pr){
+          if(!pr)return;
+          var reg=registroLeve(pr);pr=null;
+          return new Promise(function(ok){
+            var t=db.transaction(BD_LEVES,"readwrite");
+            t.objectStore(BD_LEVES).put(reg);
+            t.oncomplete=ok;t.onerror=ok;
+          });
+        });
+      });
+      if(sobram.length)cadeia=cadeia.then(function(){
+        return new Promise(function(ok){
+          var t=db.transaction(BD_LEVES,"readwrite");
+          sobram.forEach(function(k){t.objectStore(BD_LEVES).delete(k);});
+          t.oncomplete=ok;t.onerror=ok;
+        });
+      });
+      return cadeia.then(function(){
+        return new Promise(function(ok,erro){
+          var r=db.transaction(BD_LEVES,"readonly").objectStore(BD_LEVES).getAll();
+          r.onsuccess=function(){ok(r.result||[]);};
+          r.onerror=function(){erro(r.error);};
+        });
+      });
+    });
+  });
+}
+function listarProvasLeves(){
+  return listarRegistrosLeves().then(function(regs){return regs.map(function(r){return r.p;});});
+}
+/* troca, no próprio objeto, a versão leve pela inteira (e o contrário, para soltar memória) */
+function hidratarProva(p){
+  if(!p||!p.leve)return Promise.resolve(p);
+  if(p.hidratando)return p.hidratando;
+  p.hidratando=lerProva(p.id).then(function(cheia){
+    if(cheia){p.questoes=cheia.questoes;p.comuns=cheia.comuns||[];delete p.leve;}
+    delete p.hidratando;
+    return p;
+  },function(e){delete p.hidratando;throw e;});
+  return p.hidratando;
+}
+function aliviarProva(p){
+  if(!p||p.leve||!p.id)return;
+  var l=provaLeve(p);
+  p.questoes=l.questoes;p.comuns=l.comuns;delete p.arquivo;p.leve=true;
 }
 function listarProvas(){
   return abrirBD().then(function(db){
@@ -4786,8 +4928,9 @@ function listarProvas(){
 function apagarProvaBD(idProva){
   return abrirBD().then(function(db){
     return new Promise(function(ok,erro){
-      var t=db.transaction(BD_LOJA,"readwrite");
+      var t=db.transaction([BD_LOJA,BD_LEVES],"readwrite");
       t.objectStore(BD_LOJA).delete(idProva);
+      t.objectStore(BD_LEVES).delete(idProva);
       t.oncomplete=function(){acervoCache=null;nuvemMudou();ok();};
       t.onerror=function(){erro(t.error);};
     });
@@ -5555,24 +5698,35 @@ function pontuarTema(q,termos){
 var provasCarregadas=[], provaAtual=null, oficiaisSelecionadas={};
 var PASSO_OFICIAIS=30, visiveisOficiais=PASSO_OFICIAIS;
 function recarregarProvas(){
-  return listarProvas().then(function(bruto){
+  return listarProvasLeves().then(function(bruto){
     var antigas=bruto.filter(function(p){return (p.versaoExtracao||1)<VERSAO_EXTRACAO;});
     if(!antigas.length)return bruto;
     return Promise.all(antigas.map(function(p){return apagarProvaBD(p.id);})).then(function(){
       if($("retorno-prova"))
         msg("retorno-prova",antigas.length+" prova(s) de versões anteriores foram removidas, porque a extração mudou. Importe o caderno novamente.","");
-      return listarProvas();
+      return listarProvasLeves();
     });
   }).then(function(lista){
     provasCarregadas=lista.sort(function(a,b){return (b.criadaEm||"").localeCompare(a.criadaEm||"");});
+    acervoCache=provasCarregadas;   // o Gerar usa as mesmas, sem uma segunda cópia na memória
     var sel=$("prova-escolhida"), anterior=sel.value;
     sel.innerHTML=provasCarregadas.length
       ? provasCarregadas.map(function(p){
           return '<option value="'+p.id+'">'+esc(p.nome)+" — "+p.questoes.length+" questões</option>";}).join("")
       : '<option value="">— nenhuma prova importada —</option>';
     if(anterior&&provasCarregadas.some(function(p){return p.id===anterior;}))sel.value=anterior;
-    provaAtual=provasCarregadas.filter(function(p){return p.id===sel.value;})[0]||null;
+    trocarProvaAtual(provasCarregadas.filter(function(p){return p.id===sel.value;})[0]||null);
     renderEscolhaProva();preencherFiltrosOficiais();renderOficiais();
+  });
+}
+/* a prova aberta é lida inteira (com as figuras) e a anterior volta a ser leve */
+function trocarProvaAtual(p){
+  if(provaAtual&&provaAtual!==p)aliviarProva(provaAtual);
+  provaAtual=p;
+  if(p&&p.leve)hidratarProva(p).then(function(){
+    if(provaAtual===p)renderOficiais();
+  },function(){
+    if(provaAtual===p)msg("retorno-prova","Não foi possível abrir as figuras desta prova neste aparelho.","erro");
   });
 }
 /* escolher a prova em três toques, como o "Criar a partir de" do Gerar:
@@ -5882,6 +6036,10 @@ function renderOficiais(){
     alvo.innerHTML='<div class="vazio"><strong>Nenhuma prova importada</strong>Envie o caderno e o gabarito no bloco acima.</div>';
     $("contador-oficiais").textContent="";atualizarBarraOficiais();return;
   }
+  if(provaAtual.leve){
+    alvo.innerHTML='<div class="vazio"><strong>Abrindo a prova…</strong>Carregando as questões e as figuras deste caderno.</div>';
+    $("contador-oficiais").textContent="";atualizarBarraOficiais();return;
+  }
   var lista=oficiaisFiltradas();
   $("contador-oficiais").textContent=lista.length+" de "+provaAtual.questoes.length+" questões no filtro"+
     (lista.length>visiveisOficiais?" — mostrando as "+visiveisOficiais+" primeiras":"");
@@ -5932,7 +6090,7 @@ function atualizarBarraOficiais(){
   $("texto-oficiais").innerHTML="<strong>"+n+"</strong> "+(n===1?"questão selecionada":"questões selecionadas")+".";
 }
 function montarFolhaOficiais(){
-  if(!provaAtual)return;
+  if(!provaAtual||provaAtual.leve)return;
   var escolhidas=provaAtual.questoes.filter(function(q){return oficiaisSelecionadas[q.chave];});
   if(!escolhidas.length)return;
   var rotulos=gruposComuns(escolhidas);
@@ -6081,7 +6239,7 @@ $("btn-cancelar-prova").addEventListener("click",function(){
 });
 $("prova-escolhida").addEventListener("change",function(){
   var escolhido=this.value;
-  provaAtual=provasCarregadas.filter(function(p){return p.id===escolhido;})[0]||null;
+  trocarProvaAtual(provasCarregadas.filter(function(p){return p.id===escolhido;})[0]||null);
   oficiaisSelecionadas={};visiveisOficiais=PASSO_OFICIAIS;renderEscolhaProva();preencherFiltrosOficiais();renderOficiais();
 });
 $("filtro-materia").addEventListener("change",function(){
@@ -6379,7 +6537,7 @@ function baixarArquivoDocx(saida,nome){
   return blob;
 }
 function oficiaisEscolhidas(){
-  if(!provaAtual)return [];
+  if(!provaAtual||provaAtual.leve)return [];
   return provaAtual.questoes.filter(function(q){return oficiaisSelecionadas[q.chave];});
 }
 
@@ -7309,7 +7467,7 @@ function nuvemIniciar(){
   var emulador=/[?&]emulador=1/.test(location.search)&&/^(localhost|127\.0\.0\.1)$/.test(location.hostname);
   if(location.protocol==="file:"&&!emulador){nuvemEstado("arquivo");return;}
   nuvemEstado("carregando");
-  import("./firebase-sdk.js").then(function(S){
+  import("./firebase-sdk.js?v=2").then(function(S){
     NV.sdk=S;
     var cfg=emulador?{apiKey:"teste",authDomain:"localhost",projectId:"demo-banco"}:NUVEM_CONFIG;
     var app=S.initializeApp(cfg);
@@ -7359,15 +7517,55 @@ function nuvemVerificarAcesso(){
 }
 function nuvemParar(){
   if(NV.ouvinte){NV.ouvinte();NV.ouvinte=null;}
+  NV.geracao=(NV.geracao||0)+1;NV.atualizando=false;
   NV.pronto=false;NV.membro=false;NV.admin=false;
   clearTimeout(NV.espera);
 }
 
-/* ---- recebimento: um ouvinte só, a partir do último marco ---- */
+/* ---- recebimento ----
+   Primeiro, o atraso é baixado em páginas pequenas, cada uma gravada no aparelho antes
+   da próxima: num aparelho novo a nuvem inteira passa de 250 MB (as provas oficiais com
+   as figuras) e, pedida de uma vez, derrubava o Safari do iPhone. Depois, um ouvinte só,
+   a partir do último marco, traz o que os colegas forem salvando.                      */
+var PAGINA_NUVEM=40;
 function nuvemOuvir(){
-  var S=NV.sdk;
-  if(NV.ouvinte)NV.ouvinte();
+  if(NV.ouvinte){NV.ouvinte();NV.ouvinte=null;}
+  var geracao=NV.geracao=(NV.geracao||0)+1;
+  NV.atualizando=true;NV.provasMudaram=false;
   nuvemEstado("baixando");
+  nuvemPagina(Math.max(0,NV.marco-FOLGA_MARCO),null,geracao,0).then(function(){
+    if(geracao!==NV.geracao)return;
+    NV.atualizando=false;
+    if(NV.provasMudaram){NV.provasMudaram=false;recarregarProvas().catch(function(){});}
+    nuvemEscutar(geracao);
+  },function(e){
+    if(geracao!==NV.geracao)return;
+    NV.atualizando=false;NV.pronto=false;
+    nuvemEstado(e&&e.code==="permission-denied"?"semacesso":(navigator.onLine===false?"offline":"erro"),e&&(e.code||e.message));
+    if(!(e&&e.code==="permission-denied"))setTimeout(function(){if(NV.membro&&!NV.ouvinte&&geracao===NV.geracao)nuvemOuvir();},30000);
+  });
+}
+function nuvemPagina(desde,ultimo,geracao,feitos){
+  var S=NV.sdk;
+  var partes=[S.collection(NV.db,"dados"),S.where("t",">",S.Timestamp.fromMillis(desde)),S.orderBy("t")];
+  if(ultimo)partes.push(S.startAfter(ultimo));
+  partes.push(S.limit(PAGINA_NUVEM));
+  return S.getDocs(S.query.apply(null,partes)).then(function(snap){
+    if(geracao!==NV.geracao)return;
+    var docs=snap.docs, lista=docs.map(function(d){return d.data();}), fim=docs[docs.length-1];
+    feitos+=lista.length;
+    if(feitos>PAGINA_NUVEM)nuvemEstado("baixando",feitos+" partes recebidas");
+    var etapa=NV.fila.then(function(){return aplicarDaNuvem(lista);});
+    NV.fila=etapa.catch(function(){});
+    lista=null;
+    return etapa.then(function(){
+      if(docs.length<PAGINA_NUVEM||geracao!==NV.geracao)return;
+      return nuvemPagina(desde,fim,geracao,feitos);
+    });
+  });
+}
+function nuvemEscutar(geracao){
+  var S=NV.sdk;
   var desde=Math.max(0,NV.marco-FOLGA_MARCO), primeira=true;
   var q=S.query(S.collection(NV.db,"dados"),S.where("t",">",S.Timestamp.fromMillis(desde)));
   NV.ouvinte=S.onSnapshot(q,function(snap){
@@ -7387,7 +7585,7 @@ function nuvemOuvir(){
   },function(e){
     NV.ouvinte=null;NV.pronto=false;
     nuvemEstado(e&&e.code==="permission-denied"?"semacesso":"erro",e&&e.code);
-    if(!(e&&e.code==="permission-denied"))setTimeout(function(){if(NV.membro&&!NV.ouvinte)nuvemOuvir();},30000);
+    if(!(e&&e.code==="permission-denied"))setTimeout(function(){if(NV.membro&&!NV.ouvinte&&geracao===NV.geracao)nuvemOuvir();},30000);
   });
 }
 function aplicarDaNuvem(lista){
@@ -7462,14 +7660,21 @@ function aplicarDaNuvem(lista){
   });
   if(mudou.q){salvarBanco();if(!editando)renderBanco();}
   if(mudou.m){salvarMateriais();renderMateriais();}
-  var etapaProvas=!provas.length?Promise.resolve():listarProvas().catch(function(){return [];}).then(function(atuais){
-    var porId={};atuais.forEach(function(pr){porId[pr.id]=pr;});
-    return Promise.all(provas.map(function(pr){
+  // uma prova por vez: cada uma pode ter vários MB de figuras
+  var etapaProvas=Promise.resolve();
+  provas.forEach(function(pr){
+    etapaProvas=etapaProvas.then(function(){
       if(pr.apagado)return apagarProvaBD(pr.ref);
-      var nova=JSON.parse(pr.s);
-      if(porId[pr.ref]&&porId[pr.ref].arquivo)nova.arquivo=porId[pr.ref].arquivo;   // o PDF original continua só aqui
-      return gravarProva(nova);
-    })).then(function(){return recarregarProvas();});
+      var nova=JSON.parse(pr.s);pr.s=null;
+      return lerProva(pr.ref).catch(function(){return null;}).then(function(atual){
+        if(atual&&atual.arquivo)nova.arquivo=atual.arquivo;   // o PDF original continua só aqui
+        return gravarProva(nova);
+      });
+    });
+  });
+  if(provas.length)etapaProvas=etapaProvas.then(function(){
+    if(NV.atualizando){NV.provasMudaram=true;return;}
+    return recarregarProvas();
   });
   return Promise.all(esperas.concat([etapaProvas])).catch(function(){}).then(function(){
     if(mudou.q&&!editando)renderBanco();
@@ -7491,10 +7696,23 @@ function itensLocais(){
   materiais.forEach(function(m){mapa["m~"+m.id]=JSON.stringify(semAtivo(m));});
   var tb=ler(CHAVE_MODELO); if(tb)mapa["x~timbrado"]=tb;
   var pl=ler(CHAVE_MODELO_PLANO); if(pl)mapa["x~plano"]=pl;
-  return listarProvas().then(function(lista){
-    lista.forEach(function(pr){mapa["p~"+pr.id]=JSON.stringify(semArquivo(pr));});
-    return {mapa:mapa,semProvas:false};
-  },function(){return {mapa:mapa,semProvas:true};});
+  // das provas vem só o resumo guardado na versão leve; o conteúdo é lido se precisar subir
+  var resumos={};
+  return listarRegistrosLeves().then(function(regs){
+    regs.forEach(function(reg){mapa["p~"+reg.id]="";resumos["p~"+reg.id]=reg.r;});
+    return {mapa:mapa,resumos:resumos,semProvas:false};
+  },function(){return {mapa:mapa,resumos:resumos,semProvas:true};});
+}
+function carregarEscritasDeProvas(escritas){
+  var cadeia=Promise.resolve();
+  escritas.forEach(function(e){
+    if(e.s!==""||e.k.indexOf("p~")!==0)return;
+    cadeia=cadeia.then(function(){return lerProva(e.k.slice(2));}).then(function(pr){
+      e.s=pr?JSON.stringify(semArquivo(pr)):null;
+      e.r=pr?resumoDe(e.s):"x";
+    });
+  });
+  return cadeia.then(function(){return escritas;});
 }
 function nuvemEnviar(){
   if(!NV.pronto||!NV.membro)return Promise.resolve();
@@ -7503,7 +7721,7 @@ function nuvemEnviar(){
   NV.enviando=itensLocais().then(function(r){
     var mapa=r.mapa, escritas=[], sumidos={};
     Object.keys(mapa).forEach(function(k){
-      var rs=resumoDe(mapa[k]);
+      var rs=r.resumos[k]||resumoDe(mapa[k]);
       if(NV.h[k]!==rs&&!(NV.grandes&&NV.grandes[k]))escritas.push({k:k,s:mapa[k],r:rs});
     });
     Object.keys(NV.h).forEach(function(k){
@@ -7524,7 +7742,7 @@ function nuvemEnviar(){
     });
     if(!escritas.length)return;
     nuvemEstado("enviando");
-    return gravarNaNuvem(escritas).then(function(){
+    return carregarEscritasDeProvas(escritas).then(gravarNaNuvem).then(function(){
       var g=Object.keys(NV.grandes||{}).length;
       nuvemEstado("ok",g?(g===1?"1 item grande demais ficou só neste aparelho":g+" itens grandes demais ficaram só neste aparelho"):"");
     });
