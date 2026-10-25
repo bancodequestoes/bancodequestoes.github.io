@@ -7467,15 +7467,17 @@ function nuvemIniciar(){
   var emulador=/[?&]emulador=1/.test(location.search)&&/^(localhost|127\.0\.0\.1)$/.test(location.hostname);
   if(location.protocol==="file:"&&!emulador){nuvemEstado("arquivo");return;}
   nuvemEstado("carregando");
-  import("./firebase-sdk.js?v=2").then(function(S){
+  import("./firebase-sdk.js?v=3").then(function(S){
     NV.sdk=S;
     var cfg=emulador?{apiKey:"teste",authDomain:"localhost",projectId:"demo-banco"}:NUVEM_CONFIG;
     var app=S.initializeApp(cfg);
     NV.auth=S.getAuth(app);
     NV.db=S.getFirestore(app);
+    NV.dbLite=S.liteGetFirestore(app);
     if(emulador){
       S.connectAuthEmulator(NV.auth,"http://127.0.0.1:9099",{disableWarnings:true});
       S.connectFirestoreEmulator(NV.db,"127.0.0.1",8080);
+      S.liteConnectFirestoreEmulator(NV.dbLite,"127.0.0.1",8080);
       NV.teste=true;
       var folga=/[?&]folga=(\d+)/.exec(location.search);
       if(folga)FOLGA_MARCO=+folga[1];
@@ -7485,6 +7487,7 @@ function nuvemIniciar(){
             JSON.stringify({sub:email,email:email,email_verified:true})));
         },
         nv:NV,
+        provas:function(){return {carregadas:provasCarregadas,atual:provaAtual};},
         livros:{ls:LS,emUso:livrosEmUso,ativos:ativos,textoIA:textoDosAtivos}
       };
     }
@@ -7547,19 +7550,20 @@ function nuvemOuvir(){
 }
 function nuvemPagina(desde,ultimo,geracao,feitos){
   var S=NV.sdk;
-  var partes=[S.collection(NV.db,"dados"),S.where("t",">",S.Timestamp.fromMillis(desde)),S.orderBy("t")];
-  if(ultimo)partes.push(S.startAfter(ultimo));
-  partes.push(S.limit(PAGINA_NUVEM));
-  return S.getDocs(S.query.apply(null,partes)).then(function(snap){
+  // pela versão "lite": a completa guarda no cache cada documento lido e a memória enchia do mesmo jeito
+  var partes=[S.liteCollection(NV.dbLite,"dados"),S.liteWhere("t",">",S.liteTimestamp.fromMillis(desde)),S.liteOrderBy("t")];
+  if(ultimo)partes.push(S.liteStartAfter(ultimo));
+  partes.push(S.liteLimit(PAGINA_NUVEM));
+  return S.liteGetDocs(S.liteQuery.apply(null,partes)).then(function(snap){
     if(geracao!==NV.geracao)return;
     var docs=snap.docs, lista=docs.map(function(d){return d.data();}), fim=docs[docs.length-1];
     feitos+=lista.length;
     if(feitos>PAGINA_NUVEM)nuvemEstado("baixando",feitos+" partes recebidas");
-    var etapa=NV.fila.then(function(){return aplicarDaNuvem(lista);});
+    var n=docs.length, etapa=NV.fila.then(function(){var l=lista;lista=null;return aplicarDaNuvem(l);});
     NV.fila=etapa.catch(function(){});
-    lista=null;
+    docs=null;snap=null;
     return etapa.then(function(){
-      if(docs.length<PAGINA_NUVEM||geracao!==NV.geracao)return;
+      if(n<PAGINA_NUVEM||geracao!==NV.geracao)return;
       return nuvemPagina(desde,fim,geracao,feitos);
     });
   });
