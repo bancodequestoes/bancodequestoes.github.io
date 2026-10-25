@@ -384,6 +384,18 @@ input[type=file]{font-size:13px}
 .hab input{width:16px;height:16px;margin-top:2px;accent-color:var(--primaria);cursor:pointer;flex:none}
 .titulo-hab{font-size:12px;font-weight:700;color:var(--primaria-escura);text-transform:uppercase;letter-spacing:.03em;margin:12px 0 4px;padding-bottom:4px;border-bottom:1px solid var(--regua)}
 .hab .cod{font-weight:700;color:var(--primaria)}
+/* habilidades citadas nos capítulos escolhidos: bloco em destaque, um grupo por capítulo */
+.hab-caps{border:2px solid var(--destaque);background:var(--destaque-fundo);border-radius:14px;padding:12px 14px 6px;margin:12px 0}
+.hab-caps>.hab-caps-titulo{margin:0 0 2px;font-family:var(--titulo);font-size:13.5px;font-weight:700;color:#2F5E14}
+.hab-caps>.hab-caps-ajuda{margin:0 0 6px;font-size:12px;color:#4A5A3E}
+.hab-cap-nome{display:flex;gap:8px;align-items:baseline;margin:10px 0 2px;padding-top:8px;border-top:1px dashed rgba(47,94,20,.25);
+  font-size:12.5px;font-weight:800;color:var(--tinta)}
+.hab-cap-nome:first-of-type{border-top:none;padding-top:0}
+.hab-cap-nome .num{flex:none;background:var(--destaque);color:#fff;border-radius:999px;padding:1px 8px;font-size:11px}
+.hab-cap-nome .livro{font-weight:600;color:var(--cinza);font-size:11.5px}
+.hab-caps .hab{border-bottom-color:rgba(47,94,20,.15)}
+.hab-caps .hab:last-child{border-bottom:none}
+.hab-cap-vazio{font-size:12px;color:var(--cinza);margin:2px 0 6px;font-style:italic}
 .hab-resumo{font-size:12.5px;color:var(--cinza);margin-top:8px}
 
 /* ---------- banco ---------- */
@@ -479,6 +491,151 @@ input[type=file]{font-size:13px}
   .quebra{page-break-before:always}
   @page{size:A4;margin:18mm 16mm}
 }
+
+/* ---------- aviso "opcional" ao lado dos campos que não precisam ser preenchidos ---------- */
+.opcional{display:inline-block;vertical-align:1px;margin-left:6px;padding:1px 8px;border-radius:999px;
+  background:#F1F3F7;color:#5B6170;font-family:var(--sans);font-size:10.5px;font-weight:700;letter-spacing:.03em;text-transform:lowercase}
+summary .opcional{vertical-align:2px}
+
+/* ---------- alternativas clicáveis nas provas oficiais ---------- */
+.alts-oficial li.alt-int{display:flex;align-items:flex-start;gap:10px;padding:5px 8px;margin:0 -8px 3px;text-indent:0;
+  border-radius:10px;cursor:pointer;transition:background .15s}
+.alts-oficial li.alt-int:hover{background:var(--primaria-fundo)}
+.alts-oficial li.alt-int:focus-visible{outline:2px solid var(--primaria);outline-offset:1px}
+.alts-oficial li.alt-int .letra,.letras-fig .letra{flex:none;display:inline-flex;align-items:center;justify-content:center;
+  width:26px;height:26px;border-radius:50%;border:1.5px solid #C9CEDA;background:#fff;font-weight:800;font-size:12.5px;
+  color:var(--tinta);text-indent:0;transition:background .2s,border-color .2s,color .2s,transform .2s}
+.alts-oficial li.alt-int .txt{flex:1;min-width:0;padding-top:2px}
+.alts-oficial li.certa .letra,.letras-fig .letra.certa{background:#1E8E4E;border-color:#1E8E4E;color:#fff;transform:scale(1.08)}
+.alts-oficial li.errada .letra,.letras-fig .letra.errada{background:#C0392B;border-color:#C0392B;color:#fff;transform:scale(1.08)}
+.alts-oficial li.certa .txt{color:#14663A;font-weight:700}
+.letras-fig{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:4px 0 6px;font-size:12.5px;color:var(--cinza);font-weight:600}
+.letras-fig .letra{cursor:pointer}
+.letras-fig .letra:hover{border-color:var(--primaria)}
+.resposta-oficial{font-size:12.5px;font-weight:700;margin:6px 0 0;min-height:1em}
+.resposta-oficial.ok{color:#14663A}
+.resposta-oficial.nao{color:#A12A1F}
+.gab-oficial{display:flex;justify-content:flex-end;align-items:center;gap:10px;flex-wrap:wrap;margin-top:8px}
+.mostrar-gab{background:none;border:1px dashed var(--primaria-borda);border-radius:999px;padding:3px 12px;cursor:pointer;
+  font:inherit;font-size:11.5px;font-weight:700;color:var(--primaria)}
+.mostrar-gab:hover{background:var(--primaria-fundo);border-style:solid}
+.gab-texto{font-size:12.5px;font-weight:700;color:#14663A}
+.sem-gab{font-size:11.5px;color:var(--cinza)}
+.acoes-oficial{margin-left:auto;display:flex;gap:6px}
+.abrir-q{background:#fff;border:1px solid var(--primaria-borda);border-radius:999px;padding:3px 11px;cursor:pointer;
+  font:inherit;font-size:11.5px;font-weight:700;color:var(--primaria);display:inline-flex;align-items:center;gap:5px}
+.abrir-q:hover{background:var(--primaria-fundo)}
+.abrir-q svg{width:13px;height:13px}
+
+/* ---------- questão aberta em destaque, sobre a página ---------- */
+#janela-questao{position:fixed;inset:0;z-index:95;display:flex;align-items:center;justify-content:center;padding:18px 64px;
+  background:rgba(28,36,56,.16);backdrop-filter:blur(1.5px);-webkit-backdrop-filter:blur(1.5px);opacity:0;transition:opacity .2s ease}
+#janela-questao.aberta{opacity:1}
+#janela-questao[hidden]{display:none}
+.jq-cartao{position:relative;background:#fff;border-radius:20px;box-shadow:0 24px 60px rgba(28,36,56,.22);
+  width:min(880px,100%);max-height:calc(100vh - 36px);display:flex;flex-direction:column;
+  transform:translateY(10px) scale(.98);transition:transform .22s cubic-bezier(.2,.8,.2,1)}
+#janela-questao.aberta .jq-cartao{transform:none}
+.jq-topo{display:flex;align-items:center;gap:10px;padding:12px 16px 10px 22px;border-bottom:1px solid var(--regua);font-size:12.5px;color:var(--cinza);font-weight:700}
+.jq-topo .jq-conta{flex:1}
+.jq-topo label{margin:0;display:flex;align-items:center;gap:6px;font-size:12px;color:var(--tinta);cursor:pointer}
+.jq-topo label input{width:15px;height:15px;accent-color:var(--primaria)}
+.jq-fechar{background:none;border:none;font-size:22px;line-height:1;color:var(--cinza);cursor:pointer;padding:2px 6px;border-radius:8px}
+.jq-fechar:hover{background:rgba(0,0,0,.05);color:var(--tinta)}
+.jq-corpo{overflow:auto;padding:18px 26px 22px}
+.jq-corpo .fig-oficial img{max-height:var(--altura-fig,48vh);width:auto;max-width:100%}
+.jq-seta{position:absolute;top:50%;transform:translateY(-50%);width:38px;height:38px;border-radius:50%;
+  border:1px solid rgba(255,255,255,.7);background:rgba(255,255,255,.82);color:var(--primaria);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(28,36,56,.14);opacity:.75;transition:opacity .15s,background .15s}
+.jq-seta:hover{opacity:1;background:#fff}
+.jq-seta[disabled]{opacity:.25;cursor:default}
+.jq-seta svg{width:18px;height:18px}
+.jq-ant{left:-52px}
+.jq-prox{right:-52px}
+@media(max-width:760px){
+  #janela-questao{padding:10px 10px 64px}
+  .jq-cartao{max-height:calc(100vh - 80px)}
+  .jq-seta{top:auto;bottom:-54px;transform:none}
+  .jq-ant{left:calc(50% - 46px)}
+  .jq-prox{right:calc(50% - 46px)}
+  .jq-corpo{padding:14px 16px 18px}
+}
+
+/* ---------- chat de ajuda: botão discreto no canto inferior esquerdo, painel flutuante ---------- */
+.lateral{padding-bottom:64px}
+.chat-botao{position:fixed;left:16px;bottom:16px;z-index:85;display:flex;align-items:center;gap:8px;
+  height:44px;padding:0 16px 0 12px;border-radius:999px;border:1px solid var(--primaria-borda);background:#fff;color:var(--primaria);
+  font:inherit;font-size:13px;font-weight:800;cursor:pointer;box-shadow:0 6px 18px rgba(22,65,148,.16);
+  transition:transform .2s cubic-bezier(.2,.8,.2,1),box-shadow .2s,background .2s,color .2s}
+.chat-botao:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(22,65,148,.22)}
+.chat-botao:focus-visible{outline:2px solid var(--primaria);outline-offset:3px}
+.chat-botao .bolha{width:26px;height:26px;border-radius:50%;background:var(--primaria);color:#fff;display:flex;align-items:center;justify-content:center;flex:none}
+.chat-botao .bolha svg{width:15px;height:15px}
+.chat-botao[aria-expanded="true"]{background:var(--primaria);color:#fff}
+.chat-botao[aria-expanded="true"] .bolha{background:#fff;color:var(--primaria)}
+body:has(#faixa-erro) .chat-botao{bottom:70px}
+body:has(#faixa-erro) .chat-painel{bottom:124px}
+.chat-painel{position:fixed;left:16px;bottom:70px;z-index:86;width:min(370px,calc(100vw - 32px));height:min(540px,calc(100vh - 160px));
+  display:flex;flex-direction:column;background:#fff;border:1px solid var(--regua);border-radius:22px;
+  box-shadow:0 22px 60px rgba(28,36,56,.22),0 2px 8px rgba(28,36,56,.08);overflow:hidden;
+  transform-origin:24px calc(100% + 30px);opacity:0;transform:translateY(16px) scale(.6);pointer-events:none;
+  transition:opacity .22s ease,transform .34s cubic-bezier(.18,1.25,.4,1)}
+.chat-painel.aberto{opacity:1;transform:none;pointer-events:auto}
+.chat-painel.fechando{transition:opacity .18s ease,transform .2s cubic-bezier(.5,0,.75,0)}
+.chat-painel[hidden]{display:none}
+.chat-topo{display:flex;align-items:center;gap:10px;padding:12px 12px 12px 14px;background:var(--barra);color:#fff}
+.chat-topo .avatar{width:34px;height:34px;border-radius:12px;background:#fff;color:var(--barra);display:flex;align-items:center;justify-content:center;
+  font-family:var(--titulo);font-weight:700;font-size:17px;flex:none}
+.chat-topo .nomes{flex:1;min-width:0;line-height:1.25}
+.chat-topo .nomes strong{display:block;font-size:14px}
+.chat-topo .nomes span{font-size:11.5px;opacity:.85}
+.chat-topo button{background:rgba(255,255,255,.14);border:none;color:#fff;width:30px;height:30px;border-radius:9px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.chat-topo button:hover{background:rgba(255,255,255,.26)}
+.chat-topo button svg{width:16px;height:16px}
+.chat-msgs{flex:1;overflow-y:auto;padding:14px 12px 6px;background:#FBF8F5;display:flex;flex-direction:column;gap:8px;scroll-behavior:smooth}
+.chat-msg{max-width:88%;padding:9px 12px;border-radius:16px;font-size:13.5px;line-height:1.5;word-wrap:break-word;animation:chatEntra .28s cubic-bezier(.2,.8,.2,1)}
+.chat-msg.ia{align-self:flex-start;background:#fff;border:1px solid var(--regua);border-bottom-left-radius:6px;color:var(--tinta)}
+.chat-msg.eu{align-self:flex-end;background:var(--primaria);color:#fff;border-bottom-right-radius:6px}
+.chat-msg.aviso-chat{align-self:center;max-width:96%;background:var(--destaque-fundo);border:1px solid rgba(95,174,46,.35);color:#2F5E14;font-size:12.5px;text-align:center}
+.chat-msg.falha-chat{align-self:center;max-width:96%;background:var(--vermelho-fundo);border:1px solid rgba(176,50,42,.3);color:#8E2C2C;font-size:12.5px}
+.chat-msg p{margin:0 0 6px}.chat-msg p:last-child{margin-bottom:0}
+.chat-msg ul,.chat-msg ol{margin:4px 0 6px;padding-left:18px}
+.chat-msg li{margin:2px 0}
+.chat-msg img{display:block;max-width:100%;max-height:160px;border-radius:10px;margin-bottom:6px}
+.chat-msg .botao{padding:6px 12px;font-size:12px;margin-top:6px}
+.chat-digitando{display:inline-flex;gap:4px;align-items:center;padding:4px 2px}
+.chat-digitando i{width:7px;height:7px;border-radius:50%;background:#AAB2C2;animation:chatPulo 1.1s infinite ease-in-out}
+.chat-digitando i:nth-child(2){animation-delay:.15s}.chat-digitando i:nth-child(3){animation-delay:.3s}
+@keyframes chatPulo{0%,60%,100%{transform:translateY(0);opacity:.5}30%{transform:translateY(-5px);opacity:1}}
+@keyframes chatEntra{from{opacity:0;transform:translateY(8px) scale(.97)}to{opacity:1;transform:none}}
+.chat-sugestoes{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px}
+.chat-sugestoes button{background:#fff;border:1px solid var(--primaria-borda);color:var(--primaria);border-radius:999px;padding:5px 11px;
+  font:inherit;font-size:12px;font-weight:700;cursor:pointer}
+.chat-sugestoes button:hover{background:var(--primaria-fundo)}
+.chat-anexos{display:flex;gap:6px;flex-wrap:wrap;padding:0 12px}
+.chat-anexos:not(:empty){padding:8px 12px 0;background:#fff;border-top:1px solid var(--regua)}
+.chat-anexo{position:relative;width:52px;height:52px;border-radius:10px;overflow:hidden;border:1px solid var(--regua)}
+.chat-anexo img{width:100%;height:100%;object-fit:cover}
+.chat-anexo button{position:absolute;top:2px;right:2px;width:18px;height:18px;border-radius:50%;border:none;background:rgba(0,0,0,.6);color:#fff;
+  font-size:12px;line-height:18px;padding:0;cursor:pointer}
+.chat-form{display:flex;align-items:flex-end;gap:6px;padding:10px 10px 12px;background:#fff;border-top:1px solid var(--regua)}
+.chat-anexos:not(:empty)+.chat-form{border-top:none}
+.chat-form textarea{flex:1;min-height:40px;max-height:120px;resize:none;border-radius:14px;padding:9px 12px;font-size:13.5px;line-height:1.4;margin:0}
+.chat-form button{flex:none;width:40px;height:40px;border-radius:12px;border:1px solid var(--primaria-borda);background:#fff;color:var(--primaria);
+  cursor:pointer;display:flex;align-items:center;justify-content:center}
+.chat-form button:hover{background:var(--primaria-fundo)}
+.chat-form button svg{width:18px;height:18px}
+.chat-form #chat-enviar{background:var(--primaria);border-color:var(--primaria);color:#fff}
+.chat-form #chat-enviar:hover{background:var(--primaria-escura)}
+.chat-form #chat-enviar[disabled]{opacity:.5;cursor:default}
+.chat-painel.arrastando .chat-msgs{outline:3px dashed var(--primaria);outline-offset:-8px}
+@media(max-width:900px){.lateral{padding-bottom:0}}
+@media(max-width:640px){
+  .chat-botao span.rotulo{display:none}
+  .chat-botao{padding:0 9px}
+  .chat-painel{left:8px;right:8px;width:auto;bottom:68px;height:min(72vh,calc(100vh - 150px))}
+}
+@media print{.chat-botao,.chat-painel,#janela-questao{display:none !important}}
 @media(prefers-reduced-motion:reduce){*{transition:none !important;animation:none !important}}
 </style>
 </head>
@@ -575,11 +732,11 @@ input[type=file]{font-size:13px}
       <p class="ajuda" style="margin-top:0">As questões novas seguem a estrutura do ENEM. A IA recebe como modelo algumas questões reais do acervo (aba Provas oficiais) da habilidade escolhida.</p>
       <div class="linha">
         <div><label for="en-area">Área do ENEM</label><select id="en-area"></select></div>
-        <div><label for="en-comp">Competência</label><select id="en-comp"></select></div>
+        <div><label for="en-comp">Competência <span class="opcional">opcional</span></label><select id="en-comp"></select></div>
       </div>
       <div class="linha">
-        <div><label for="en-hab">Habilidade</label><select id="en-hab"></select></div>
-        <div><label for="en-dif">Dificuldade (TRI do INEP)</label><select id="en-dif"><option value="">Qualquer</option><option value="facil">Fácil</option><option value="media">Média</option><option value="dificil">Difícil</option></select></div>
+        <div><label for="en-hab">Habilidade <span class="opcional">opcional</span></label><select id="en-hab"></select></div>
+        <div><label for="en-dif">Dificuldade (TRI do INEP) <span class="opcional">opcional</span></label><select id="en-dif"><option value="">Qualquer</option><option value="facil">Fácil</option><option value="media">Média</option><option value="dificil">Difícil</option></select></div>
       </div>
       <p class="ajuda" id="en-info"></p>
     </div>
@@ -610,8 +767,9 @@ input[type=file]{font-size:13px}
         </div>
         <label for="componente">Componente curricular</label>
         <select id="componente"></select>
-        <label for="assunto">Assunto ou recorte <span style="font-weight:400;color:var(--cinza)">— opcional se houver capítulo ou material marcado</span></label>
+        <label for="assunto">Assunto ou recorte <span class="opcional">opcional</span> <span style="font-weight:400;color:var(--cinza)">— se houver capítulo ou material marcado</span></label>
         <input type="text" id="assunto" placeholder="Ex.: Revolução Pernambucana de 1817 — causas e desdobramentos">
+        <div id="hab-dos-capitulos"></div>
 
     <h3 class="passo"><span>3</span> Formato e quantidade</h3>
         <div class="formatos">
@@ -635,8 +793,8 @@ input[type=file]{font-size:13px}
         <p class="ajuda" style="margin-top:4px">Até 20 questões por geração. Para provas maiores, gere em rodadas: o banco acumula tudo.</p>
 
         <details id="det-mais-opcoes" style="margin-top:14px">
-          <summary><span><strong>Mais opções</strong> <span class="sumario">— bimestre, habilidades, nível de exigência, orientações</span></span></summary>
-            <label for="unidade">Bimestre</label>
+          <summary><span><strong>Mais opções</strong> <span class="opcional">opcional</span> <span class="sumario">— bimestre, habilidades, nível de exigência, orientações</span></span></summary>
+            <label for="unidade">Bimestre <span class="opcional">opcional</span></label>
             <select id="unidade">
               <option value="">— não informar —</option>
               <option value="1º bimestre">1º bimestre</option>
@@ -645,14 +803,14 @@ input[type=file]{font-size:13px}
               <option value="4º bimestre">4º bimestre</option>
             </select>
         <details id="det-habilidades">
-          <summary><span><strong>Habilidades da matriz</strong> <span id="resumo-hab" class="sumario">— opcional</span></span></summary>
+          <summary><span><strong>Habilidades da matriz</strong> <span class="opcional">opcional</span> <span id="resumo-hab" class="sumario"></span></span></summary>
           <input type="text" id="busca-hab" placeholder="Filtrar por código ou por palavra do texto">
           <div id="lista-habilidades" class="caixa-hab"></div>
-          <label for="habilidades">Outros códigos, fora da matriz carregada</label>
+          <label for="habilidades">Outros códigos, fora da matriz carregada <span class="opcional">opcional</span></label>
           <input type="text" id="habilidades" placeholder="Ex.: EF09HI09 — só para códigos que não aparecem na lista acima">
         </details>
         <p class="ajuda nota-hab">Sem marcar nada, a IA escolhe sozinha a habilidade mais adequada da matriz oficial para cada questão. Marque apenas se quiser dirigir a prova a habilidades específicas.</p>
-        <label for="nivel">Nível de exigência</label>
+        <label for="nivel">Nível de exigência <span class="opcional">opcional</span></label>
         <select id="nivel">
           <option value="misto">Misto — do reconhecimento à análise</option>
           <option value="basico">Básico — reconhecimento e compreensão</option>
@@ -660,15 +818,15 @@ input[type=file]{font-size:13px}
           <option value="avancado">Avançado — análise e interpretação de fontes</option>
         </select>
         <label style="margin-top:10px"><input type="checkbox" id="raciocinio" style="width:auto;margin-right:7px">Elaboração cuidadosa — o modelo raciocina antes de responder e revisa cada questão. Melhora a qualidade, mas deixa a geração bem mais lenta e mais sujeita a congestionamento do provedor.</label>
-        <label for="observacoes">Orientações adicionais</label>
+        <label for="observacoes">Orientações adicionais <span class="opcional">opcional</span></label>
         <textarea id="observacoes" placeholder="Ex.: usar fontes iconográficas; evitar datas isoladas; contemplar história local de Pernambuco."></textarea>
         </details>
 
         <details id="det-material-extra" style="margin-top:10px">
-          <summary><span><strong>Material extra</strong> <span class="sumario">— anexar um PDF ou colar um texto só para apoio <span id="resumo-outros"></span></span></span></summary>
-          <label for="texto-extra">Texto avulso</label>
+          <summary><span><strong>Material extra</strong> <span class="opcional">opcional</span> <span class="sumario">— anexar um PDF ou colar um texto só para apoio <span id="resumo-outros"></span></span></span></summary>
+          <label for="texto-extra">Texto avulso <span class="opcional">opcional</span></label>
           <textarea id="texto-extra" placeholder="Cole aqui trechos, fontes históricas ou anotações que devem entrar apenas nesta geração."></textarea>
-          <label style="margin-top:12px">Arquivos guardados (PDF)</label>
+          <label style="margin-top:12px">Arquivos guardados (PDF) <span class="opcional">opcional</span></label>
           <p class="ajuda">Provas, apostilas e outros PDFs que não estão nos livros SESI. Anexe cada arquivo uma única vez, dê um título e marque quando ele deve alimentar a próxima geração.</p>
             <input type="file" id="arquivos" accept="application/pdf" multiple>
             <div id="status-pdf" class="progresso"></div>
@@ -752,8 +910,11 @@ input[type=file]{font-size:13px}
   <div class="bloco nao-imprime">
     <h2>Modelo timbrado</h2>
     <p class="ajuda">Anexe uma única vez o .docx timbrado da escola. Ele fica guardado neste navegador e é reaproveitado em todas as provas. Todo trecho entre chaves duplas no Word — como {{DISCIPLINA}} — vira um campo aqui embaixo, e o marcador {{QUESTOES}} indica onde as questões entram.</p>
-    <input type="file" id="arquivo-modelo" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
-    <div id="status-modelo"></div>
+    <details id="det-anexar-modelo">
+      <summary><span><strong>Anexar ou trocar o modelo</strong> <span class="sumario" id="resumo-anexar-modelo">— nenhum modelo anexado ainda</span></span></summary>
+      <input type="file" id="arquivo-modelo" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
+      <div id="status-modelo"></div>
+    </details>
 
     <div id="bloco-campos" style="display:none">
       <div id="campos-modelo"></div>
@@ -772,14 +933,15 @@ input[type=file]{font-size:13px}
   </div>
 
   <div class="bloco nao-imprime">
-    <h2>Versão sem timbre</h2>
-    <p class="ajuda">Para conferência rápida, impressão de rascunho ou uso fora do modelo institucional.</p>
+    <details id="det-sem-timbre">
+    <summary><span><strong>Versão sem timbre</strong> <span class="opcional">opcional</span> <span class="sumario">— para conferência rápida, rascunho ou uso fora do modelo da escola</span></span></summary>
+    <p class="ajuda">Não precisa preencher nada aqui para usar o modelo timbrado. Esta versão serve para conferência rápida, impressão de rascunho ou uso fora do modelo institucional.</p>
     <div class="linha">
-      <div><label for="p-escola">Escola</label><input type="text" id="p-escola" value="SESI Ibura"></div>
-      <div><label for="p-titulo">Título</label><input type="text" id="p-titulo" value="Avaliação de História"></div>
+      <div><label for="p-escola">Escola <span class="opcional">opcional</span></label><input type="text" id="p-escola" value="SESI Ibura"></div>
+      <div><label for="p-titulo">Título <span class="opcional">opcional</span></label><input type="text" id="p-titulo" value="Avaliação de História"></div>
     </div>
     <div class="linha">
-      <div><label for="p-data">Data</label><input type="text" id="p-data" placeholder="Ex.: 12/09/2026"></div>
+      <div><label for="p-data">Data <span class="opcional">opcional</span></label><input type="text" id="p-data" placeholder="Ex.: 12/09/2026"></div>
     </div>
     <label><input type="checkbox" id="p-gabarito" checked style="width:auto;margin-right:7px">Incluir folha de gabarito ao final</label>
     <div class="botoes">
@@ -788,13 +950,14 @@ input[type=file]{font-size:13px}
       <button class="botao secundario" id="btn-docx">Baixar em Word</button>
       <button class="botao secundario" id="btn-copiar">Copiar como texto</button>
     </div>
+    </details>
   </div>
   <div class="bloco nao-imprime">
     <details id="det-completar">
-      <summary><span><strong>Completar a prova com questões novas</strong> <span class="sumario">— opcional, acrescenta questões inéditas à prova</span></span></summary>
+      <summary><span><strong>Completar a prova com questões novas</strong> <span class="opcional">opcional</span> <span class="sumario">— acrescenta questões inéditas à prova</span></span></summary>
     <p class="ajuda">Gera questões inéditas e já as inclui na seleção, sem sair desta aba. Elas também entram no banco para as próximas provas. São usados os mesmos parâmetros do último pedido feito na aba Gerar, com os materiais que estiverem marcados na biblioteca.</p>
     <div class="aviso" id="resumo-pedido"></div>
-    <label for="c-assunto">Assunto destas questões</label>
+    <label for="c-assunto">Assunto destas questões <span class="opcional">opcional</span></label>
     <input type="text" id="c-assunto" placeholder="Deixe como está para repetir o assunto anterior">
     <label>Quantidade por formato <span class="sumario">— as objetivas seguem o molde do último pedido</span></label>
     <div class="formatos">
@@ -833,11 +996,11 @@ input[type=file]{font-size:13px}
         <input type="file" id="pdf-gabarito" accept="application/pdf">
       </div>
     </div>
-    <label for="gabarito-colado">Ou cole o gabarito aqui, se o PDF não funcionar</label>
+    <label for="gabarito-colado">Ou cole o gabarito aqui, se o PDF não funcionar <span class="opcional">opcional</span></label>
     <textarea id="gabarito-colado" placeholder="Ex.: 46 E 47 D 48 E — ou uma resposta por linha"></textarea>
     <div class="linha">
       <div>
-        <label for="nome-prova">Nome da prova</label>
+        <label for="nome-prova">Nome da prova <span class="opcional">opcional</span></label>
         <input type="text" id="nome-prova" placeholder="Ex.: ENEM 2025 — 1º dia, Caderno Azul">
       </div>
       <div>
@@ -870,7 +1033,7 @@ input[type=file]{font-size:13px}
       <div class="linha" id="linha-prova">
         <div><label for="prova-ano">Ano</label><select id="prova-ano"></select></div>
         <div id="caixa-prova-turma" hidden><label for="prova-turma">Turma</label><select id="prova-turma"></select></div>
-        <div id="caixa-prova-area" hidden><label for="prova-area">Área / disciplina</label><select id="prova-area"></select></div>
+        <div id="caixa-prova-area" hidden><label for="prova-area">Disciplina</label><select id="prova-area"></select></div>
         <div hidden><label for="prova-caderno">Caderno</label><select id="prova-caderno"></select></div>
       </div>
       <div class="grade-capas" id="capas-provas" aria-label="Cadernos do ano"></div>
@@ -879,22 +1042,26 @@ input[type=file]{font-size:13px}
     <select id="prova-escolhida" hidden aria-hidden="true"><option value="">— nenhuma prova importada —</option></select>
 
     <h3 class="passo"><span>2</span> Filtrar as questões</h3>
+    <p class="ajuda" id="nota-disciplina" hidden></p>
     <div class="linha">
+      <div id="caixa-filtro-area">
+        <label for="filtro-area">Disciplina</label>
+        <select id="filtro-area"><option value="">Todas</option></select>
+      </div>
       <div>
-        <label for="filtro-materia">Matéria</label>
+        <label for="filtro-materia">Matéria <span class="opcional">opcional</span></label>
         <select id="filtro-materia"><option value="">Todas</option></select>
       </div>
-      <div>
-        <label for="filtro-assunto">Assunto identificado na prova</label>
-        <select id="filtro-assunto"><option value="">Todos</option></select>
-      </div>
     </div>
-    <label for="busca-tema">Buscar por tema amplo</label>
+    <label for="filtro-assunto">Assunto identificado na prova <span class="opcional">opcional</span></label>
+    <select id="filtro-assunto"><option value="">Todos</option></select>
+    <label for="busca-tema">Buscar por tema amplo <span class="opcional">opcional</span></label>
     <input type="text" id="busca-tema" placeholder="Ex.: ódio na política">
     <p class="ajuda nota-hab">A busca por tema encontra questões próximas do que você digitou, mesmo com outras palavras — útil quando o capítulo do livro traz só um título.</p>
+    <div id="filtros-enem">
     <div class="linha">
       <div>
-        <label for="filtro-area-enem">Matriz do ENEM: área</label>
+        <label for="filtro-area-enem">Matriz do ENEM: área <span class="opcional">opcional</span></label>
         <select id="filtro-area-enem"><option value="">Todas as áreas</option></select>
       </div>
       <div>
@@ -905,9 +1072,10 @@ input[type=file]{font-size:13px}
     <label for="filtro-hab-enem">Habilidade</label>
     <select id="filtro-hab-enem"><option value="">Todas as habilidades</option></select>
     <p class="ajuda nota-hab" id="texto-matriz-enem"></p>
+    </div>
     <div class="linha">
       <div>
-        <label for="filtro-dif">Dificuldade (TRI do INEP)</label>
+        <label for="filtro-dif" id="rotulo-dif">Dificuldade (TRI do INEP)</label>
         <select id="filtro-dif"><option value="">Todas</option><option value="1">Muito fácil</option><option value="2">Fácil</option><option value="3">Média</option><option value="4">Difícil</option><option value="5">Muito difícil</option><option value="0">Sem dado do INEP</option></select>
       </div>
       <div>
@@ -982,10 +1150,10 @@ input[type=file]{font-size:13px}
         </select>
       </div>
     </div>
-    <label for="pl-professor">Professor</label>
+    <label for="pl-professor">Professor <span class="opcional">opcional</span></label>
     <input type="text" id="pl-professor">
     <details id="det-quinzenal" style="margin-top:14px">
-      <summary><span><strong>Quinzenal</strong> <span class="sumario" id="resumo-quinzenal">— escolha para preencher as datas</span></span></summary>
+      <summary><span><strong>Quinzenal</strong> <span class="opcional">opcional</span> <span class="sumario" id="resumo-quinzenal">— escolha para preencher as datas</span></span></summary>
       <p class="ajuda">Calendário do 2º semestre do SESI Ibura. Ao escolher, a data das aulas é preenchida; você ainda pode ajustá-la no calendário.</p>
       <div class="quinzenais" id="lista-quinzenais"></div>
     </details>
@@ -1004,7 +1172,7 @@ input[type=file]{font-size:13px}
       </div>
     </div>
     <details id="det-material-plano" class="livros-sesi" style="margin-top:14px">
-      <summary><span><strong>Material didático que será utilizado nas aulas</strong> <span class="sumario" id="resumo-material-plano">— nenhum capítulo escolhido</span></span></summary>
+      <summary><span><strong>Material didático que será utilizado nas aulas</strong> <span class="opcional">opcional</span> <span class="sumario" id="resumo-material-plano">— nenhum capítulo escolhido</span></span></summary>
       <p class="ajuda">Escolha o livro SESI da série e marque os capítulos do ciclo. A IA lê o texto deles para escrever o desenvolvimento. Na divisão entre as aulas basta escrever, por exemplo, "Aula 01: início do capítulo 1".</p>
       <div class="linha">
         <div><label for="pm-area">Área</label><select id="pm-area"></select></div>
@@ -1013,23 +1181,28 @@ input[type=file]{font-size:13px}
       <div id="pm-capitulos"></div>
       <div id="pm-marcados"></div>
     </details>
-    <label for="pl-tema">Temas norteadores e tema geral</label>
+    <label for="pl-tema">Temas norteadores e tema geral <span class="opcional">opcional</span></label>
     <input type="text" id="pl-tema" placeholder="Ex.: Seminário de História — O mundo em conflito: das Guerras Mundiais à Corrida Espacial">
     <label for="pl-divisao">Divisão entre as aulas</label>
     <textarea id="pl-divisao" style="min-height:150px" placeholder="Aula 01: ...&#10;Aula 02: ...&#10;Aula 03: ...&#10;Aula 04: ..."></textarea>
     <p class="ajuda nota-hab">Uma linha por aula, começando por "Aula 01:". O app monta uma tabela para cada uma, respeitando a regra dos pares: a ímpar abre e termina em suspensão, a par retoma e fecha.</p>
 
     <details id="det-hab-plano">
-      <summary><span><strong>Competências e habilidades</strong> <span id="resumo-hab-plano" class="sumario">— nenhuma marcada</span></span></summary>
+      <summary><span><strong>Competências e habilidades</strong> <span class="opcional">opcional</span> <span id="resumo-hab-plano" class="sumario">— nenhuma marcada</span></span></summary>
+      <div id="hab-cap-plano"></div>
       <input type="text" id="busca-hab-plano" placeholder="Filtrar por código ou palavra">
       <div class="caixa-hab" id="lista-hab-plano"></div>
-      <label for="hab-plano-extra">Outros códigos, fora da matriz carregada</label>
-      <textarea id="hab-plano-extra" placeholder="Ex.: SESI.EF09HI13.s.29 – Descrever e contextualizar os processos da emergência do fascismo…"></textarea>
+      <details id="det-hab-extra" style="margin-top:12px">
+        <summary><span><strong>Outros códigos, fora da matriz carregada</strong> <span class="opcional">opcional</span> <span class="sumario">— Ensino Religioso, Projeto de Vida ou códigos que não estão na lista</span></span></summary>
+        <textarea id="hab-plano-extra" aria-label="Outros códigos, fora da matriz carregada" placeholder="Ex.: SESI.EF09HI13.s.29 – Descrever e contextualizar os processos da emergência do fascismo…"></textarea>
+        <p class="ajuda nota-hab">O app traz a matriz SESI do Fundamental (6º ao 9º ano) e do Médio. Ensino Religioso e Projeto de Vida não estão na matriz: para eles, cole os códigos e as descrições aqui.</p>
+      </details>
     </details>
-    <p class="ajuda nota-hab">O app traz a matriz SESI do Fundamental (6º ao 9º ano) e do Médio. Ensino Religioso e Projeto de Vida não estão na matriz: para eles, cole os códigos e as descrições no campo acima.</p>
 
-    <label for="pl-observacoes">Orientações adicionais</label>
-    <textarea id="pl-observacoes" placeholder="Ex.: semana de PASSE; turma com dois estudantes com TEA; sem acesso a impressão nesta quinzena."></textarea>
+    <details id="det-obs-plano" style="margin-top:12px">
+      <summary><span><strong>Orientações adicionais</strong> <span class="opcional">opcional</span> <span class="sumario">— semana de prova, estudantes com TEA, falta de impressão…</span></span></summary>
+      <textarea id="pl-observacoes" aria-label="Orientações adicionais" placeholder="Ex.: semana de PASSE; turma com dois estudantes com TEA; sem acesso a impressão nesta quinzena."></textarea>
+    </details>
 
     <div class="botoes">
       <button class="botao" id="btn-gerar-plano">Gerar planejamento</button>
@@ -1063,6 +1236,9 @@ input[type=file]{font-size:13px}
       <div id="retorno-membros"></div>
       <p class="ajuda" style="margin:12px 0 4px">Professores com acesso:</p>
       <ul id="lista-membros" style="margin:0;padding-left:20px;font-size:13.5px;line-height:2"></ul>
+      <p class="ajuda" style="margin:16px 0 4px"><strong>Avisos de erro por e-mail.</strong> Quando o assistente do chat de ajuda percebe um defeito do site, ele manda um e-mail para o administrador. O primeiro aviso chega com um pedido de ativação do FormSubmit: é só confirmar uma vez.</p>
+      <button class="botao secundario" type="button" id="btn-testar-relato">Testar o aviso de erros por e-mail</button>
+      <div id="retorno-relato"></div>
     </div>
   </div>
 
@@ -1079,7 +1255,7 @@ input[type=file]{font-size:13px}
     <datalist id="lista-modelos"></datalist>
     <p class="ajuda" id="aviso-chave" style="margin:8px 0 2px;color:#7a5210">Cadastre a chave para liberar o teste de conexão e a busca de modelos. Ela é gratuita no Google AI Studio e leva dois minutos.</p>
     <button class="botao secundario" id="btn-modelos" style="margin-top:9px">Buscar modelos disponíveis na minha conta</button>
-    <label for="reserva">Modelo reserva (opcional)</label>
+    <label for="reserva">Modelo reserva <span class="opcional">opcional</span></label>
     <input type="text" id="reserva" list="lista-modelos" placeholder="Ex.: gemini-3.5-flash">
     <p class="ajuda" style="margin-top:5px">Usado automaticamente quando o modelo principal está congestionado.</p>
     <label for="chave">Chave de API</label>
@@ -1132,6 +1308,40 @@ input[type=file]{font-size:13px}
 
 </main>
 
+<div id="chat-ia">
+  <button type="button" class="chat-botao" id="chat-botao" aria-expanded="false" aria-controls="chat-painel" title="Dúvidas sobre o site? Fale com o assistente">
+    <span class="bolha"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.9A8 8 0 1 1 21 12z"/></svg></span>
+    <span class="rotulo">Ajuda</span>
+  </button>
+  <section class="chat-painel" id="chat-painel" role="dialog" aria-label="Assistente do Banco de Questões" hidden>
+    <div class="chat-topo">
+      <span class="avatar" aria-hidden="true">B</span>
+      <span class="nomes"><strong>Assistente do Banco</strong><span>dúvidas sobre o site, dicas e prints</span></span>
+      <button type="button" id="chat-limpar" title="Começar uma conversa nova" aria-label="Começar uma conversa nova"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg></button>
+      <button type="button" id="chat-recolher" title="Recolher" aria-label="Recolher o chat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+    </div>
+    <div class="chat-msgs" id="chat-msgs" aria-live="polite"></div>
+    <div class="chat-anexos" id="chat-anexos"></div>
+    <form class="chat-form" id="chat-form" autocomplete="off">
+      <button type="button" id="chat-anexar" title="Anexar um print da tela" aria-label="Anexar um print da tela"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2"/><path d="M21 16l-5-5-8 8"/></svg></button>
+      <input type="file" id="chat-arquivo" accept="image/*" multiple hidden>
+      <textarea id="chat-texto" rows="1" placeholder="Pergunte sobre o site… dá para colar um print aqui" aria-label="Sua mensagem"></textarea>
+      <button type="submit" id="chat-enviar" title="Enviar" aria-label="Enviar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+    </form>
+  </section>
+</div>
+<div id="janela-questao" hidden role="dialog" aria-modal="true" aria-label="Questão em destaque">
+  <div class="jq-cartao">
+    <div class="jq-topo">
+      <span class="jq-conta" id="jq-conta"></span>
+      <label><input type="checkbox" id="jq-marcar">selecionar para a prova</label>
+      <button type="button" class="jq-fechar" id="jq-fechar" aria-label="Fechar" title="Fechar (Esc)">×</button>
+    </div>
+    <div class="jq-corpo" id="jq-corpo"></div>
+    <button type="button" class="jq-seta jq-ant" id="jq-ant" aria-label="Questão anterior" title="Anterior (seta para a esquerda)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></button>
+    <button type="button" class="jq-seta jq-prox" id="jq-prox" aria-label="Próxima questão" title="Próxima (seta para a direita)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg></button>
+  </div>
+</div>
 <div id="portao" class="fundo-janela portao" style="display:none" role="dialog" aria-modal="true" aria-labelledby="titulo-portao">
   <div class="janela">
     <h2 id="titulo-portao">Banco de Questões</h2>
@@ -1195,7 +1405,10 @@ window.addEventListener("unhandledrejection",function(ev){
   var r=ev.reason;
   mostrarFalha((r&&r.message)||String(r),"");
 });
+// os últimos erros da faixa vermelha: o chat de ajuda conta para a IA e manda no aviso ao administrador
+var errosRecentes=[];
 function mostrarFalha(texto,onde){
+  try{errosRecentes.push({texto:String(texto||"").slice(0,300),onde:onde||"",quando:Date.now()});if(errosRecentes.length>10)errosRecentes.shift();}catch(e){}
   try{
     var faixa=document.getElementById("faixa-erro");
     if(!faixa){
@@ -2086,6 +2299,7 @@ function livrosCompletarTextos(){
 function livrosRenderMarcados(){
   var alvo=$("ls-marcados");
   if(!alvo)return;
+  if(typeof habSelecionadas==="object"&&habSelecionadas)renderHabilidades();
   var ids=Object.keys(LS.marcados);
   if(!ids.length){alvo.innerHTML="";return;}
   alvo.innerHTML='<div class="aviso">'+'<strong>'+ids.length+" "+(ids.length===1?"capítulo marcado":"capítulos marcados")+"</strong> para a próxima geração:"+
@@ -2191,6 +2405,22 @@ document.addEventListener("click",function(ev){
   document.querySelectorAll("#ls-lista details.caderno[open]").forEach(function(d){
     if(!d.contains(ev.target))d.open=false;
   });
+});
+/* clicar numa parte vazia da página (fora de campos e botões) recolhe as listas de livros
+   e de capítulos em todo o site: a prateleira do Gerar e os capítulos do Planejamento.
+   O que foi marcado continua marcado e aparece no resumo.                              */
+function cliqueEmCampo(el){
+  return !!(el.closest&&el.closest("input,select,textarea,button,a,label,summary,option,[role=button],[contenteditable],.calendario,#chat-ia,#janela-questao,.fundo-janela"));
+}
+document.addEventListener("click",function(ev){
+  var alvo=ev.target;
+  if(!alvo||!document.body.contains(alvo)||cliqueEmCampo(alvo))return;
+  var dl=$("det-ls-lista");
+  if(dl&&dl.open&&!dl.contains(alvo))dl.open=false;
+  var caps=$("pm-capitulos");
+  if(typeof PM!=="undefined"&&PM&&PM.livro!==""&&caps&&!caps.contains(alvo)){
+    PM.livro="";pmGuardar();renderMaterialPlano();
+  }
 });
 // chamado quando a nuvem muda de estado: abre a lista pendente e traz os textos que faltam
 function livrosNuvemMudou(){
@@ -3138,6 +3368,7 @@ function origemMudou(guardar){
   if(o==="enem")renderFiltroEnem();else infoAcervo();
   if(guardar)gravar(CHAVE_ORIGEM,o);
   atualizarTotalPedido();
+  renderHabilidades();
 }
 document.querySelectorAll('input[name="origem"]').forEach(function(r){
   r.addEventListener("change",function(){acervoCache=null;origemMudou(true);});
@@ -3275,6 +3506,77 @@ function preencherComponentes(){
   });
   if(!sel.value&&sel.options.length)sel.selectedIndex=0;
 }
+/* ---- habilidades citadas nos capítulos do livro SESI ----
+   O texto de cada capítulo traz o código completo (SESI.EM23CHS101.d.3; o "23" é a série,
+   que a matriz escreve EM13). Vale primeiro o código completo; se ele não estiver na matriz,
+   vale o código da BNCC (EM13CHS101), com todas as variantes dele.                         */
+var RE_COD_LIVRO=/SESI\.\s?E[MF]\d{2}\s?[A-Z]{2,4}\s?\d{2,3}(?:\.\d{2})?(?:\.[a-zA-Z]\.\d{1,3})?|\bE[MF]\d{2}[A-Z]{2,4}\d{2,3}\b/g;
+function normCodHab(c){
+  return String(c||"").replace(/\s+/g,"").replace(/^SESI\./i,"").toUpperCase().replace(/^EM[1-3]3/,"EM13").replace(/\.0*(\d+)$/,".$1");
+}
+function baseCodHab(c){var m=/^(E[FM]\d\d[A-Z]+\d+)/.exec(normCodHab(c));return m?m[1]:"";}
+function habilidadesDoTexto(texto,lista){
+  var cods={}, porCod={}, porBase={}, achou={};
+  (String(texto||"").match(RE_COD_LIVRO)||[]).forEach(function(c){cods[normCodHab(c)]=1;});
+  lista.forEach(function(h){
+    var n=normCodHab(h.c), b=baseCodHab(h.c);
+    (porCod[n]=porCod[n]||[]).push(h);(porBase[b]=porBase[b]||[]).push(h);
+  });
+  Object.keys(cods).forEach(function(c){
+    var f=/\.[A-Z]\.\d+$/.test(c)?porCod[c]:null;
+    if(!f||!f.length)f=porBase[baseCodHab(c)]||[];
+    f.forEach(function(h){achou[h.c]=1;});
+  });
+  return lista.filter(function(h){return achou[h.c];});
+}
+/* capitulos: [{titulo, livro, texto}] → grupos com as habilidades de cada um e as que sobram */
+function gruposHabCapitulos(capitulos,lista){
+  var usadas={};
+  var grupos=capitulos.map(function(c){
+    var habs=c.texto?habilidadesDoTexto(c.texto,lista):[];
+    habs.forEach(function(h){usadas[h.c]=1;});
+    return {titulo:c.titulo,livro:c.livro,carregando:!c.texto,habs:habs};
+  });
+  return {grupos:grupos,usadas:usadas,outras:lista.filter(function(h){return !usadas[h.c];})};
+}
+/* bloco verde: "Capítulo 2 — título" e, embaixo, as habilidades dele com caixa de marcar */
+function htmlHabCapitulos(g,item,titulo){
+  if(!g.grupos.length)return "";
+  var com=g.grupos.filter(function(x){return x.habs.length;}).length;
+  return '<div class="hab-caps"><p class="hab-caps-titulo">'+titulo+"</p>"+
+    '<p class="hab-caps-ajuda">'+(com?"Cada habilidade aparece debaixo do capítulo que a cita. As demais habilidades da série ficam logo abaixo.":
+      "Os capítulos escolhidos não citam habilidades desta matriz.")+"</p>"+
+    g.grupos.map(function(x,k){
+      return '<p class="hab-cap-nome"><span class="num">'+(k+1)+"</span><span>"+esc(x.titulo)+
+        (x.livro?' <span class="livro">· '+esc(x.livro)+"</span>":"")+"</span></p>"+
+        (x.carregando?'<p class="hab-cap-vazio">carregando o capítulo…</p>':
+         x.habs.length?x.habs.map(item).join(""):'<p class="hab-cap-vazio">nenhuma habilidade da matriz citada neste capítulo</p>');
+    }).join("")+"</div>";
+}
+/* quando a matriz aberta não tem nenhuma das citadas: diz em que componentes elas estão */
+function componenteDasCitadas(capitulos,etapa,serie,chaveAtual){
+  var texto=capitulos.map(function(c){return c.texto||"";}).join("\n");
+  if(!texto||!serie)return "";
+  var melhor="", n=0;
+  Object.keys(HABILIDADES).forEach(function(k){
+    if(k===chaveAtual||k.split("|")[1]!==serie)return;
+    var achou=habilidadesDoTexto(texto,HABILIDADES[k]).length;
+    if(achou>n){n=achou;melhor=k;}
+  });
+  if(!melhor)return "";
+  var nomes=[];
+  (COMPONENTES[etapa]||[]).forEach(function(v){
+    (Array.isArray(v)?v[1]:[v]).forEach(function(c){if(chaveDaMatriz(etapa,c,serie)===melhor&&nomes.indexOf(c)<0)nomes.push(c);});
+  });
+  if(!nomes.length)return melhor.split("|")[0];
+  return nomes.length===1?nomes[0]:nomes.slice(0,-1).join(", ")+" ou "+nomes[nomes.length-1];
+}
+function capitulosDoGerar(){
+  return Object.keys(LS.marcados).map(function(id){
+    var partes=String(LS.marcados[id].nome||"").split(" · ");
+    return {titulo:partes[partes.length-1]||"",livro:partes.length>2?partes[partes.length-2]:"",texto:LS.textos[id]||""};
+  });
+}
 var habSelecionadas={};
 function preencherSeries(){
   var sel=$("serie"), atual=sel.value, lista=SERIES[$("etapa").value]||[];
@@ -3288,6 +3590,23 @@ function chaveMatriz(){
 function renderHabilidades(){
   var alvo=$("lista-habilidades"), chave=chaveMatriz();
   var lista=HABILIDADES[chave]||[];
+  var caps=$("hab-dos-capitulos");
+  var capitulos=origemAtual()==="livro"?capitulosDoGerar():[];
+  var g=gruposHabCapitulos(capitulos,lista);
+  function itemCap(h){
+    return '<label class="hab"><input type="checkbox" data-hab="'+esc(h.c)+'"'+(habSelecionadas[h.c]?" checked":"")+'>'+
+      '<span><span class="cod">'+esc(h.c)+"</span> "+esc(h.t)+"</span></label>";
+  }
+  var outro=lista.length&&capitulos.length&&!Object.keys(g.usadas).length?componenteDasCitadas(capitulos,$("etapa").value,$("serie").value,chave):"";
+  caps.innerHTML=capitulos.length&&lista.length
+    ? htmlHabCapitulos(g,itemCap,'Habilidades dos capítulos marcados <span class="opcional">opcional</span>')+
+      (outro?'<p class="ajuda" style="margin-top:-4px">Os capítulos marcados citam habilidades de outra matriz. Para vê-las aqui, troque o componente curricular acima para <strong>'+esc(outro)+"</strong>.</p>":"")
+    : "";
+  if(capitulos.length)lista=g.outras;
+  if(!lista.length&&capitulos.length&&(HABILIDADES[chave]||[]).length){
+    alvo.innerHTML='<p class="ajuda" style="margin:10px 0">Todas as habilidades desta matriz já aparecem nos capítulos marcados.</p>';
+    resumoHabilidades();return;
+  }
   if(!lista.length){
     alvo.innerHTML='<p class="ajuda" style="margin:10px 0">'+
       ($("etapa").value==="Ensino Fundamental"&&$("componente").value&&$("serie").value
@@ -3299,24 +3618,29 @@ function renderHabilidades(){
   var visiveis=lista.filter(function(h){
     return !busca||(h.c+" "+h.t).toLowerCase().indexOf(busca)>-1;
   });
-  alvo.innerHTML=visiveis.map(function(h){
+  alvo.innerHTML=(capitulos.length?'<p class="titulo-hab" style="margin-top:4px">Demais habilidades da série</p>':"")+(visiveis.map(function(h){
     return '<label class="hab"><input type="checkbox" data-hab="'+esc(h.c)+'"'+
       (habSelecionadas[h.c]?" checked":"")+'>'+
       '<span><span class="cod">'+esc(h.c)+"</span> "+esc(h.t)+"</span></label>";
-  }).join("")||'<p class="ajuda" style="margin:10px 0">Nenhuma habilidade corresponde ao filtro.</p>';
-  alvo.querySelectorAll("[data-hab]").forEach(function(cb){
-    cb.addEventListener("change",function(){
-      if(this.checked)habSelecionadas[this.dataset.hab]=true;
-      else delete habSelecionadas[this.dataset.hab];
-      resumoHabilidades();
-    });
-  });
+  }).join("")||'<p class="ajuda" style="margin:10px 0">Nenhuma habilidade corresponde ao filtro.</p>');
   resumoHabilidades();
 }
+/* a mesma habilidade pode estar em dois capítulos: marcar uma marca as duas */
+["lista-habilidades","hab-dos-capitulos"].forEach(function(id){
+  $(id).addEventListener("change",function(ev){
+    var cb=ev.target;if(!cb.dataset||!cb.dataset.hab)return;
+    if(cb.checked)habSelecionadas[cb.dataset.hab]=true;
+    else delete habSelecionadas[cb.dataset.hab];
+    document.querySelectorAll('#hab-dos-capitulos [data-hab], #lista-habilidades [data-hab]').forEach(function(x){
+      if(x.dataset.hab===cb.dataset.hab)x.checked=cb.checked;
+    });
+    resumoHabilidades();
+  });
+});
 function resumoHabilidades(){
   var n=Object.keys(habSelecionadas).length;
   var alvo=$("resumo-hab");
-  if(alvo)alvo.textContent=n?("— "+n+" "+(n===1?"habilidade marcada":"habilidades marcadas")):"— opcional";
+  if(alvo)alvo.textContent=n?("— "+n+" "+(n===1?"habilidade marcada":"habilidades marcadas")):"";
 }
 function habilidadesDetalhadas(){
   var chave=chaveMatriz(), lista=HABILIDADES[chave]||[];
@@ -4135,18 +4459,20 @@ $("arquivo-pacote").addEventListener("change",function(ev){
         });
       });
     });
-    // dificuldade e habilidade oficiais do INEP (microdados): só acrescenta esses campos
+    // dificuldade e habilidade oficiais do INEP (microdados): só acrescenta esses campos.
+    // Nas provas sem microdados (SSA, PASSE) vem só a faixa estimada (1 a 5), com estimada:true.
     var dados=Array.isArray(pacote.dificuldade)?pacote.dificuldade:[];
     if(dados.length)seguir=seguir.then(function(){
       return listarProvas().then(function(atuais){
         var porNome={};atuais.forEach(function(pr){porNome[pr.nome]=pr;});
-        var mudadas={}, feitas=0, habs=0, provasFaltando={};
+        var mudadas={}, feitas=0, habs=0, estimadas=0, provasFaltando={};
         dados.forEach(function(d){
           var pr=d&&porNome[d.prova];
           if(!pr){if(d&&d.prova)provasFaltando[d.prova]=1;return;}
           var q=(pr.questoes||[]).filter(function(x){return x.chave===d.chave;})[0];
           if(!q)return;
           if(typeof d.dificuldade==="number"){q.dificuldade=d.dificuldade;q.faixa=d.faixa;}
+          else if(d.estimada&&d.faixa>=1&&d.faixa<=5&&typeof q.dificuldade!=="number"){q.faixa=d.faixa;q.difEstimada=true;estimadas++;}
           if(d.acerto!=null)q.acerto=d.acerto;
           if(d.habilidade&&HAB_ENEM[d.habilidade]&&q.matriz!==d.habilidade){
             if(q.matriz&&!q.matrizIA)q.matrizIA=q.matriz;
@@ -4158,7 +4484,8 @@ $("arquivo-pacote").addEventListener("change",function(ev){
         var lista=Object.keys(mudadas).map(function(k){return mudadas[k];});
         return Promise.all(lista.map(gravarProva)).then(function(){
           var faltam=Object.keys(provasFaltando).length;
-          relato.push("dificuldade do INEP em "+feitas+" questões"+(habs?" ("+habs+" com a habilidade corrigida pela oficial)":"")+
+          relato.push((feitas-estimadas?"dificuldade do INEP em "+(feitas-estimadas)+" questões"+(habs?" ("+habs+" com a habilidade corrigida pela oficial)":""):"")+
+            (estimadas?(feitas-estimadas?" e ":"")+"dificuldade estimada em "+estimadas+" questões":"")+
             (faltam?"; "+faltam+" "+(faltam===1?"prova não está":"provas não estão")+" neste aparelho":""));
           return recarregarProvas().catch(function(){});
         });
@@ -4568,6 +4895,7 @@ function carregarModelo(mapa,anunciar){
     new TextDecoder().decode(mapa["word/styles.xml"]).indexOf('w:styleId="Corpodetexto"')>-1);
   modeloCampos=lerCampos(mapa);
   montarFormulario();
+  $("resumo-anexar-modelo").textContent="— modelo guardado neste navegador; abra só se quiser trocar por outro";
   if(anunciar){
     var temMarca=partesTexto(mapa).some(function(n){
       return new TextDecoder().decode(mapa[n]).indexOf("{{QUESTOES}}")>-1;
@@ -5771,6 +6099,35 @@ function areaDaProva(p){
   var n=(p.nome||"").toLowerCase();
   return AREAS_PROVA.filter(function(a){return n.indexOf(a.toLowerCase())>=0;})[0]||"";
 }
+/* disciplina (área ampla) de cada questão: CH, CN, LC ou MT. Vem do bloco do ENEM,
+   da matéria classificada ou, no PASSE, do próprio caderno, que é de uma área só.
+   Um caderno do ENEM ou do SSA traz duas áreas; o filtro "Disciplina" separa as duas. */
+var AREA_DO_NOME={"Ciências Humanas":"CH","Ciências da Natureza":"CN","Linguagens":"LC","Matemática":"MT","Redação":"RD"},
+    NOME_DISCIPLINA={LC:"Linguagens",CH:"Humanas",CN:"Natureza",MT:"Exatas (Matemática)",RD:"Redação"},
+    ORDEM_DISCIPLINA=["LC","CH","CN","MT","RD"];
+function areaDaQuestao(q,p){
+  if(q.areaEnem)return q.areaEnem;
+  var m=(q.materias||[])[0];
+  if(m&&AREA_DA_MATERIA[m])return AREA_DA_MATERIA[m];
+  p=p||provaAtual||{};
+  // ENEM ainda sem classificação: cada bloco de 45 questões é de uma área (em 2009, outra ordem)
+  if(origemDaProva(p)==="enem"&&Number(q.numero)>0){
+    var b=Math.min(3,Math.floor((Number(q.numero)-1)/45));
+    return (anoDaProva(p)==="2009"?["CN","CH","LC","MT"]:["LC","CH","CN","MT"])[b];
+  }
+  return AREA_DO_NOME[areaDaProva(p)]||"";
+}
+function areasDoCaderno(p){
+  var a=AREA_DO_NOME[areaDaProva(p)];
+  if(a)return [a];
+  var vistas={};
+  (p.questoes||[]).forEach(function(q){var x=areaDaQuestao(q,p);if(x)vistas[x]=1;});
+  return ORDEM_DISCIPLINA.filter(function(k){return vistas[k];});
+}
+/* a disciplina vale a do passo 1 (escolha do caderno) ou, sem ela, a do passo 2 */
+function disciplinaEscolhida(){
+  return $("prova-area").value||(!$("caixa-filtro-area").hidden&&$("filtro-area").value)||"";
+}
 /* cadernos em ordem de turma (6º ano … 3ª série), depois de área, depois pelo nome */
 function compararCadernos(a,b){
   var ta=turmaDaProva(a), tb=turmaDaProva(b);
@@ -5781,16 +6138,16 @@ function compararCadernos(a,b){
 }
 function passaFiltroCaderno(p){
   var t=$("prova-turma").value, a=$("prova-area").value;
-  return (!t||turmaDaProva(p)===t)&&(!a||areaDaProva(p)===a);
+  return (!t||turmaDaProva(p)===t)&&(!a||areasDoCaderno(p).indexOf(a)>=0);
 }
 /* com filtro: os que passam; se nenhum passar, a lista toda */
 function preferirFiltrados(lista){
   var f=lista.filter(passaFiltroCaderno);return f.length?f:lista;
 }
-function encherFiltroCaderno(id,valores,rotulo){
+function encherFiltroCaderno(id,valores,rotulo,nomes){
   var sel=$(id), atual=sel.value;
   $("caixa-"+id).hidden=valores.length<2;
-  sel.innerHTML='<option value="">'+rotulo+"</option>"+valores.map(function(v){return '<option value="'+esc(v)+'">'+esc(v)+"</option>";}).join("");
+  sel.innerHTML='<option value="">'+rotulo+"</option>"+valores.map(function(v){return '<option value="'+esc(v)+'">'+esc(nomes?nomes[v]||v:v)+"</option>";}).join("");
   sel.value=valores.length>1&&valores.indexOf(atual)>=0?atual:"";
 }
 function origemEscolhida(){var r=document.querySelector('input[name="origem-oficial"]:checked');return r?r.value:"";}
@@ -5826,13 +6183,13 @@ function renderEscolhaProva(){
   $("prova-caderno").innerHTML=doAno.map(function(p){return '<option value="'+p.id+'">'+esc(rotuloCaderno(p))+"</option>";}).join("");
   if(provaAtual&&doAno.indexOf(provaAtual)>=0)$("prova-caderno").value=provaAtual.id;
   var turmas={}, areas={};
-  doAno.forEach(function(p){var t=turmaDaProva(p), a=areaDaProva(p);if(t)turmas[t]=1;if(a)areas[a]=1;});
+  doAno.forEach(function(p){var t=turmaDaProva(p);if(t)turmas[t]=1;areasDoCaderno(p).forEach(function(a){areas[a]=1;});});
   encherFiltroCaderno("prova-turma",Object.keys(turmas).sort(function(a,b){return ordemTurma(a)-ordemTurma(b);}),"Todas as turmas");
-  encherFiltroCaderno("prova-area",AREAS_PROVA.filter(function(a){return areas[a];}),"Todas as áreas");
+  encherFiltroCaderno("prova-area",ORDEM_DISCIPLINA.filter(function(a){return areas[a];}),"Todas as disciplinas",NOME_DISCIPLINA);
   // a prova aberta sempre aparece: o filtro que a esconderia volta para "todas"
   if(provaAtual&&doAno.indexOf(provaAtual)>=0){
     if($("prova-turma").value&&turmaDaProva(provaAtual)!==$("prova-turma").value)$("prova-turma").value="";
-    if($("prova-area").value&&areaDaProva(provaAtual)!==$("prova-area").value)$("prova-area").value="";
+    if($("prova-area").value&&areasDoCaderno(provaAtual).indexOf($("prova-area").value)<0)$("prova-area").value="";
   }
   var visiveis=doAno.filter(passaFiltroCaderno);
   $("capas-provas").innerHTML=visiveis.map(function(p){
@@ -5873,7 +6230,9 @@ $("prova-ano").addEventListener("change",function(){
     var doAno=provasCarregadas.filter(function(p){return origemDaProva(p)===o&&(anoDaProva(p)||"Sem ano")===ano;})
       .sort(compararCadernos);
     var vis=doAno.filter(passaFiltroCaderno);
-    if(!vis.length||(provaAtual&&vis.indexOf(provaAtual)>=0)){renderEscolhaProva();return;}
+    if(!vis.length||(provaAtual&&vis.indexOf(provaAtual)>=0)){
+      renderEscolhaProva();preencherFiltrosOficiais();visiveisOficiais=PASSO_OFICIAIS;renderOficiais();return;
+    }
     escolherProva(vis[0].id);
   });
 });
@@ -5883,19 +6242,54 @@ $("capas-provas").addEventListener("click",function(ev){
 });
 function preencherFiltrosOficiais(){
   var questoes=provaAtual?provaAtual.questoes:[];
-  var materias={};
-  questoes.forEach(function(q){(q.materias||[]).forEach(function(m){if(m)materias[m]=1;});});
-  function encher(id,chaves,rotulo){
-    var sel=$(id), atual=sel.value;
-    sel.innerHTML='<option value="">'+rotulo+"</option>"+
-      chaves.map(function(c){return '<option value="'+esc(c)+'">'+esc(c)+"</option>";}).join("");
-    // se o valor anterior não existe mais, o filtro volta para "todos"
-    sel.value=(atual&&chaves.indexOf(atual)>=0)?atual:"";
-  }
-  var listaMaterias=Object.keys(materias).sort(function(a,b){return a.localeCompare(b,"pt-BR");});
-  encher("filtro-materia",listaMaterias,"Todas as matérias");
+  var ehEnem=!!provaAtual&&origemDaProva(provaAtual)==="enem";
+  // disciplina do passo 2: só quando o passo 1 não escolheu e a prova tem mais de uma
+  var contaArea={};
+  questoes.forEach(function(q){var a=areaDaQuestao(q);if(a)contaArea[a]=(contaArea[a]||0)+1;});
+  var areas=ORDEM_DISCIPLINA.filter(function(a){return contaArea[a];});
+  var doPasso1=$("prova-area").value, selA=$("filtro-area"), atualA=selA.value;
+  $("caixa-filtro-area").hidden=!!doPasso1||areas.length<2;
+  selA.innerHTML='<option value="">Todas as disciplinas</option>'+areas.map(function(a){
+    return '<option value="'+a+'">'+esc(NOME_DISCIPLINA[a])+" ("+contaArea[a]+")</option>";}).join("");
+  selA.value=areas.indexOf(atualA)>=0?atualA:"";
+  var nota=$("nota-disciplina");
+  nota.hidden=!doPasso1;
+  if(doPasso1)nota.innerHTML="Mostrando só <strong>"+esc(NOME_DISCIPLINA[doPasso1]||doPasso1)+"</strong>, a disciplina escolhida no passo 1. "+
+    "A matéria abaixo detalha dentro dela.";
+  atualizarMaterias();
   atualizarAssuntos();
+  // matriz e TRI são do ENEM: nas outras provas, somem e deixam de filtrar
+  $("filtros-enem").hidden=!ehEnem;
+  $("btn-matriz-prova").hidden=!ehEnem;
+  if(!ehEnem){$("filtro-area-enem").value="";$("filtro-comp-enem").value="";$("filtro-hab-enem").value="";}
   atualizarFiltrosMatriz();
+  atualizarFiltroDificuldade(ehEnem);
+}
+/* matérias da disciplina escolhida (História, Filosofia… dentro de Humanas) */
+function atualizarMaterias(){
+  var questoes=provaAtual?provaAtual.questoes:[], area=disciplinaEscolhida(), materias={};
+  questoes.forEach(function(q){
+    if(area&&areaDaQuestao(q)!==area)return;
+    (q.materias||[]).forEach(function(m){if(m&&(!area||!AREA_DA_MATERIA[m]||AREA_DA_MATERIA[m]===area))materias[m]=(materias[m]||0)+1;});
+  });
+  var lista=Object.keys(materias).sort(function(a,b){return a.localeCompare(b,"pt-BR");});
+  var sel=$("filtro-materia"), atual=sel.value;
+  sel.innerHTML='<option value="">'+(area?"Todas as matérias de "+esc(NOME_DISCIPLINA[area]):"Todas as matérias")+"</option>"+
+    lista.map(function(c){return '<option value="'+esc(c)+'">'+esc(c)+" ("+materias[c]+")</option>";}).join("");
+  // se o valor anterior não existe mais, o filtro volta para "todos"
+  sel.value=(atual&&lista.indexOf(atual)>=0)?atual:"";
+}
+/* no ENEM a dificuldade é a da TRI (microdados do INEP); nas outras provas, estimada pela leitura da questão */
+function atualizarFiltroDificuldade(ehEnem){
+  var questoes=provaAtual?provaAtual.questoes:[], conta={0:0};
+  questoes.forEach(function(q){var f=q.faixa||0;conta[f]=(conta[f]||0)+1;});
+  $("rotulo-dif").innerHTML=ehEnem?"Dificuldade (TRI do INEP)":'Dificuldade <span class="opcional" title="Estas provas não têm microdados oficiais; a dificuldade foi estimada pela leitura de cada questão">estimada</span>';
+  var sel=$("filtro-dif"), atual=sel.value;
+  sel.innerHTML='<option value="">Todas</option>'+[1,2,3,4,5].map(function(f){
+    return '<option value="'+f+'">'+FAIXAS_DIF[f]+(provaAtual?" ("+(conta[f]||0)+")":"")+"</option>";}).join("")+
+    '<option value="0">'+(ehEnem?"Sem dado do INEP":"Sem estimativa")+(provaAtual?" ("+conta[0]+")":"")+"</option>";
+  sel.value=atual;
+  if(sel.value!==atual)sel.value="";
 }
 /* filtros da matriz do ENEM: área › competência › habilidade.
    Mostram a matriz inteira, com quantas questões da prova há em cada item,
@@ -5944,8 +6338,9 @@ function atualizarFiltrosMatriz(){
    e sempre os da prova aberta — nunca sobras de provas apagadas */
 function atualizarAssuntos(){
   var questoes=provaAtual?provaAtual.questoes:[];
-  var mat=$("filtro-materia").value, assuntos={};
+  var mat=$("filtro-materia").value, area=disciplinaEscolhida(), assuntos={};
   questoes.forEach(function(q){
+    if(area&&areaDaQuestao(q)!==area)return;
     if(mat&&(q.materias||[]).indexOf(mat)<0)return;
     if(q.assunto)assuntos[q.assunto]=1;
   });
@@ -5957,11 +6352,12 @@ function atualizarAssuntos(){
 }
 function oficiaisFiltradas(){
   if(!provaAtual)return [];
-  var mat=$("filtro-materia").value, ass=$("filtro-assunto").value;
+  var mat=$("filtro-materia").value, ass=$("filtro-assunto").value, disc=disciplinaEscolhida();
   var area=$("filtro-area-enem").value, comp=$("filtro-comp-enem").value, hab=$("filtro-hab-enem").value;
   var dif=$("filtro-dif").value, ordem=$("ordem-oficiais").value;
   var termos=semAcento($("busca-tema").value).split(/[^a-z0-9]+/).filter(function(t){return t.length>2;});
   var lista=provaAtual.questoes.filter(function(q){
+    if(disc&&areaDaQuestao(q)!==disc)return false;
     if(mat&&(q.materias||[]).indexOf(mat)<0)return false;
     if(ass&&q.assunto!==ass)return false;
     if(area){
@@ -5976,11 +6372,13 @@ function oficiaisFiltradas(){
   if(ordem){
     // questões sem dado do INEP ficam no fim, na ordem do caderno
     var sentido=ordem==="facil"?1:-1;
+    // a TRI do INEP quando há; nas outras provas, a faixa estimada
+    function nivel(q){return typeof q.dificuldade==="number"?q.dificuldade:(q.faixa?q.faixa:null);}
     lista=lista.map(function(q,i){return {q:q,i:i};}).sort(function(a,b){
-      var da=typeof a.q.dificuldade==="number", db=typeof b.q.dificuldade==="number";
+      var na=nivel(a.q), nb=nivel(b.q), da=na!==null, db=nb!==null;
       if(da!==db)return da?-1:1;
       if(!da)return a.i-b.i;
-      return sentido*(a.q.dificuldade-b.q.dificuldade)||a.i-b.i;
+      return sentido*(na-nb)||a.i-b.i;
     }).map(function(x){return x.q;});
   }
   if(termos.length){
@@ -6008,24 +6406,97 @@ function textoComumHtml(c,rotulo){
     (c.de<10?"0":"")+c.de+" a "+(c.ate<10?"0":"")+c.ate+"."))+"</p>"+partesHtml(c.partes)+
     (c.fonte?'<p class="fonte-oficial">'+esc(c.fonte)+"</p>":"")+"</div>";
 }
-function corpoDaQuestao(q,rotulo,comComum){
+/* modo "lista": alternativas clicáveis e o botão "Mostrar gabarito";
+   modo "janela": só as alternativas clicáveis (o gabarito aparece ao responder);
+   sem modo: a folha para imprimir, como no caderno                              */
+function letrasDaQuestao(q){
+  var n=(q.alternativas||[]).length;
+  if(!n)n=provaAtual&&/º ano/.test(turmaDaProva(provaAtual))?4:5;
+  return "ABCDE".slice(0,n);
+}
+function corpoDaQuestao(q,rotulo,comComum,modo){
+  var interativa=modo==="lista"||modo==="janela";
   var alts=(q.alternativas||[]).map(function(a,i){
+    if(interativa)return '<li class="alt-int" data-alt="'+"ABCDE"[i]+'" role="button" tabindex="0" title="Clique para responder">'+
+      '<span class="letra">'+"ABCDE"[i]+'</span><span class="txt">'+esc(a)+"</span></li>";
     return "<li><span>"+"ABCDE"[i]+")</span> "+esc(a)+"</li>";
   }).join("");
+  var letrasFig="";
+  if(interativa&&q.alternativasFigura&&!alts)
+    letrasFig='<div class="letras-fig">Responder:'+letrasDaQuestao(q).split("").map(function(l){
+      return '<span class="letra" data-alt="'+l+'" role="button" tabindex="0">'+l+"</span>";}).join("")+"</div>";
+  var gab="";
+  if(modo==="lista"){
+    gab='<div class="gab-oficial">'+(q.gabarito
+      ? '<span class="gab-texto" hidden>'+(q.gabarito==="Anulada"?"Questão anulada pelo INEP":"Gabarito: "+esc(q.gabarito)+
+          (q.gabaritoNaoOficial?' <span class="sem-gab" title="O caderno veio sem gabarito; a resposta foi resolvida à parte">· não oficial</span>':""))+"</span>"+
+        '<button type="button" class="mostrar-gab" data-mostrar-gab>Mostrar gabarito</button>'
+      : '<span class="sem-gab">sem gabarito</span>')+"</div>";
+  }
   return (comComum?textoComumHtml(comumDe(q)):"")+
-    '<div class="q-oficial">'+
+    '<div class="q-oficial"'+(interativa?' data-gab="'+esc(q.gabarito||"")+'"':"")+'>'+
     '<p class="rotulo-oficial">'+rotulo+"</p>"+
     partesHtml(q.partes)+
     (q.fonte?'<p class="fonte-oficial">'+esc(q.fonte)+"</p>":"")+
     (q.comando?'<p class="comando-oficial">'+esc(q.comando)+"</p>":"")+
     (alts?'<ol class="alts-oficial">'+alts+"</ol>":"")+
     (q.alternativasFigura?'<div class="fig-oficial"><img src="'+q.alternativasFigura+'" alt="Alternativas da questão"></div>':"")+
+    letrasFig+
+    (interativa?'<p class="resposta-oficial" aria-live="polite"></p>':"")+
+    gab+
+    (modo==="lista"&&q.resolucao?'<div class="resolucao" data-resolucao hidden><strong>Sobre o gabarito</strong> <span>material do professor; não vai para a prova</span>'+esc(q.resolucao)+"</div>":"")+
     "</div>";
+}
+/* clicar numa alternativa: a correta ganha o círculo verde; a escolhida errada, o vermelho */
+function responderOficial(caixa,letra){
+  var gab=caixa.dataset.gab||"";
+  caixa.querySelectorAll("[data-alt]").forEach(function(el){el.classList.remove("certa","errada");});
+  var aviso=caixa.querySelector(".resposta-oficial");
+  if(!/^[A-E]$/.test(gab)){
+    if(aviso){aviso.className="resposta-oficial";aviso.textContent=gab==="Anulada"?"Esta questão foi anulada pelo INEP.":"Esta questão está sem gabarito.";}
+    return;
+  }
+  caixa.querySelectorAll('[data-alt="'+gab+'"]').forEach(function(el){el.classList.add("certa");});
+  if(letra!==gab)caixa.querySelectorAll('[data-alt="'+letra+'"]').forEach(function(el){el.classList.add("errada");});
+  if(aviso){
+    aviso.className="resposta-oficial "+(letra===gab?"ok":"nao");
+    aviso.textContent=letra===gab?"Isso! A resposta certa é "+gab+".":"Não é a "+letra+". A resposta certa é "+gab+".";
+  }
+}
+function mostrarGabaritoOficial(caixa,botao){
+  var aberto=botao.dataset.aberto==="1";
+  var texto=caixa.querySelector(".gab-texto"), res=caixa.querySelector("[data-resolucao]");
+  if(texto)texto.hidden=aberto;
+  if(res)res.hidden=aberto;
+  var gab=caixa.dataset.gab||"";
+  if(/^[A-E]$/.test(gab))caixa.querySelectorAll('[data-alt="'+gab+'"]').forEach(function(el){
+    if(!aberto)el.classList.add("certa");
+    else if(!caixa.querySelector(".errada"))el.classList.remove("certa");
+  });
+  botao.dataset.aberto=aberto?"":"1";
+  botao.textContent=aberto?"Mostrar gabarito":"Esconder gabarito";
+}
+/* clique e teclado (Enter ou espaço) nas alternativas, valendo para a lista e para a janela */
+function ligarAlternativas(raiz){
+  raiz.addEventListener("click",function(ev){
+    var alt=ev.target.closest("[data-alt]");
+    if(alt&&raiz.contains(alt)){var c=alt.closest(".q-oficial");if(c&&c.dataset.gab!==undefined)responderOficial(c,alt.dataset.alt);return;}
+    var b=ev.target.closest("[data-mostrar-gab]");
+    if(b&&raiz.contains(b)){mostrarGabaritoOficial(b.closest(".q-oficial"),b);}
+  });
+  raiz.addEventListener("keydown",function(ev){
+    if(ev.key!=="Enter"&&ev.key!==" ")return;
+    var alt=ev.target.closest&&ev.target.closest("[data-alt]");
+    if(!alt)return;
+    ev.preventDefault();alt.click();
+  });
 }
 /* dificuldade: parâmetro b da TRI publicado pelo INEP nos microdados, em 5 faixas por área */
 var FAIXAS_DIF=["","Muito fácil","Fácil","Média","Difícil","Muito difícil"];
 function etiquetaDificuldade(q){
   if(!q.faixa)return "";
+  if(typeof q.dificuldade!=="number")
+    return '<span class="tag dif dif-'+q.faixa+'" title="Dificuldade estimada pela leitura da questão (esta prova não tem microdados oficiais)">'+FAIXAS_DIF[q.faixa]+" · estimada</span>";
   return '<span class="tag dif dif-'+q.faixa+'" title="Parâmetro de dificuldade da TRI (INEP): '+
     String(q.dificuldade).replace(".",",")+(q.acerto!=null?" · "+q.acerto+"% de acerto":"")+'">'+FAIXAS_DIF[q.faixa]+"</span>";
 }
@@ -6040,7 +6511,7 @@ function renderOficiais(){
     alvo.innerHTML='<div class="vazio"><strong>Abrindo a prova…</strong>Carregando as questões e as figuras deste caderno.</div>';
     $("contador-oficiais").textContent="";atualizarBarraOficiais();return;
   }
-  var lista=oficiaisFiltradas();
+  var lista=oficiaisFiltradas(), ehEnem=origemDaProva(provaAtual)==="enem";
   $("contador-oficiais").textContent=lista.length+" de "+provaAtual.questoes.length+" questões no filtro"+
     (lista.length>visiveisOficiais?" — mostrando as "+visiveisOficiais+" primeiras":"");
   if(!lista.length){
@@ -6050,19 +6521,18 @@ function renderOficiais(){
   alvo.innerHTML=lista.slice(0,visiveisOficiais).map(function(q){
     var etiquetas=(q.materias||[]).map(function(m){return '<span class="tag tipo">'+esc(m)+"</span>";}).join("")+
       (q.assunto?'<span class="tag habilidade">'+esc(q.assunto)+"</span>":"")+
-      (HAB_ENEM[q.matriz]?'<span class="tag habilidade" title="'+esc(HAB_ENEM[q.matriz].texto)+'">ENEM '+rotuloHabilidade(q.matriz)+"</span>":"")+
+      (ehEnem&&HAB_ENEM[q.matriz]?'<span class="tag habilidade" title="'+esc(HAB_ENEM[q.matriz].texto)+'">ENEM '+rotuloHabilidade(q.matriz)+"</span>":"")+
       etiquetaDificuldade(q)+
       '<span class="tag">questão '+q.numero+(q.variante?" · "+q.variante.toLowerCase():"")+"</span>"+
       '<span class="tag">página '+q.pagina+"</span>"+
       (q.temFigura?'<span class="tag habilidade">com figura</span>':"")+
-      (q.gabarito==="Anulada"?'<span class="tag">questão anulada pelo INEP</span>':
-       q.gabarito&&q.gabaritoNaoOficial?'<span class="tag" title="O caderno veio sem gabarito; a resposta foi resolvida à parte">gabarito '+q.gabarito+" · não oficial</span>":
-       q.gabarito?'<span class="tag habilidade">gabarito '+q.gabarito+"</span>":'<span class="tag">sem gabarito</span>');
+      (q.gabarito==="Anulada"?'<span class="tag">questão anulada pelo INEP</span>':"")+
+      '<span class="acoes-oficial"><button type="button" class="abrir-q" data-abrir="'+esc(q.chave)+'" title="Abrir esta questão em destaque, sobre a página">'+
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>Abrir</button></span>';
     return '<article class="ficha'+(oficiaisSelecionadas[q.chave]?" marcada":"")+'">'+
       '<div class="lombada"><input type="checkbox" data-oficial="'+esc(q.chave)+'"'+(oficiaisSelecionadas[q.chave]?" checked":"")+'></div>'+
       '<div class="corpo"><div class="meta">'+etiquetas+"</div>"+
-      corpoDaQuestao(q,rotuloQuestao(q.numero)+(q.variante?" — "+q.variante:""),true)+
-      (q.resolucao?'<div class="resolucao"><strong>Sobre o gabarito</strong> <span>material do professor; não vai para a prova</span>'+esc(q.resolucao)+"</div>":"")+
+      corpoDaQuestao(q,rotuloQuestao(q.numero)+(q.variante?" — "+q.variante:""),true,"lista")+
       "</div></article>";
   }).join("")+(function(){
     var restam=lista.length-visiveisOficiais;
@@ -6242,6 +6712,9 @@ $("prova-escolhida").addEventListener("change",function(){
   trocarProvaAtual(provasCarregadas.filter(function(p){return p.id===escolhido;})[0]||null);
   oficiaisSelecionadas={};visiveisOficiais=PASSO_OFICIAIS;renderEscolhaProva();preencherFiltrosOficiais();renderOficiais();
 });
+$("filtro-area").addEventListener("change",function(){
+  atualizarMaterias();atualizarAssuntos();visiveisOficiais=PASSO_OFICIAIS;renderOficiais();
+});
 $("filtro-materia").addEventListener("change",function(){
   atualizarAssuntos();visiveisOficiais=PASSO_OFICIAIS;renderOficiais();
 });
@@ -6268,6 +6741,85 @@ $("lista-oficiais").addEventListener("change",function(ev){
   if(ficha)ficha.classList.toggle("marcada",cb.checked);
   atualizarBarraOficiais();
 });
+ligarAlternativas($("lista-oficiais"));
+$("lista-oficiais").addEventListener("click",function(ev){
+  var b=ev.target.closest("[data-abrir]");
+  if(b)abrirJanelaQuestao(b.dataset.abrir);
+});
+
+/* ---- questão em destaque: abre sobre a página, com o fundo esmaecido,
+   ajustada à altura da tela; as setas passam pelas questões do filtro ---- */
+var JQ={lista:[],i:0,voltar:null};
+function abrirJanelaQuestao(chave){
+  JQ.lista=oficiaisFiltradas();
+  JQ.i=Math.max(0,JQ.lista.map(function(q){return q.chave;}).indexOf(chave));
+  if(!JQ.lista.length)return;
+  JQ.voltar=document.activeElement;
+  var j=$("janela-questao");
+  j.hidden=false;
+  document.body.style.overflow="hidden";
+  mostrarNaJanela();
+  requestAnimationFrame(function(){j.classList.add("aberta");});
+  $("jq-fechar").focus();
+}
+function fecharJanelaQuestao(){
+  var j=$("janela-questao");
+  if(j.hidden)return;
+  j.classList.remove("aberta");
+  document.body.style.overflow="";
+  setTimeout(function(){if(!j.classList.contains("aberta"))j.hidden=true;},200);
+  // a lista volta a mostrar a seleção feita dentro da janela
+  renderOficiais();
+  if(JQ.voltar&&JQ.voltar.focus&&document.body.contains(JQ.voltar))JQ.voltar.focus();
+}
+function mostrarNaJanela(){
+  var q=JQ.lista[JQ.i];
+  if(!q)return;
+  var corpo=$("jq-corpo");
+  corpo.style.zoom="";
+  corpo.style.removeProperty("--altura-fig");
+  corpo.innerHTML=corpoDaQuestao(q,rotuloQuestao(q.numero)+(q.variante?" — "+q.variante:""),true,"janela");
+  corpo.scrollTop=0;
+  $("jq-conta").textContent="Questão "+(JQ.i+1)+" de "+JQ.lista.length+" do filtro";
+  $("jq-marcar").checked=!!oficiaisSelecionadas[q.chave];
+  $("jq-ant").disabled=JQ.i<=0;
+  $("jq-prox").disabled=JQ.i>=JQ.lista.length-1;
+  ajustarJanela();
+  corpo.querySelectorAll("img").forEach(function(im){if(!im.complete)im.addEventListener("load",ajustarJanela);});
+}
+/* a questão cabe na tela: primeiro encolhe as figuras, depois a letra (até 70%); o resto rola */
+function ajustarJanela(){
+  var corpo=$("jq-corpo");
+  corpo.style.zoom="";
+  var cabe=corpo.clientHeight, precisa=corpo.scrollHeight;
+  if(precisa<=cabe+2)return;
+  corpo.style.setProperty("--altura-fig","32vh");
+  precisa=corpo.scrollHeight;
+  if(precisa<=cabe+2)return;
+  var z=Math.max(0.7,cabe/precisa);
+  if(z<0.99)corpo.style.zoom=String(Math.round(z*100)/100);
+}
+function andarJanela(passo){
+  var n=JQ.i+passo;
+  if(n<0||n>=JQ.lista.length)return;
+  JQ.i=n;mostrarNaJanela();
+}
+ligarAlternativas($("jq-corpo"));
+$("jq-fechar").addEventListener("click",fecharJanelaQuestao);
+$("jq-ant").addEventListener("click",function(){andarJanela(-1);});
+$("jq-prox").addEventListener("click",function(){andarJanela(1);});
+$("janela-questao").addEventListener("click",function(ev){if(ev.target===this)fecharJanelaQuestao();});
+$("jq-marcar").addEventListener("change",function(){
+  var q=JQ.lista[JQ.i];if(!q)return;
+  oficiaisSelecionadas[q.chave]=this.checked;atualizarBarraOficiais();
+});
+document.addEventListener("keydown",function(ev){
+  if($("janela-questao").hidden)return;
+  if(ev.key==="Escape"){ev.preventDefault();fecharJanelaQuestao();}
+  else if(ev.key==="ArrowRight"&&!/INPUT|TEXTAREA|SELECT/.test(ev.target.tagName)){ev.preventDefault();andarJanela(1);}
+  else if(ev.key==="ArrowLeft"&&!/INPUT|TEXTAREA|SELECT/.test(ev.target.tagName)){ev.preventDefault();andarJanela(-1);}
+});
+window.addEventListener("resize",function(){if(!$("janela-questao").hidden)ajustarJanela();});
 $("btn-marcar-oficiais").addEventListener("click",function(){
   oficiaisFiltradas().forEach(function(q){oficiaisSelecionadas[q.chave]=true;});
   renderOficiais();
@@ -6709,53 +7261,61 @@ $("arquivo-modelo-plano").addEventListener("change",function(ev){
 function matrizDoPlano(){
   return HABILIDADES[chaveDaMatriz($("pl-etapa").value,$("pl-componente").value,$("pl-serie").value)]||[];
 }
-/* os capítulos do livro SESI citam as habilidades da BNCC no próprio texto (EM13CHS101, EF09HI13…):
-   elas aparecem primeiro e já marcadas; as demais da série ficam abaixo */
-var RE_COD_BNCC=/E[FM]\d{2}[A-Z]{2,3}\d{2,3}/g, habRecusadas={};
-function codBncc(c){var m=String(c||"").match(RE_COD_BNCC);return m?m[0]:"";}
-function codigosDoMaterial(){
-  var cods={};
-  PM.ordem.filter(function(id){return PM.marcados[id]&&PM.textos[id];}).forEach(function(id){
-    (String(PM.textos[id]).match(RE_COD_BNCC)||[]).forEach(function(c){cods[c]=1;});
+/* os capítulos do livro SESI citam as habilidades no próprio texto (SESI.EM23CHS101.d.3, EF09HI13…):
+   elas aparecem primeiro, agrupadas por capítulo e já marcadas; as demais da série ficam abaixo */
+var habRecusadas={};
+function capitulosDoPlano(){
+  return PM.ordem.filter(function(id){return PM.marcados[id];}).map(function(id){
+    var m=PM.marcados[id];
+    return {titulo:m.cap,livro:m.livro,texto:PM.textos[id]||""};
   });
-  return cods;
 }
 function habDoMaterial(){
-  var cods=codigosDoMaterial();
-  return matrizDoPlano().filter(function(h){return cods[codBncc(h.c)];});
+  var g=gruposHabCapitulos(capitulosDoPlano(),matrizDoPlano());
+  return matrizDoPlano().filter(function(h){return g.usadas[h.c];});
 }
 // marca as citadas, menos as que o professor desmarcou de propósito
 function aplicarHabDoMaterial(){
-  habDoMaterial().forEach(function(h){if(!habRecusadas[h.c])habPlano[h.c]=true;});
+  var citadas=habDoMaterial();
+  citadas.forEach(function(h){if(!habRecusadas[h.c])habPlano[h.c]=true;});
   renderHabPlano();
+  // as habilidades dos capítulos ficam à vista, sem precisar procurar
+  if(citadas.length)$("det-hab-plano").open=true;
 }
 function renderHabPlano(){
   var alvo=$("lista-hab-plano");
   if(!alvo)return;
-  var lista=matrizDoPlano();
-  var filtro=semAcento($("busca-hab-plano").value);
-  if(filtro)lista=lista.filter(function(h){return semAcento(h.c+" "+h.t).indexOf(filtro)>=0;});
-  var cods=codigosDoMaterial(), citadas=lista.filter(function(h){return cods[codBncc(h.c)];}),
-      outras=lista.filter(function(h){return !cods[codBncc(h.c)];});
+  var matriz=matrizDoPlano(), capitulos=capitulosDoPlano();
+  var g=gruposHabCapitulos(capitulos,matriz);
   function item(h){
     return '<label class="hab"><input type="checkbox" data-hab-plano="'+esc(h.c)+'"'+(habPlano[h.c]?" checked":"")+'>'+
       '<span><span class="cod">'+esc(h.c)+"</span> "+esc(h.t)+"</span></label>";
   }
-  alvo.innerHTML=lista.length
-    ? (citadas.length
-        ? '<p class="titulo-hab">Citadas nos capítulos escolhidos ('+citadas.length+")</p>"+citadas.map(item).join("")+
-          '<p class="titulo-hab">Outras habilidades da série</p>'
-        : "")+outras.map(item).join("")
+  var outro=matriz.length&&capitulos.length&&!Object.keys(g.usadas).length?componenteDasCitadas(capitulos,$("pl-etapa").value,$("pl-serie").value,chaveDaMatriz($("pl-etapa").value,$("pl-componente").value,$("pl-serie").value)):"";
+  $("hab-cap-plano").innerHTML=capitulos.length&&matriz.length
+    ? htmlHabCapitulos(g,item,"Habilidades dos capítulos escolhidos")+
+      (outro?'<p class="ajuda" style="margin-top:-4px">Os capítulos escolhidos citam habilidades de outra matriz. Para vê-las aqui, troque a disciplina acima para <strong>'+esc(outro)+"</strong>.</p>":"")
+    : "";
+  var lista=capitulos.length?g.outras:matriz;
+  var filtro=semAcento($("busca-hab-plano").value);
+  if(filtro)lista=lista.filter(function(h){return semAcento(h.c+" "+h.t).indexOf(filtro)>=0;});
+  alvo.innerHTML=matriz.length
+    ? (capitulos.length?'<p class="titulo-hab" style="margin-top:4px">Demais habilidades da série</p>':"")+
+      (lista.map(item).join("")||'<p class="ajuda" style="margin:10px 0">Nenhuma habilidade corresponde ao filtro.</p>')
     : '<p class="ajuda" style="margin:10px 0">Nenhuma habilidade carregada para esta combinação. Use o campo de códigos abaixo.</p>';
   var n=Object.keys(habPlano).filter(function(k){return habPlano[k];}).length;
   $("resumo-hab-plano").textContent=n?("— "+n+" marcada"+(n>1?"s":"")):"— nenhuma marcada";
 }
-$("lista-hab-plano").addEventListener("change",function(ev){
-  var cb=ev.target;
-  if(!cb.dataset||!cb.dataset.habPlano)return;
-  habPlano[cb.dataset.habPlano]=cb.checked;
-  if(cb.checked)delete habRecusadas[cb.dataset.habPlano];else habRecusadas[cb.dataset.habPlano]=1;
-  renderHabPlano();
+["lista-hab-plano","hab-cap-plano"].forEach(function(id){
+  $(id).addEventListener("change",function(ev){
+    var cb=ev.target;
+    if(!cb.dataset||!cb.dataset.habPlano)return;
+    habPlano[cb.dataset.habPlano]=cb.checked;
+    if(cb.checked)delete habRecusadas[cb.dataset.habPlano];else habRecusadas[cb.dataset.habPlano]=1;
+    var rolagem=$("lista-hab-plano").scrollTop;
+    renderHabPlano();
+    $("lista-hab-plano").scrollTop=rolagem;
+  });
 });
 $("busca-hab-plano").addEventListener("input",function(){renderHabPlano();});
 ["pl-etapa","pl-componente","pl-serie"].forEach(function(id){
@@ -7861,6 +8421,346 @@ $("nuvem-chip").addEventListener("click",function(){
   var bloco=$("bloco-nuvem");if(bloco&&bloco.scrollIntoView)bloco.scrollIntoView({behavior:"smooth",block:"start"});
 });
 window.addEventListener("online",function(){if(NV.pronto)nuvemMudou();});
+
+/* ===================== CHAT DE AJUDA =====================
+   Um assistente para tirar dúvidas sobre o site, com a chave de IA do próprio professor.
+   Lê prints (imagens coladas ou anexadas). Quando conclui que é defeito do site, a resposta
+   traz a marca [[ERRO_DO_SITE: ...]], que some da tela e vira um e-mail para o administrador
+   (FormSubmit, gratuito: o primeiro aviso pede uma confirmação no e-mail do administrador). */
+var GUIA_SITE=[
+"O SITE: Banco de Questões (https://bancodequestoes.github.io), feito pelo professor Matheus Ernandes para os professores do SESI Ibura (Recife, PE), do 6º ano à 3ª série do Ensino Médio. Funciona no navegador, sem instalar nada. Menu lateral com seis páginas: Gerar, Banco, Montar prova, Provas oficiais, Planejamento e Ajustes. No celular, o menu abre pelo botão do topo.",
+"",
+"ENTRADA E CHAVE: o site pede login com Google; o administrador (Matheus) libera o e-mail de cada colega em Ajustes › Nuvem compartilhada. Depois do login, quem não tem chave de IA vê uma tela para cadastrá-la. A chave é gratuita: aistudio.google.com/apikey, entrar com uma conta Google (se a da escola estiver bloqueada, use a pessoal), Criar chave de API, copiar (começa com AQ. ou AIza) e colar em Ajustes › Chave de acesso à IA › Salvar chave › Testar conexão. A chave fica só naquele aparelho e navegador: em outro computador ou navegador é preciso colar de novo. Botão 'Buscar modelos disponíveis na minha conta' escolhe um modelo estável e um reserva.",
+"",
+"GERAR (criar questões novas com a IA). Passo 1, 'Criar a partir de': Livro SESI (escolhe a série, abre o livro e marca os capítulos; os capítulos marcados alimentam a geração; clicar fora do livro fecha a lista; o botão vermelho 'Desmarcar tudo' limpa), ENEM (área, competência, habilidade e dificuldade da matriz do ENEM), SSA (etapa 1, 2 ou 3) ou PASSE. No Livro SESI dá para escolher a 'Estrutura das questões objetivas': Simples, ENEM, SSA ou PASSE. Passo 2, 'Sobre o quê': nível, série, componente e assunto (o assunto é opcional quando há capítulo marcado). Quando há capítulos marcados, aparece um bloco verde 'Habilidades dos capítulos marcados', com as habilidades que cada capítulo cita, separadas por capítulo. Passo 3: quantidade de Objetivas, Dissertativas e Adaptadas (para estudantes atípicos, TEA e TDAH), até 20 por geração; para mais, gere em rodadas, o banco acumula. 'Mais opções' (opcional): bimestre, habilidades da matriz, nível de exigência, elaboração cuidadosa (mais lenta), orientações adicionais. 'Material extra' (opcional): colar um texto ou anexar PDFs próprios. Botões Gerar questões, Cancelar geração e Limpar campos. Ensino Fundamental sai com 4 alternativas (A a D) e Médio com 5 (A a E); adaptadas têm 3.",
+"",
+"BANCO: todas as questões geradas e guardadas. Filtros por assunto, nível, componente, série, matriz, material, nível de exigência e formato, e busca por palavra. Cada questão pode ser editada (texto, alternativas, gabarito, resolução) ou excluída. Marque as caixas das questões para usar: aparece a barra azul com 'Montar prova com as selecionadas', 'Baixar sem timbre', 'Reequilibrar gabarito' (espalha as respostas certas entre as letras) e 'Excluir selecionadas'. Também há 'Selecionar tudo que o filtro mostra' e 'Limpar seleção'.",
+"",
+"MONTAR PROVA: primeiro 'Série ou ano da prova' (define 4 ou 5 alternativas e entra no cabeçalho). 'Modelo timbrado': o .docx da escola é anexado uma vez em 'Anexar ou trocar o modelo' (fica recolhido); cada marcador entre chaves duplas do Word, como {{DISCIPLINA}}, {{PROFESSOR}}, {{TURMA}}, vira um campo, e {{QUESTOES}} marca onde entram as questões. Escolher uma ou duas colunas, gabarito em página separada e código de habilidade; botão 'Gerar prova no timbrado'. 'Versão sem timbre' (opcional, recolhida): montar na tela, imprimir ou salvar em PDF, baixar em Word, copiar como texto. 'Completar a prova com questões novas' (opcional): gera questões inéditas já incluídas na prova.",
+"",
+"PROVAS OFICIAIS: acervo com ENEM 2009 a 2025, SSA (UPE) e PASSE (Avalia SESI), com as questões como no original. Passo 1, 'Escolher a prova': cartão da origem (ENEM, SSA, PASSE), depois Ano, Turma (PASSE e SSA) e Disciplina (Linguagens, Humanas, Natureza, Exatas/Matemática), e o caderno. Escolher a Disciplina no passo 1 já mostra só as questões dela. Passo 2, 'Filtrar as questões': Disciplina (quando não escolhida no passo 1), Matéria para detalhar (História, Filosofia, Sociologia…), assunto, busca por tema amplo, e dificuldade com ordem da mais fácil para a mais difícil. A matriz do ENEM (área, competência, habilidade) e a dificuldade da TRI do INEP só aparecem nas provas do ENEM; no SSA e no PASSE a dificuldade é estimada. Cada questão tem alternativas clicáveis: clicar numa alternativa mostra a certa com círculo verde e, se errou, a escolhida com círculo vermelho. O botão pequeno 'Mostrar gabarito', embaixo da questão, revela a resposta sem responder. O botão 'Abrir' (canto da questão) abre a questão em destaque sobre a página, ajustada à tela, sem gabarito exposto, com setas discretas (ou as setas do teclado) para ir à próxima e Esc para fechar; dá para selecionar a questão ali mesmo. Marcando as caixas das questões aparece a barra com 'Baixar Word no timbrado', 'Baixar Word sem timbre', 'Ver na tela' e 'incluir gabarito no fim'. Importar uma prova nova: bloco 'Importar uma prova oficial' (caderno e gabarito em PDF, com texto selecionável; PDF escaneado como imagem não funciona). Gabarito marcado 'não oficial' foi resolvido à parte porque o caderno veio sem gabarito.",
+"",
+"PLANEJAMENTO: monta o plano de aula da quinzena no timbrado da rede. Anexe uma vez o modelo .docx (recolhido no topo). Preencha Turma, Área ou disciplina, Bimestre, Professor (opcional), Quinzenal (opcional, preenche as datas), Data das aulas (obrigatória, com calendário), Número de aulas e duração, Material didático (opcional: escolha o livro SESI e marque os capítulos; clicar fora recolhe a lista de capítulos), Temas norteadores (opcional), Divisão entre as aulas (obrigatória, uma linha por aula começando por 'Aula 01:'), Competências e habilidades (as dos capítulos escolhidos aparecem primeiro, num bloco verde, separadas por capítulo, já marcadas) e, recolhidos, 'Outros códigos' e 'Orientações adicionais'. A IA escreve tudo e o texto fica editável na tela antes de virar documento Word. Regras: aulas em pares (a ímpar termina em suspensão, a par retoma e fecha). O planejamento em edição some se ficar mais de 5 minutos parado e a página for recarregada.",
+"",
+"AJUSTES: Nuvem compartilhada (entrar com Google; as questões, provas e modelos aparecem para todos os professores liberados; só o administrador libera colegas), Chave de acesso à IA (provedor, modelo, modelo reserva, chave, testar), levar tudo para outro computador (baixar e importar pacote completo) e cópias de segurança.",
+"",
+"PROBLEMAS COMUNS (não são defeito do site): 'cota esgotada' = a cota gratuita do dia da chave do Gemini acabou; volta sozinha em algumas horas; cada professor tem a sua chave. 'Sobrecarregado' = o Google está congestionado; tentar de novo em alguns minutos. 'Não foi possível alcançar o Gemini' com internet funcionando = rede da escola ou bloqueador do navegador (escudo do Brave): usar dados móveis, desligar o bloqueador ou outro navegador. Site desatualizado depois de uma melhoria = recarregar sem cache: Cmd+Shift+R no Mac ou Ctrl+Shift+R no Windows. Livros SESI não aparecem = precisa estar na nuvem (logado e liberado). Questão de prova sem figura no celular = abrir de novo a prova com internet.",
+"",
+"DEFEITOS DO SITE (estes sim): a faixa vermelha 'Falha no aplicativo: …' no rodapé, botão que não responde, tela ou layout quebrado, informação que some sem motivo, filtro que mostra resultado errado, documento Word que não abre."
+].join("\n");
+var CHAVE_CHAT="bancoQuestoes.chat.v1", CHAVE_RELATOS="bancoQuestoes.relatosPendentes.v1", MAX_RELATOS_SESSAO=3;
+var CHAT={msgs:[],anexos:[],enviando:false,relatados:{},nRelatos:0};
+try{var chatSalvo=JSON.parse(sessionStorage.getItem(CHAVE_CHAT)||"null");if(chatSalvo&&Array.isArray(chatSalvo.msgs))CHAT.msgs=chatSalvo.msgs;}catch(e){}
+function chatGuardar(){
+  // as imagens não ficam guardadas: só o texto da conversa, nesta aba do navegador
+  try{sessionStorage.setItem(CHAVE_CHAT,JSON.stringify({msgs:CHAT.msgs.slice(-40).map(function(m){
+    return {papel:m.papel,texto:m.texto,tipo:m.tipo||"",temPrint:!!(m.imagens&&m.imagens.length)||!!m.temPrint};})}));}catch(e){}
+}
+function nomeDaPessoa(){
+  var n=NV&&NV.usuario&&NV.usuario.displayName||"";
+  return String(n).trim().split(/\s+/)[0]||"";
+}
+function abaAtualNome(){
+  var a=document.querySelector(".aba[aria-selected=true]");
+  return a?a.textContent.trim():"";
+}
+function sistemaDoChat(){
+  var nome=nomeDaPessoa();
+  return [
+    "Você é o Assistente do Banco de Questões, o ajudante do site para os professores. Você tem a personalidade do professor Matheus Ernandes, que criou o site: animado, acolhedor, prestativo e super gente boa, com explicações claras e diretas, como um colega que adora ajudar. Um emoji de vez em quando é bem-vindo (no máximo um ou dois por resposta).",
+    "",
+    "RESPEITO ACIMA DE TUDO:",
+    "- Seja sempre educado e cordial. Nunca use ironia, deboche, gírias desrespeitosas, diminutivos ou intimidade forçada.",
+    "- Pronomes de tratamento: trate a pessoa por \"você\", com cortesia. Se ela disser como prefere ser chamada (professora, professor, senhor, senhora, pelo nome…), use sempre essa forma. Nunca deduza o gênero pelo nome; enquanto ela não disser, use formas neutras (\"Prof. "+(nome||"Fulano")+"\", \"você\", \"que bom te ver por aqui\") e evite palavras sobre a pessoa que mudam com o gênero, como bem-vindo/bem-vinda ou cansado/cansada.",
+    nome?"- O primeiro nome da pessoa no login é "+nome+". Você pode chamá-la de \"Prof. "+nome+"\" de vez em quando.":"",
+    "",
+    "COMO RESPONDER:",
+    "- Português do Brasil. Respostas curtas: em geral até 120 palavras. Quando for um passo a passo, use uma lista numerada com os nomes exatos dos botões e páginas do site, em negrito (**assim**).",
+    "- Responda só sobre o site e sobre o trabalho do professor com ele (montar provas, gerar questões, planejar aulas). Pode dar conselhos pedagógicos curtos quando ajudarem a usar bem o site (por exemplo, como dosar a dificuldade de uma prova ou combinar questões do ENEM com o livro).",
+    "- Use só o que está no guia abaixo. Se o site não tiver o que a pessoa pede, diga com gentileza que ainda não tem e, se fizer sentido, sugira o caminho mais próximo. Nunca invente botões, páginas ou recursos.",
+    "- Se a pessoa mandar um print, descreva rapidinho o que você vê nele e responda a partir do print.",
+    "- Nunca peça nem repita a chave de API, senhas ou dados pessoais.",
+    "",
+    "QUANDO FOR DEFEITO DO SITE: se, pela conversa ou pelo print, você concluir que é um defeito do próprio site (e não dúvida de uso, falta de chave, cota do Gemini esgotada, internet fora ou bloqueio da rede), diga com calma que parece um erro do site, que o Matheus vai ser avisado, e ofereça um jeito de contornar se houver. E termine a resposta com uma última linha exatamente neste formato, que o site esconde e manda por e-mail ao Matheus:",
+    "[[ERRO_DO_SITE: página onde aconteceu | o que a pessoa fez | o que deu errado, com o texto exato da mensagem de erro, se houver]]",
+    "Use essa marca no máximo uma vez por defeito e nunca fale dela para a pessoa.",
+    "",
+    "SITUAÇÃO AGORA: página aberta: "+(abaAtualNome()||"desconhecida")+"; chave de IA: "+(conf.chave?"cadastrada":"não cadastrada")+"; nuvem: "+(NV&&NV.membro?"conectada":"desconectada")+
+      (errosRecentes.length?"; erros mostrados na faixa vermelha nesta visita: "+errosRecentes.slice(-3).map(function(e){return "\""+e.texto+"\""+(e.onde?" ("+e.onde+")":"");}).join("; "):"; nenhum erro na faixa vermelha nesta visita")+".",
+    "",
+    "GUIA DO SITE:",
+    GUIA_SITE
+  ].filter(function(l){return l!=="";}).join("\n");
+}
+/* texto simples com **negrito**, listas e parágrafos; tudo escapado antes */
+function chatFormatar(t){
+  var linhas=esc(String(t||"").trim()).split("\n"), html="", lista="";
+  function fecharLista(){if(lista){html+="</"+lista+">";lista="";}}
+  linhas.forEach(function(l){
+    var m;
+    l=l.replace(/\*\*([^*]+)\*\*/g,"<strong>$1</strong>").replace(/(^|[^*])\*([^*\s][^*]*)\*/g,"$1<em>$2</em>");
+    if((m=/^\s*[-•*]\s+(.*)$/.exec(l))){if(lista!=="ul"){fecharLista();html+="<ul>";lista="ul";}html+="<li>"+m[1]+"</li>";return;}
+    if((m=/^\s*\d+[.)]\s+(.*)$/.exec(l))){if(lista!=="ol"){fecharLista();html+="<ol>";lista="ol";}html+="<li>"+m[1]+"</li>";return;}
+    fecharLista();
+    if(l.trim())html+="<p>"+l+"</p>";
+  });
+  fecharLista();
+  return html;
+}
+function chatRolar(){var c=$("chat-msgs");c.scrollTop=c.scrollHeight;}
+function chatRender(){
+  var alvo=$("chat-msgs");
+  if(!CHAT.msgs.length){
+    var nome=nomeDaPessoa();
+    alvo.innerHTML='<div class="chat-msg ia"><p>Olá'+(nome?", Prof. "+esc(nome):"")+'! 👋 Eu sou o assistente do Banco de Questões.</p>'+
+      "<p>Posso explicar como gerar questões, montar provas, usar as provas oficiais ou fazer o planejamento. Se algo estranho aparecer na tela, pode mandar um print que eu dou uma olhada.</p></div>"+
+      '<div class="chat-sugestoes">'+["Como gero questões a partir do livro?","Como monto uma prova no timbrado?","Como filtro só Humanas no SSA?","Como faço o planejamento?"].map(function(s){
+        return '<button type="button" data-sugestao="'+esc(s)+'">'+esc(s)+"</button>";}).join("")+"</div>";
+    return;
+  }
+  alvo.innerHTML=CHAT.msgs.map(function(m){
+    if(m.tipo==="aviso")return '<div class="chat-msg aviso-chat">'+m.texto+"</div>";
+    if(m.tipo==="falha")return '<div class="chat-msg falha-chat">'+m.texto+"</div>";
+    var imgs=(m.imagens||[]).map(function(d){return '<img src="'+d+'" alt="Print enviado">';}).join("")+
+      (!(m.imagens||[]).length&&m.temPrint?'<p><em>(print anexado)</em></p>':"");
+    return '<div class="chat-msg '+(m.papel==="user"?"eu":"ia")+'">'+imgs+(m.papel==="user"?chatFormatar(m.texto):chatFormatar(m.texto))+"</div>";
+  }).join("")+(CHAT.enviando?'<div class="chat-msg ia"><span class="chat-digitando" aria-label="digitando"><i></i><i></i><i></i></span></div>':"");
+  chatRolar();
+}
+function chatAbrir(){
+  var p=$("chat-painel"), b=$("chat-botao");
+  if(p.classList.contains("aberto"))return;
+  p.hidden=false;p.classList.remove("fechando");
+  chatRender();
+  requestAnimationFrame(function(){requestAnimationFrame(function(){p.classList.add("aberto");});});
+  b.setAttribute("aria-expanded","true");
+  setTimeout(function(){$("chat-texto").focus();},120);
+}
+function chatFechar(){
+  var p=$("chat-painel"), b=$("chat-botao");
+  if(!p.classList.contains("aberto"))return;
+  p.classList.add("fechando");p.classList.remove("aberto");
+  b.setAttribute("aria-expanded","false");
+  setTimeout(function(){if(!p.classList.contains("aberto")){p.hidden=true;p.classList.remove("fechando");}},230);
+}
+/* o print é reduzido para no máximo 1400 px e vira JPEG: chega rápido e cabe no pedido */
+function chatLerImagem(arquivo){
+  return new Promise(function(ok,erro){
+    if(!arquivo||!/^image\//.test(arquivo.type)){erro(new Error("Só imagens."));return;}
+    var url=URL.createObjectURL(arquivo), img=new Image();
+    img.onload=function(){
+      var max=1400, k=Math.min(1,max/Math.max(img.width,img.height));
+      var c=document.createElement("canvas");c.width=Math.max(1,Math.round(img.width*k));c.height=Math.max(1,Math.round(img.height*k));
+      var g=c.getContext("2d");g.fillStyle="#fff";g.fillRect(0,0,c.width,c.height);g.drawImage(img,0,0,c.width,c.height);
+      URL.revokeObjectURL(url);
+      ok(c.toDataURL("image/jpeg",0.82));
+    };
+    img.onerror=function(){URL.revokeObjectURL(url);erro(new Error("Não foi possível abrir a imagem."));};
+    img.src=url;
+  });
+}
+function chatAnexar(arquivos){
+  [].slice.call(arquivos||[]).filter(function(f){return /^image\//.test(f.type);}).slice(0,4-CHAT.anexos.length).forEach(function(f){
+    chatLerImagem(f).then(function(d){CHAT.anexos.push(d);chatRenderAnexos();},function(){});
+  });
+}
+function chatRenderAnexos(){
+  $("chat-anexos").innerHTML=CHAT.anexos.map(function(d,i){
+    return '<span class="chat-anexo"><img src="'+d+'" alt="Print anexado"><button type="button" data-tirar-anexo="'+i+'" aria-label="Tirar este print">×</button></span>';
+  }).join("");
+}
+/* conversa com a IA: histórico com imagens, texto livre na resposta, troca de modelo quando ocupado */
+function chamarChatIA(sistema,historico){
+  if(!conf.chave)return Promise.reject(new Error("sem chave"));
+  var modelos=[conf.modelo||(conf.provedor==="anthropic"?"claude-sonnet-5":"gemini-3.6-flash")];
+  if(conf.reserva&&conf.reserva!==modelos[0])modelos.push(conf.reserva);
+  if(conf.provedor==="gemini")MODELOS_EXTRAS_GEMINI.forEach(function(m){if(modelos.indexOf(m)<0&&!modelosAusentes[m])modelos.push(m);});
+  modelos=modelos.filter(function(m){return !modelosEsgotados[m];}).concat(modelos.filter(function(m){return modelosEsgotados[m];}));
+  function base64(d){return String(d).replace(/^data:[^,]+,/,"");}
+  function pedir(modelo){
+    var ctl=new AbortController(), relogio=setTimeout(function(){try{ctl.abort();}catch(e){}},60000);
+    var req;
+    if(conf.provedor==="anthropic"){
+      req=fetch("https://api.anthropic.com/v1/messages",{method:"POST",signal:ctl.signal,
+        headers:{"Content-Type":"application/json","x-api-key":conf.chave,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+        body:JSON.stringify({model:modelo,max_tokens:1500,system:sistema,messages:historico.map(function(m){
+          var c=(m.imagens||[]).map(function(d){return {type:"image",source:{type:"base64",media_type:"image/jpeg",data:base64(d)}};});
+          c.push({type:"text",text:m.texto||"(print)"});
+          return {role:m.papel==="user"?"user":"assistant",content:c};
+        })})
+      }).then(tratarResposta).then(function(d){
+        return (d.content||[]).map(function(b){return b.type==="text"?b.text:"";}).join("");
+      });
+    }else{
+      req=fetch("https://generativelanguage.googleapis.com/v1beta/models/"+encodeURIComponent(modelo)+":generateContent",{
+        method:"POST",signal:ctl.signal,headers:{"Content-Type":"application/json","x-goog-api-key":conf.chave},
+        body:JSON.stringify({systemInstruction:{parts:[{text:sistema}]},
+          contents:historico.map(function(m){
+            var partes=(m.imagens||[]).map(function(d){return {inline_data:{mime_type:"image/jpeg",data:base64(d)}};});
+            partes.push({text:m.texto||"(print)"});
+            return {role:m.papel==="user"?"user":"model",parts:partes};
+          }),
+          generationConfig:{maxOutputTokens:4096,temperature:0.7}})
+      }).then(tratarResposta).then(function(d){
+        var c=d.candidates&&d.candidates[0];
+        if(!c||!c.content||!c.content.parts)throw new Error("O modelo respondeu vazio.");
+        return c.content.parts.filter(function(p){return !p.thought;}).map(function(p){return p.text||"";}).join("");
+      });
+    }
+    return req.then(function(t){clearTimeout(relogio);return t;},function(e){clearTimeout(relogio);
+      if(e&&e.name==="AbortError"){var t=new Error("O provedor não respondeu a tempo.");t.repetivel=true;throw t;}
+      throw marcarRede(e);});
+  }
+  function tentar(i,ultimo){
+    if(i>=modelos.length)throw ultimo||new Error("Nenhum modelo respondeu.");
+    return pedir(modelos[i]).catch(function(e){
+      if(e&&e.cota)modelosEsgotados[modelos[i]]=1;
+      if(e&&e.semModelo&&modelos[i]!==conf.modelo)modelosAusentes[modelos[i]]=1;
+      if(e&&e.rede)throw e;
+      if(e&&(e.repetivel||e.semModelo||e.cota||e.sobrecarga))return tentar(i+1,e);
+      throw e;
+    });
+  }
+  return tentar(0,null);
+}
+function chatFalha(e){
+  var t=(e&&e.message)||"";
+  if(e&&e.rede)return "Não consegui falar com a IA agora: "+esc(t);
+  if(e&&e.cota||/quota|cota/i.test(t))return "A cota gratuita do dia da sua chave do Gemini acabou. Ela volta sozinha em algumas horas. 😉 Enquanto isso, o resto do site funciona normalmente.";
+  if(/recusada/i.test(t))return "A IA recusou a chave cadastrada. Confira em <strong>Ajustes › Chave de acesso à IA</strong> e clique em <strong>Testar conexão</strong>.";
+  return "A IA está ocupada neste momento e não respondeu. Tente de novo daqui a pouquinho. ("+esc(t.slice(0,140))+")";
+}
+function chatEnviar(texto){
+  texto=String(texto||"").trim();
+  if(CHAT.enviando||(!texto&&!CHAT.anexos.length))return;
+  if(!conf.chave){
+    CHAT.msgs.push({papel:"user",texto:texto||"(print)",imagens:CHAT.anexos.slice()});
+    CHAT.msgs.push({papel:"model",tipo:"aviso",texto:'Para eu conversar com você, preciso da chave da IA, a mesma que o site usa para gerar questões. É gratuita e leva dois minutos. <br><button type="button" class="botao" data-abrir-assistente="1">Cadastrar minha chave</button>'});
+    CHAT.anexos=[];chatRenderAnexos();$("chat-texto").value="";chatGuardar();chatRender();return;
+  }
+  var msg={papel:"user",texto:texto||"Veja este print.",imagens:CHAT.anexos.slice()};
+  CHAT.msgs.push(msg);CHAT.anexos=[];chatRenderAnexos();
+  $("chat-texto").value="";chatAjustarCampo();
+  CHAT.enviando=true;$("chat-enviar").disabled=true;chatRender();
+  // só as últimas mensagens vão para a IA; as imagens, só as das duas últimas falas do professor
+  var conversa=CHAT.msgs.filter(function(m){return !m.tipo;}).slice(-14);
+  var comImagem=0;
+  var historico=conversa.slice().reverse().map(function(m){
+    var c={papel:m.papel,texto:m.texto+(m.temPrint&&!(m.imagens||[]).length?" (havia um print nesta mensagem)":"")};
+    if(m.papel==="user"&&(m.imagens||[]).length&&comImagem<2){c.imagens=m.imagens;comImagem++;}
+    return c;
+  }).reverse();
+  while(historico.length&&historico[0].papel!=="user")historico.shift();
+  chamarChatIA(sistemaDoChat(),historico).then(function(resp){
+    var marca=/\[\[\s*ERRO_DO_SITE\s*:([\s\S]*?)\]\]/i.exec(resp||"");
+    var limpa=String(resp||"").replace(/\[\[\s*ERRO_DO_SITE\s*:[\s\S]*?\]\]/ig,"").trim();
+    CHAT.msgs.push({papel:"model",texto:limpa||"Hum, fiquei sem palavras aqui. 😅 Pode perguntar de novo?"});
+    if(marca)return relatarErroSite(marca[1].trim(),msg).then(function(r){
+      CHAT.msgs.push({papel:"model",tipo:r==="ok"?"aviso":"falha",texto:r==="ok"
+        ? "📨 Avisei o Matheus sobre esse erro, com o que você contou. Obrigado pela ajuda para deixar o site melhor!"
+        : r==="repetido"?"📨 Esse erro já foi avisado ao Matheus nesta visita."
+        : "Não consegui mandar o aviso ao Matheus agora (sem conexão com o serviço de e-mail). Ele fica guardado e vai na próxima vez que o site abrir."});
+    });
+  }).catch(function(e){
+    CHAT.msgs.push({papel:"model",tipo:"falha",texto:chatFalha(e)});
+  }).then(function(){
+    CHAT.enviando=false;$("chat-enviar").disabled=false;
+    chatGuardar();chatRender();
+  });
+}
+/* ---- aviso de erro por e-mail ao administrador ----
+   FormSubmit (formsubmit.co) recebe o formulário e manda o e-mail, sem servidor nem conta.
+   No primeiro aviso, o FormSubmit manda ao administrador um e-mail de ativação: é só confirmar. */
+function enviarRelato(r){
+  return fetch("https://formsubmit.co/ajax/"+encodeURIComponent(NUVEM_ADMIN),{
+    method:"POST",headers:{"Content-Type":"application/json","Accept":"application/json"},
+    body:JSON.stringify({
+      _subject:"Banco de Questões: erro relatado pelo assistente",
+      _template:"table",_captcha:"false",
+      resumo:r.resumo, mensagem_do_professor:r.mensagem, print_anexado:r.print?"sim (a IA descreveu no resumo)":"não",
+      professor:r.professor, pagina:r.pagina, erros_na_tela:r.erros, navegador:r.navegador, quando:r.quando, versao:r.versao
+    })
+  }).then(function(resp){return resp.json().catch(function(){return {};}).then(function(d){
+    if(!resp.ok||d.success===false||d.success==="false")throw new Error(d.message||("HTTP "+resp.status));
+    return d;
+  });});
+}
+function relatosPendentes(){try{return JSON.parse(ler(CHAVE_RELATOS)||"[]")||[];}catch(e){return [];}}
+function relatarErroSite(resumo,msg){
+  var chave=semAcento(resumo).replace(/[^a-z0-9]+/g," ").trim().slice(0,80);
+  if(CHAT.relatados[chave])return Promise.resolve("repetido");
+  if(CHAT.nRelatos>=MAX_RELATOS_SESSAO)return Promise.resolve("repetido");
+  CHAT.relatados[chave]=1;CHAT.nRelatos++;
+  var u=NV&&NV.usuario;
+  var r={resumo:resumo,mensagem:String(msg&&msg.texto||"").slice(0,1500),print:!!(msg&&msg.imagens&&msg.imagens.length),
+    professor:u?((u.displayName||"")+" <"+(u.email||"")+">"):"não identificado (fora da nuvem)",
+    pagina:abaAtualNome(),erros:errosRecentes.slice(-5).map(function(e){return e.texto+(e.onde?" ("+e.onde+")":"");}).join(" | ")||"nenhum",
+    navegador:navigator.userAgent,quando:new Date().toLocaleString("pt-BR"),versao:($("versao-app")||{}).textContent||""};
+  return enviarRelato(r).then(function(){return "ok";},function(){
+    var fila=relatosPendentes();fila.push(r);gravar(CHAVE_RELATOS,JSON.stringify(fila.slice(-10)));
+    return "falha";
+  });
+}
+// avisos que não saíram ficam guardados e vão na próxima visita
+setTimeout(function(){
+  var fila=relatosPendentes();
+  if(!fila.length||!navigator.onLine)return;
+  var cadeia=Promise.resolve(), sobrou=[];
+  fila.forEach(function(r){cadeia=cadeia.then(function(){return enviarRelato(r).catch(function(){sobrou.push(r);});});});
+  cadeia.then(function(){if(sobrou.length)gravar(CHAVE_RELATOS,JSON.stringify(sobrou));else apagar(CHAVE_RELATOS);});
+},8000);
+function chatAjustarCampo(){var t=$("chat-texto");t.style.height="auto";t.style.height=Math.min(120,t.scrollHeight+2)+"px";}
+
+$("chat-botao").addEventListener("click",function(){
+  if($("chat-painel").classList.contains("aberto"))chatFechar();else chatAbrir();
+});
+$("chat-recolher").addEventListener("click",function(){chatFechar();$("chat-botao").focus();});
+$("chat-limpar").addEventListener("click",function(){
+  if(CHAT.enviando)return;
+  CHAT.msgs=[];CHAT.anexos=[];chatRenderAnexos();chatGuardar();chatRender();$("chat-texto").focus();
+});
+$("chat-form").addEventListener("submit",function(ev){ev.preventDefault();chatEnviar($("chat-texto").value);});
+$("chat-texto").addEventListener("keydown",function(ev){
+  if(ev.key==="Enter"&&!ev.shiftKey&&!ev.isComposing){ev.preventDefault();chatEnviar(this.value);}
+});
+$("chat-texto").addEventListener("input",chatAjustarCampo);
+$("chat-texto").addEventListener("paste",function(ev){
+  var itens=(ev.clipboardData&&ev.clipboardData.items)||[], arquivos=[];
+  for(var i=0;i<itens.length;i++)if(itens[i].kind==="file"&&/^image\//.test(itens[i].type))arquivos.push(itens[i].getAsFile());
+  if(arquivos.length){ev.preventDefault();chatAnexar(arquivos);}
+});
+$("chat-anexar").addEventListener("click",function(){$("chat-arquivo").click();});
+$("chat-arquivo").addEventListener("change",function(){chatAnexar(this.files);this.value="";});
+$("chat-anexos").addEventListener("click",function(ev){
+  var b=ev.target.closest("[data-tirar-anexo]");if(!b)return;
+  CHAT.anexos.splice(+b.dataset.tirarAnexo,1);chatRenderAnexos();
+});
+$("chat-msgs").addEventListener("click",function(ev){
+  var s=ev.target.closest("[data-sugestao]");if(s)chatEnviar(s.dataset.sugestao);
+  if(ev.target.closest("[data-abrir-assistente]")){chatFechar();abrirAssistenteChave();}
+});
+$("btn-testar-relato").addEventListener("click",function(){
+  var b=this;b.disabled=true;
+  msg("retorno-relato","Enviando um aviso de teste…","");
+  enviarRelato({resumo:"Teste do aviso de erros (enviado pelo administrador em Ajustes).",mensagem:"",print:false,
+    professor:NV&&NV.usuario?NV.usuario.email:"",pagina:"Ajustes",erros:"nenhum",navegador:navigator.userAgent,
+    quando:new Date().toLocaleString("pt-BR"),versao:($("versao-app")||{}).textContent||""})
+  .then(function(d){
+    msg("retorno-relato","Pedido enviado. Se for o primeiro, chega no e-mail "+esc(NUVEM_ADMIN)+" uma mensagem do FormSubmit com o botão <strong>Activate Form</strong>: clique nele uma vez e os próximos avisos chegam direto.","ok");
+  },function(e){
+    msg("retorno-relato","Não foi possível falar com o FormSubmit agora ("+esc(e.message||"sem conexão")+"). Tente de novo mais tarde.","erro");
+  }).then(function(){b.disabled=false;});
+});
+(function(){
+  var p=$("chat-painel");
+  p.addEventListener("dragover",function(ev){if(ev.dataTransfer&&[].indexOf.call(ev.dataTransfer.types||[],"Files")>=0){ev.preventDefault();p.classList.add("arrastando");}});
+  p.addEventListener("dragleave",function(ev){if(!p.contains(ev.relatedTarget))p.classList.remove("arrastando");});
+  p.addEventListener("drop",function(ev){ev.preventDefault();p.classList.remove("arrastando");chatAnexar(ev.dataTransfer&&ev.dataTransfer.files);});
+})();
+document.addEventListener("keydown",function(ev){
+  if(ev.key==="Escape"&&$("chat-painel").classList.contains("aberto")&&$("janela-questao").hidden)chatFechar();
+});
+
 nuvemIniciar();
 
 })();
