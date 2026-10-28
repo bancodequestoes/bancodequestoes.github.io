@@ -27,5 +27,26 @@ service cloud.firestore {
       allow read: if membro() || (logado() && request.auth.token.email == email);
       allow write: if admin();
     }
+
+    // ===== Gabarito (correção de provas) =====
+    // Cada professor liberado só lê e altera os próprios dados.
+    match /gab_perfis/{uid} {
+      allow read, write: if membro() && request.auth.uid == uid;
+    }
+    match /gab_turmas/{id} {
+      allow read, delete: if membro() && resource.data.dono == request.auth.uid;
+      allow create: if membro() && request.resource.data.dono == request.auth.uid;
+      allow update: if membro() && resource.data.dono == request.auth.uid && request.resource.data.dono == request.auth.uid;
+    }
+    match /gab_avaliacoes/{id} {
+      allow read, delete: if membro() && resource.data.dono == request.auth.uid;
+      allow create: if membro() && request.resource.data.dono == request.auth.uid;
+      allow update: if membro() && resource.data.dono == request.auth.uid && request.resource.data.dono == request.auth.uid;
+    }
+    match /gab_resultados/{id} {
+      allow read, delete: if membro() && resource.data.dono == request.auth.uid;
+      allow create: if membro() && request.resource.data.dono == request.auth.uid;
+      allow update: if membro() && resource.data.dono == request.auth.uid && request.resource.data.dono == request.auth.uid;
+    }
   }
 }
