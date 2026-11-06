@@ -1053,6 +1053,7 @@ body:has(#faixa-erro) .chat-painel{bottom:124px}
         <select id="filtro-materia"><option value="">Todas</option></select>
       </div>
     </div>
+    <p class="ajuda nota-hab" id="nota-outro-dia" hidden></p>
     <label for="filtro-assunto">Assunto identificado na prova <span class="opcional">opcional</span></label>
     <select id="filtro-assunto"><option value="">Todos</option></select>
     <label for="busca-tema">Buscar por tema amplo <span class="opcional">opcional</span></label>
@@ -6398,7 +6399,47 @@ function atualizarMaterias(){
     (semMateria?'<option value="'+SEM_MATERIA+'">Sem matéria definida ('+semMateria+")</option>":"");
   // se o valor anterior não existe mais, o filtro volta para "todos"
   sel.value=(atual&&(lista.indexOf(atual)>=0||(atual===SEM_MATERIA&&semMateria)))?atual:"";
+  atualizarNotaOutroDia(area);
 }
+/* No SSA até 2023 (1ª fase até 2022) a UPE punha História, Geografia e Sociologia no 2º dia
+   e só Filosofia no 1º. Quem abre um dia e escolhe a disciplina fica sabendo se o outro dia
+   da mesma fase tem mais questões dela, com um botão para abrir.                          */
+function atualizarNotaOutroDia(area){
+  var nota=$("nota-outro-dia");
+  nota.hidden=true;nota.innerHTML="";
+  if(!provaAtual||!area||!/\b[12]º dia\b/.test(provaAtual.nome||""))return;
+  var nomeOutro=(provaAtual.nome||"").replace(/\b([12])º dia\b/,function(_,d){return (d==="1"?"2":"1")+"º dia";});
+  var outro=provasCarregadas.filter(function(p){return p.nome===nomeOutro;})[0];
+  if(!outro)return;
+  function contar(pr){
+    var n=0, mats={};
+    (pr.questoes||[]).forEach(function(q){
+      if(areaDaQuestao(q,pr)!==area)return;
+      n++;
+      (q.materias||[]).forEach(function(m){if(AREA_DA_MATERIA[m]===area)mats[m]=(mats[m]||0)+1;});
+    });
+    return {n:n,mats:mats};
+  }
+  var aqui=contar(provaAtual), la=contar(outro);
+  if(la.n<=aqui.n)return;
+  var detalhe=Object.keys(la.mats).sort(function(a,b){return a.localeCompare(b,"pt-BR");})
+    .map(function(m){return esc(m)+" "+la.mats[m];}).join(", ");
+  var diaOutro=/1º dia/.test(nomeOutro)?"1º dia":"2º dia";
+  nota.innerHTML="Este caderno tem "+aqui.n+" "+(aqui.n===1?"questão":"questões")+" de "+esc(NOME_DISCIPLINA[area])+
+    ". Nesta prova, o <strong>"+diaOutro+"</strong> tem "+la.n+(detalhe?" ("+detalhe+")":"")+". "+
+    '<button type="button" class="botao secundario" id="btn-abrir-outro-dia" data-id="'+esc(outro.id)+'">Abrir o '+diaOutro+"</button>";
+  nota.hidden=false;
+}
+document.addEventListener("click",function(ev){
+  var b=ev.target.closest&&ev.target.closest("#btn-abrir-outro-dia");
+  if(!b)return;
+  var area=disciplinaEscolhida();
+  escolherProva(b.getAttribute("data-id"));
+  // a disciplina escolhida continua valendo no outro dia
+  if(area&&!$("prova-area").value&&$("filtro-area").querySelector('option[value="'+area+'"]')){
+    $("filtro-area").value=area;$("filtro-area").dispatchEvent(new Event("change"));
+  }
+});
 /* no ENEM a dificuldade é a da TRI (microdados do INEP); nas outras provas, estimada pela leitura da questão */
 function atualizarFiltroDificuldade(ehEnem){
   var questoes=provaAtual?provaAtual.questoes:[], conta={0:0};
