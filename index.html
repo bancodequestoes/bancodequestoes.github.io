@@ -4491,6 +4491,38 @@ $("arquivo-pacote").addEventListener("change",function(ev){
         });
       });
     });
+    // classificação pronta (matéria, assunto, palavras-chave) das provas oficiais.
+    // Só preenche questão que ainda não tem matéria ou assunto: o que já foi classificado aqui fica como está.
+    var classes=Array.isArray(pacote.classificacao)?pacote.classificacao:[];
+    if(classes.length)seguir=seguir.then(function(){
+      return listarProvas().then(function(atuais){
+        var porNome={};atuais.forEach(function(pr){porNome[pr.nome]=pr;});
+        var mudadas={}, feitas=0, mantidas=0, provasFaltando={};
+        classes.forEach(function(c){
+          var pr=c&&porNome[c.prova];
+          if(!pr){if(c&&c.prova)provasFaltando[c.prova]=1;return;}
+          var q=(pr.questoes||[]).filter(function(x){return x.chave===c.chave;})[0];
+          if(!q||!Array.isArray(c.materias)||!c.materias.length)return;
+          if((q.materias||[]).length&&q.assunto){mantidas++;return;}
+          var mats=c.materias.map(function(m){return String(m||"").trim();}).filter(Boolean);
+          if(!mats.length)return;
+          q.materias=mats;
+          q.assunto=String(c.assunto||"").trim();
+          q.palavras=(Array.isArray(c.palavras)?c.palavras:[]).map(String);
+          if(c.areaEnem&&!q.areaEnem)q.areaEnem=c.areaEnem;
+          if(c.matriz&&HAB_ENEM[c.matriz]&&!q.matriz)q.matriz=c.matriz;
+          mudadas[pr.id]=pr;feitas++;
+        });
+        var lista=Object.keys(mudadas).map(function(k){return mudadas[k];});
+        return Promise.all(lista.map(gravarProva)).then(function(){
+          var faltam=Object.keys(provasFaltando).length;
+          relato.push("matéria e assunto em "+feitas+" "+(feitas===1?"questão":"questões")+" das provas oficiais"+
+            (mantidas?" ("+mantidas+" já estavam classificadas e foram mantidas)":"")+
+            (faltam?"; "+faltam+" "+(faltam===1?"prova não está":"provas não estão")+" neste aparelho":""));
+          return recarregarProvas().catch(function(){});
+        });
+      });
+    });
     seguir.catch(function(){
       relato.push("as provas oficiais não puderam ser gravadas neste navegador");
     }).then(function(){
@@ -6342,18 +6374,30 @@ function preencherFiltrosOficiais(){
   atualizarFiltroDificuldade(ehEnem);
 }
 /* matérias da disciplina escolhida (História, Filosofia… dentro de Humanas) */
+/* questão ainda sem matéria (na área escolhida): não pode sumir do filtro; aparece como "Sem matéria definida" */
+var SEM_MATERIA="__sem_materia";
+function semMateriaDefinida(q,area){
+  return !(q.materias||[]).some(function(m){return m&&(!area||!AREA_DA_MATERIA[m]||AREA_DA_MATERIA[m]===area);});
+}
+function passaFiltroMateria(q,mat,area){
+  if(!mat)return true;
+  if(mat===SEM_MATERIA)return semMateriaDefinida(q,area);
+  return (q.materias||[]).indexOf(mat)>=0;
+}
 function atualizarMaterias(){
-  var questoes=provaAtual?provaAtual.questoes:[], area=disciplinaEscolhida(), materias={};
+  var questoes=provaAtual?provaAtual.questoes:[], area=disciplinaEscolhida(), materias={}, semMateria=0;
   questoes.forEach(function(q){
     if(area&&areaDaQuestao(q)!==area)return;
+    if(semMateriaDefinida(q,area))semMateria++;
     (q.materias||[]).forEach(function(m){if(m&&(!area||!AREA_DA_MATERIA[m]||AREA_DA_MATERIA[m]===area))materias[m]=(materias[m]||0)+1;});
   });
   var lista=Object.keys(materias).sort(function(a,b){return a.localeCompare(b,"pt-BR");});
   var sel=$("filtro-materia"), atual=sel.value;
   sel.innerHTML='<option value="">'+(area?"Todas as matérias de "+esc(NOME_DISCIPLINA[area]):"Todas as matérias")+"</option>"+
-    lista.map(function(c){return '<option value="'+esc(c)+'">'+esc(c)+" ("+materias[c]+")</option>";}).join("");
+    lista.map(function(c){return '<option value="'+esc(c)+'">'+esc(c)+" ("+materias[c]+")</option>";}).join("")+
+    (semMateria?'<option value="'+SEM_MATERIA+'">Sem matéria definida ('+semMateria+")</option>":"");
   // se o valor anterior não existe mais, o filtro volta para "todos"
-  sel.value=(atual&&lista.indexOf(atual)>=0)?atual:"";
+  sel.value=(atual&&(lista.indexOf(atual)>=0||(atual===SEM_MATERIA&&semMateria)))?atual:"";
 }
 /* no ENEM a dificuldade é a da TRI (microdados do INEP); nas outras provas, estimada pela leitura da questão */
 function atualizarFiltroDificuldade(ehEnem){
@@ -6417,12 +6461,12 @@ function atualizarAssuntos(){
   var mat=$("filtro-materia").value, area=disciplinaEscolhida(), assuntos={};
   questoes.forEach(function(q){
     if(area&&areaDaQuestao(q)!==area)return;
-    if(mat&&(q.materias||[]).indexOf(mat)<0)return;
+    if(!passaFiltroMateria(q,mat,area))return;
     if(q.assunto)assuntos[q.assunto]=1;
   });
   var chaves=Object.keys(assuntos).sort(function(a,b){return a.localeCompare(b,"pt-BR");});
   var sel=$("filtro-assunto"), atual=sel.value;
-  sel.innerHTML='<option value="">'+(mat?"Todos os assuntos de "+esc(mat):"Todos os assuntos")+"</option>"+
+  sel.innerHTML='<option value="">'+(mat&&mat!==SEM_MATERIA?"Todos os assuntos de "+esc(mat):"Todos os assuntos")+"</option>"+
     chaves.map(function(c){return '<option value="'+esc(c)+'">'+esc(c)+"</option>";}).join("");
   sel.value=(atual&&chaves.indexOf(atual)>=0)?atual:"";
 }
@@ -6434,7 +6478,7 @@ function oficiaisFiltradas(){
   var termos=semAcento($("busca-tema").value).split(/[^a-z0-9]+/).filter(function(t){return t.length>2;});
   var lista=provaAtual.questoes.filter(function(q){
     if(disc&&areaDaQuestao(q)!==disc)return false;
-    if(mat&&(q.materias||[]).indexOf(mat)<0)return false;
+    if(!passaFiltroMateria(q,mat,disc))return false;
     if(ass&&q.assunto!==ass)return false;
     if(area){
       var x=HAB_ENEM[q.matriz];
