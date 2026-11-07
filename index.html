@@ -478,6 +478,8 @@ input[type=file]{font-size:13px}
 .q-prova{margin-bottom:22px;break-inside:avoid}
 .q-prova .num{font-family:var(--serif);font-weight:700;margin-right:6px}
 .q-prova .cod{font-size:11px;color:var(--primaria);font-weight:700;margin-bottom:3px}
+/* prova adaptada (AEE): Arial 12, espaçamento 1,5, sem itálico no apoio */
+#folha.folha-aee,#folha.folha-aee .q-prova,#folha.folha-aee blockquote{font-family:Arial,Helvetica,sans-serif;font-size:12pt;line-height:1.5;font-style:normal}
 .chave{margin-top:30px;border-top:1.5px solid var(--tinta);padding-top:14px;font-size:13.5px}
 .chave-grade{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
 .chave-grade span{border:1px solid var(--regua);padding:3px 10px;border-radius:6px}
@@ -923,6 +925,7 @@ body:has(#faixa-erro) .chat-painel{bottom:124px}
         <option value="1">Uma coluna — largura total da página</option>
         <option value="2">Duas colunas — economiza papel</option>
       </select>
+      <p class="ajuda" style="margin-top:6px">Prova só com questões adaptadas sai sozinha no padrão do AEE: Arial 12, espaçamento 1,5 e uma coluna, e o app confere as 10 questões com 3 alternativas.</p>
       <label style="margin-top:14px"><input type="checkbox" id="m-gabarito" checked style="width:auto;margin-right:7px">Incluir o gabarito em página separada no fim</label>
       <label><input type="checkbox" id="m-habilidade" style="width:auto;margin-right:7px">Imprimir o código de habilidade acima de cada questão</label>
       <div class="botoes">
@@ -2648,7 +2651,7 @@ var ESTILOS={
   objetiva:'do tipo "objetiva": enunciado direto, uma única alternativa correta',
   dissertativa:'do tipo "dissertativa": sem alternativas, com resposta esperada descrevendo os elementos que a correção deve encontrar',
   passe:'do tipo "passe": texto-base analítico e denso de 100 a 180 palavras seguido de pergunta interpretativa',
-  adaptada:'do tipo "adaptada": versão acessível da avaliação, destinada a estudantes atípicos (TEA, TDAH e outros), cujo objetivo é reduzir a carga de leitura e de interpretação SEM baixar a habilidade avaliada. Quando houver material anexado, o apoio textual é a simplificação de uma passagem específica dele, e a pergunta trata da ideia que essa passagem desenvolve — nunca de um dado externo sobre o mesmo assunto. O apoio textual é graduado pelo nível de exigência pedido: no nível básico, a questão traz apenas UMA frase curta de contexto (10 a 20 palavras) ou vai direto à pergunta, sem texto-base; no nível intermediário ou misto, um texto-base de duas frases, entre 25 e 35 palavras; no nível avançado, um texto-base de três frases, entre 30 e 45 palavras. Em qualquer caso o apoio é autossuficiente — traz tudo o que o estudante precisa — e o campo fonte fica VAZIO, porque o texto é escrito para a questão e não citado de lugar nenhum. O APOIO TEXTUAL NÃO PODE CONTER A RESPOSTA: é proibido que o apoio traga uma frase que responda literalmente ao comando, e é proibido que a alternativa correta seja paráfrase de uma frase do apoio. Aplique este teste antes de entregar cada questão: se bastasse copiar uma frase do apoio para acertar, a questão está errada e deve ser refeita. O apoio fornece a matéria-prima — uma situação concreta, um exemplo do cotidiano, um caso, dois fatos a relacionar — e o comando exige um passo além da leitura. Operações aceitáveis, graduadas pelo nível: no básico, reconhecer entre as alternativas qual situação do dia a dia é exemplo do que foi descrito, ou qual consequência decorre do fato apresentado; no intermediário, aplicar a ideia a uma situação nova que não está no apoio, ou explicar por que aquilo acontece; no avançado, relacionar dois elementos do apoio, inferir um desdobramento não declarado ou identificar o que mudaria se uma condição fosse diferente. Quando o apoio precisar nomear um conceito, apresente-o pelo funcionamento ou por um caso, e pergunte pela aplicação: em vez de "o texto diz que X é Y" seguido de "o que é X?", escreva um apoio com uma cena concreta e pergunte qual alternativa é exemplo de X. O comando é uma pergunta direta, curta, de cerca de 10 palavras, terminada em ponto de interrogação, abrindo com "Qual destas situações", "Qual é a consequência", "Por que", "Como", "O que explica" ou "Qual seria o resultado" — evite "O que é" e "O que significa", que convidam à cópia da definição; JAMAIS use "de acordo com o texto", "segundo o material didático" ou qualquer referência a material de apoio. Exatamente 3 alternativas, de A a C, começando com maiúscula e terminando em ponto: no nível básico, de 8 a 15 palavras cada; nos demais, de 15 a 25 — e as três com extensão parecida entre si, porque a alternativa visivelmente mais longa entrega a resposta a quem não leu. Regras de acessibilidade cognitiva, obrigatórias: uma ideia por frase e uma pergunta por questão; ordem direta (sujeito, verbo, complemento); nada de dupla negativa, ironia, metáfora, provérbio ou linguagem figurada, que dificultam a compreensão literal; nada de comandos como "assinale a incorreta" ou "exceto"; vocabulário concreto e cotidiano, com todo termo técnico explicado na própria frase em que aparece; sem pegadinhas, sem alternativas que diferem entre si por um detalhe mínimo, e sem depender de informação apresentada muitas linhas antes. A alternativa correta reafirma o conceito com palavras diferentes das do apoio textual, e os dois distratores representam erros plausíveis de quem não compreendeu — inverter a relação, confundir dois conceitos próximos, atribuir a causa errada — nunca absurdos evidentes nem opções cômicas',
+  adaptada:'do tipo "adaptada": versão acessível da avaliação, destinada a estudantes atípicos atendidos pelo AEE (TEA, TDAH e outros), cujo objetivo é reduzir a carga de leitura e de interpretação SEM baixar a habilidade avaliada. Siga a orientação da Educação Inclusiva da rede: priorize os objetivos de aprendizagem essenciais do componente, sem perder de vista os conteúdos e competências previstos; linguagem adequada ao nível de compreensão do estudante, com enunciado objetivo e comando claro que favoreçam a autonomia; o enunciado inteiro (apoio textual mais comando) cabe em no máximo 4 linhas impressas, e um texto de apoio, quando houver, tem no máximo 3 parágrafos. Quando houver material anexado, o apoio textual é a simplificação de uma passagem específica dele, e a pergunta trata da ideia que essa passagem desenvolve — nunca de um dado externo sobre o mesmo assunto. O apoio textual é graduado pelo nível de exigência pedido: no nível básico, a questão traz apenas UMA frase curta de contexto (10 a 20 palavras) ou vai direto à pergunta, sem texto-base; no nível intermediário ou misto, um texto-base de duas frases, entre 25 e 35 palavras; no nível avançado, um texto-base de três frases, entre 30 e 45 palavras. Em qualquer caso o apoio é autossuficiente — traz tudo o que o estudante precisa — e o campo fonte fica VAZIO, porque o texto é escrito para a questão e não citado de lugar nenhum. O APOIO TEXTUAL NÃO PODE CONTER A RESPOSTA: é proibido que o apoio traga uma frase que responda literalmente ao comando, e é proibido que a alternativa correta seja paráfrase de uma frase do apoio. Aplique este teste antes de entregar cada questão: se bastasse copiar uma frase do apoio para acertar, a questão está errada e deve ser refeita. O apoio fornece a matéria-prima — uma situação concreta, um exemplo do cotidiano, um caso, dois fatos a relacionar — e o comando exige um passo além da leitura. Operações aceitáveis, graduadas pelo nível: no básico, reconhecer entre as alternativas qual situação do dia a dia é exemplo do que foi descrito, ou qual consequência decorre do fato apresentado; no intermediário, aplicar a ideia a uma situação nova que não está no apoio, ou explicar por que aquilo acontece; no avançado, relacionar dois elementos do apoio, inferir um desdobramento não declarado ou identificar o que mudaria se uma condição fosse diferente. Quando o apoio precisar nomear um conceito, apresente-o pelo funcionamento ou por um caso, e pergunte pela aplicação: em vez de "o texto diz que X é Y" seguido de "o que é X?", escreva um apoio com uma cena concreta e pergunte qual alternativa é exemplo de X. O comando é uma pergunta direta, curta, de cerca de 10 palavras, terminada em ponto de interrogação, abrindo com "Qual destas situações", "Qual é a consequência", "Por que", "Como", "O que explica" ou "Qual seria o resultado" — evite "O que é" e "O que significa", que convidam à cópia da definição; JAMAIS use "de acordo com o texto", "segundo o material didático" ou qualquer referência a material de apoio. Exatamente 3 alternativas, de A a C, começando com maiúscula e terminando em ponto: no nível básico, de 8 a 15 palavras cada; nos demais, de 15 a 25 — e as três com extensão parecida entre si, porque a alternativa visivelmente mais longa entrega a resposta a quem não leu. Regras de acessibilidade cognitiva, obrigatórias: uma ideia por frase e uma pergunta por questão; ordem direta (sujeito, verbo, complemento); nada de dupla negativa, ironia, metáfora, provérbio ou linguagem figurada, que dificultam a compreensão literal; nada de comandos como "assinale a incorreta" ou "exceto"; vocabulário concreto e cotidiano, com todo termo técnico explicado na própria frase em que aparece; sem pegadinhas, sem alternativas que diferem entre si por um detalhe mínimo, e sem depender de informação apresentada muitas linhas antes. A alternativa correta reafirma o conceito com palavras diferentes das do apoio textual, e os dois distratores representam erros plausíveis de quem não compreendeu — inverter a relação, confundir dois conceitos próximos, atribuir a causa errada — nunca absurdos evidentes nem opções cômicas',
 
   enem:'do tipo "enem", seguindo a estrutura medida nas provas oficiais: texto-base de 80 a 160 palavras (mediana de 104) — notícia, trecho literário, fragmento historiográfico, excerto teórico de autor consagrado, dado de pesquisa ou descrição verbal de imagem, charge ou gráfico; campo fonte sempre preenchido com a referência no padrão do exame; comando curto, de cerca de 10 palavras, que na maioria das vezes é uma frase INCOMPLETA, sem ponto final, que as alternativas completam sintaticamente — nesse caso as alternativas começam com letra minúscula, terminam com ponto, têm a mesma classe gramatical inicial e cerca de 6 palavras cada (nunca mais de 20); quando o comando for uma pergunta fechada terminada em ponto de interrogação, as alternativas começam com maiúscula; a questão sempre exige leitura e interpretação do texto-base, nunca memorização isolada, e cada distrator corresponde a um erro de leitura plausível; abra o comando com fórmulas do exame como "Nesse texto,", "De acordo com esse texto,", "Ao abordar", "Com base em", "Nesse fragmento,"; parte das questões pode trazer dois textos, identificados como TEXTO I e TEXTO II dentro do campo textoBase, pedindo comparação entre eles',
   ssa:'do tipo "ssa", seguindo a estrutura medida nos cadernos oficiais do SSA/UPE. Regra geral: a questão começa por uma linha de instrução curta e imperativa — "Leia o texto a seguir.", "Observe a imagem a seguir.", "Analise as imagens a seguir." —, o comando é uma frase COMPLETA terminada em ponto ou interrogação e costuma explicitar a tarefa com a palavra CORRETA em caixa alta, nas fórmulas "assinale a alternativa CORRETA", "é CORRETO afirmar que", "assinale a alternativa que apresenta CORRETAMENTE"; cada distrator mistura uma informação verdadeira a um erro conceitual ou factual preciso, nunca a um absurdo. Em Linguagens e em Ciências Humanas, o texto-base é enxuto (mediana de 42 palavras, raramente acima de 110), com referência no campo fonte, e as alternativas são afirmações completas de cerca de 13 palavras, no máximo 20, que o estudante julga verdadeiras ou falsas; privilegie fortemente conteúdo pernambucano e nordestino quando o assunto permitir (Recife, frevo, maracatu, mamulengo, cordel, Borborema, sertão, agreste, história e literatura regionais). Em Ciências da Natureza e Matemática, o texto-base é mais longo e assume duas formas: uma situação-problema concreta e nomeada (uma empresa, um laboratório, uma obra de urbanismo, um experimento escolar, com personagens e números plausíveis) ou um trecho traduzido de artigo científico, citado com autor, periódico, volume e ano; quando houver cálculo, uma linha iniciada por "Dados:" traz as constantes e massas molares logo antes do comando, e as alternativas são curtas, numéricas e com unidade; em Biologia e em Química conceitual, ao contrário, as alternativas são longas, de 30 a 60 palavras, encadeando explicação e conclusão. Proposições numeradas são raras e aparecem apenas em Natureza e Matemática, como itens I e II ou de 1 a 6, com alternativas que combinam os números ("2, 4 e 5"); nunca as use em Linguagens ou Humanas. Um mesmo texto-base pode servir a duas questões consecutivas'
@@ -4048,6 +4051,9 @@ $("btn-montar").addEventListener("click",function(){
     ($("p-turma").value?" · "+esc($("p-turma").value):"")+
     ($("p-data").value?" · "+esc($("p-data").value):"")+"</div>"+
     '<div class="identificacao"><span>Estudante: _______________________________________</span><span>Nota: __________</span></div>';
+  var aeeTela=ehProvaAdaptada(lista);
+  $("folha").classList.toggle("folha-aee",aeeTela);
+  if(aeeTela)html='<div class="aviso nao-imprime">'+esc(textoAvisoAEE(lista).replace("saiu em","sai em"))+"</div>"+html;
 
   lista.forEach(function(q,i){
     html+='<div class="q-prova">';
@@ -4618,14 +4624,17 @@ function paragrafo(texto,op){
   if(op.quebra)pPr+="<w:pageBreakBefore/>";
   if(op.borda)pPr+='<w:pBdr><w:left w:val="single" w:sz="12" w:space="8" w:color="9AA69E"/></w:pBdr>';
   if(op.linha)pPr+='<w:pBdr><w:bottom w:val="single" w:sz="6" w:space="1" w:color="808080"/></w:pBdr>';
-  pPr+='<w:spacing w:before="'+(op.antes||0)+'" w:after="'+(op.depois==null?120:op.depois)+'" w:line="264" w:lineRule="auto"/>';
+  pPr+='<w:spacing w:before="'+(op.antes||0)+'" w:after="'+(op.depois==null?120:op.depois)+'" w:line="'+(MODO_AEE?360:264)+'" w:lineRule="auto"/>';
   if(op.recuo)pPr+='<w:ind w:left="'+op.recuo+'"/>';
   if(op.alinhar)pPr+='<w:jc w:val="'+op.alinhar+'"/>';
   pPr+="</w:pPr>";
   var rPr="<w:rPr>";
   if(op.negrito)rPr+="<w:b/>";
-  if(op.italico)rPr+="<w:i/>";
-  rPr+='<w:sz w:val="'+(op.tamanho||22)+'"/><w:szCs w:val="'+(op.tamanho||22)+'"/>';
+  if(op.italico&&!MODO_AEE)rPr+="<w:i/>";
+  var tam=op.tamanho||22;
+  if(MODO_AEE&&tam>=16&&tam<24)tam=24;
+  if(MODO_AEE)rPr+='<w:rFonts w:ascii="Arial" w:hAnsi="Arial" w:cs="Arial"/>';
+  rPr+='<w:sz w:val="'+tam+'"/><w:szCs w:val="'+tam+'"/>';
   if(op.cor)rPr+='<w:color w:val="'+op.cor+'"/>';
   rPr+="</w:rPr>";
   var corpo=xml(texto).split("\n").map(function(l){return '<w:t xml:space="preserve">'+l+"</w:t>";}).join("<w:br/>");
@@ -4634,7 +4643,9 @@ function paragrafo(texto,op){
 function baixarDocx(){
   var lista=embaralharSemRepetir(selecaoAtual());
   if(!lista.length){alert("Marque as questões desejadas no banco antes de exportar.");return;}
-  var corpo="", ctxFig={midias:[],larguraMax:6263640,fonte:"Calibri",tamanho:22};
+  MODO_AEE=ehProvaAdaptada(lista);
+  try{
+  var corpo="", ctxFig={midias:[],larguraMax:6263640,fonte:MODO_AEE?"Arial":"Calibri",tamanho:MODO_AEE?24:22};
   corpo+=paragrafo($("p-titulo").value||"Avaliação",{negrito:true,tamanho:28,alinhar:"center",depois:60});
   var sub=[$("p-escola").value,$("p-turma").value,$("p-data").value].filter(Boolean).join("  —  ");
   if(sub)corpo+=paragrafo(sub,{alinhar:"center",tamanho:20,cor:"5B655E",depois:200});
@@ -4684,7 +4695,8 @@ function baixarDocx(){
 
   var estilos='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
     '<w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:docDefaults><w:rPrDefault><w:rPr>'+
-    '<w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/><w:sz w:val="22"/><w:szCs w:val="22"/>'+
+    (MODO_AEE?'<w:rFonts w:ascii="Arial" w:hAnsi="Arial" w:cs="Arial"/><w:sz w:val="24"/><w:szCs w:val="24"/>':
+    '<w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/><w:sz w:val="22"/><w:szCs w:val="22"/>')+
     '<w:lang w:val="pt-BR"/></w:rPr></w:rPrDefault></w:docDefaults>'+
     '<w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/></w:style></w:styles>';
 
@@ -4712,6 +4724,7 @@ function baixarDocx(){
   arquivosDoc.forEach(function(a){saidaDoc[a.nome]=codDoc.encode(a.texto);});
   registrarMidias(saidaDoc,ctxFig.midias);
   var blob=zipar(Object.keys(saidaDoc).map(function(n){return {nome:n,dados:saidaDoc[n]};}));
+  }finally{MODO_AEE=false;}
 
   var url=URL.createObjectURL(blob), a=document.createElement("a");
   a.href=url;
@@ -4949,6 +4962,29 @@ $("arquivo-modelo").addEventListener("change",function(ev){
 });
 
 function letra(q,j){return q&&q.tipo==="ssa"?LETRAS[j].toLowerCase():LETRAS[j];}
+/* Prova adaptada (AEE), conforme a orientação da Educação Inclusiva: Arial 12, espaçamento 1,5,
+   uma coluna, 10 questões com 3 alternativas, enunciado de até 4 linhas, texto de apoio de até 3 parágrafos.
+   Vale automaticamente quando todas as questões da prova são do formato adaptada. */
+var MODO_AEE=false;
+function ehProvaAdaptada(lista){return !!(lista&&lista.length&&lista.every(function(q){return q.tipo==="adaptada";}));}
+function conferirAEE(lista){
+  var avisos=[];
+  if(lista.length!==10)avisos.push("a prova tem "+lista.length+" questões (a orientação pede 10)");
+  lista.forEach(function(q,i){
+    var n="questão "+numeroQuestao(i);
+    if((q.alternativas||[]).length!==3)avisos.push(n+" tem "+(q.alternativas||[]).length+" alternativas (o pedido é 3)");
+    var pars=String(q.textoBase||"").split(/\n+/).filter(function(l){return l.trim();}).length;
+    if(pars>3)avisos.push(n+": texto de apoio com "+pars+" parágrafos (máximo 3)");
+    // Arial 12 com as margens da prova dá cerca de 85 caracteres por linha: 4 linhas ≈ 340
+    if(String(q.enunciado||"").length>340)avisos.push(n+": enunciado passa de 4 linhas");
+  });
+  return avisos;
+}
+function textoAvisoAEE(lista){
+  var av=conferirAEE(lista);
+  return "Prova adaptada (AEE): saiu em Arial 12, espaçamento 1,5 e uma coluna."+
+    (av.length?" Confira: "+av.join("; ")+".":" Atende à orientação: 10 questões com 3 alternativas.");
+}
 function numeroQuestao(i){return (i+1)<10?("0"+(i+1)):String(i+1);}
 // reproduz o padrão da rede: Arial 12, justificado, estilo Corpodetexto, tudo em preto
 function parCorpo(texto,op){
@@ -4966,7 +5002,8 @@ function parCorpo(texto,op){
   if(ESTILO_CORPO)pPr+='<w:pStyle w:val="Corpodetexto"/>';
   if(op.quebra)pPr+="<w:pageBreakBefore/>";
   if(op.linha)pPr+='<w:pBdr><w:bottom w:val="single" w:sz="6" w:space="1" w:color="808080"/></w:pBdr>';
-  if(op.antes)pPr+='<w:spacing w:before="'+op.antes+'"/>';
+  if(MODO_AEE)pPr+='<w:spacing w:before="'+(op.antes||0)+'" w:after="0" w:line="360" w:lineRule="auto"/>';
+  else if(op.antes)pPr+='<w:spacing w:before="'+op.antes+'"/>';
   pPr+='<w:jc w:val="'+(op.alinhar||"both")+'"/></w:pPr>';
   var rPr='<w:rPr><w:rFonts w:ascii="Arial" w:hAnsi="Arial" w:cs="Arial"/>';
   if(op.negrito)rPr+="<w:b/><w:bCs/>";
@@ -4975,6 +5012,12 @@ function parCorpo(texto,op){
   return "<w:p>"+pPr+"<w:r>"+rPr+corpo+"</w:r></w:p>";
 }
 function vazio(){return parCorpo("",{});}
+// sem {{QUESTOES}} no modelo, as questões entram antes do último parágrafo (com ou sem atributos);
+// se o modelo não tiver parágrafo nenhum ali, entram logo antes da configuração da seção
+function pontoDeInsercao(doc,sect){
+  var p=Math.max(doc.lastIndexOf("<w:p ",sect),doc.lastIndexOf("<w:p>",sect));
+  return p>-1?p:sect;
+}
 function questoesEmXml(lista,comGabarito,comHabilidade,ctxFig){
   var out="";
   ctxFig=ctxFig||{midias:[],larguraMax:5760000,fonte:"Arial",tamanho:24};
@@ -5028,8 +5071,10 @@ $("btn-gerar-timbrado").addEventListener("click",function(){
 
   var dec=new TextDecoder(), cod=new TextEncoder(), saida={}, inseriu=false;
   Object.keys(modeloArquivos).forEach(function(nome){saida[nome]=modeloArquivos[nome];});
-  var ctxFig={midias:[],larguraMax:$("m-colunas").value==="2"?2880000:5760000,fonte:"Arial",tamanho:24};
-
+  var aee=ehProvaAdaptada(lista);
+  var ctxFig={midias:[],larguraMax:(!aee&&$("m-colunas").value==="2")?2880000:5760000,fonte:"Arial",tamanho:24};
+  MODO_AEE=aee;
+  try{
   partesTexto(modeloArquivos).forEach(function(nome){
     var texto=recomporMarcadores(dec.decode(modeloArquivos[nome]));
     Object.keys(valores).forEach(function(campo){
@@ -5050,8 +5095,8 @@ $("btn-gerar-timbrado").addEventListener("click",function(){
     saida[nome]=cod.encode(texto);
   });
 
-  // a seção final do timbrado vem em duas colunas; ajusta conforme o escolhido
-  var colunas=$("m-colunas").value;
+  // a seção final do timbrado vem em duas colunas; ajusta conforme o escolhido (a adaptada é sempre uma coluna)
+  var colunas=aee?"1":$("m-colunas").value;
   var docTexto=dec.decode(saida["word/document.xml"]);
   var ultima=docTexto.lastIndexOf("<w:sectPr");
   if(ultima>-1){
@@ -5068,10 +5113,11 @@ $("btn-gerar-timbrado").addEventListener("click",function(){
   if(!inseriu){
     var doc=dec.decode(saida["word/document.xml"]);
     var corte=doc.lastIndexOf("<w:sectPr");
-    corte=doc.lastIndexOf("<w:p ",corte);
+    corte=pontoDeInsercao(doc,corte);
     doc=doc.slice(0,corte)+questoesEmXml(lista,$("m-gabarito").checked,$("m-habilidade").checked,ctxFig)+doc.slice(corte);
     saida["word/document.xml"]=cod.encode(doc);
   }
+  }finally{MODO_AEE=false;}
   if(ctxFig.midias.length){
     saida["word/document.xml"]=cod.encode(comNamespacesDeFigura(dec.decode(saida["word/document.xml"])));
     registrarMidias(saida,ctxFig.midias);
@@ -5089,6 +5135,11 @@ $("btn-gerar-timbrado").addEventListener("click",function(){
   var recado="Prova gerada no timbrado com "+lista.length+" questões.";
   if(objetivas!==10)recado+=" O cartão-resposta do modelo tem 10 linhas e a prova tem "+objetivas+" questões objetivas — confira antes de imprimir.";
   if(alerta)recado+=" Há questões com 5 alternativas, e o cartão vai só até D.";
+  if(aee){
+    recado+=" "+textoAvisoAEE(lista);
+    msg("retorno-timbrado",recado,conferirAEE(lista).length?"":"ok");
+    return;
+  }
   msg("retorno-timbrado",recado,objetivas===10&&!alerta?"ok":"");
 });
 
@@ -7341,7 +7392,7 @@ function wordOficialTimbrado(){
     if(novo!==trecho)doc=doc.slice(0,ultima)+novo+doc.slice(fimSec);
   }
   if(!inseriu){
-    var corte=doc.lastIndexOf("<w:sectPr");corte=doc.lastIndexOf("<w:p ",corte);
+    var corte=pontoDeInsercao(doc,doc.lastIndexOf("<w:sectPr"));
     doc=doc.slice(0,corte)+corpo+doc.slice(corte);
   }
   saida["word/document.xml"]=cod.encode(doc);
