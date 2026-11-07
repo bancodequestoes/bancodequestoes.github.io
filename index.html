@@ -2555,12 +2555,25 @@ function guardarImagensLocal(id,lista){
     });
   }).catch(function(){});
 }
+function nuvemImagensSeparada(){return !!(NV&&NV.img&&NV.img.db);}
+function dbImagens(){return nuvemImagensSeparada()?NV.img.db:NV.db;}
+// pode ler as imagens: entrou na nuvem principal e, se as imagens moram à parte, também nela
+function imagensAcessiveis(){return livrosNaNuvem()&&(!nuvemImagensSeparada()||!!NV.img.usuario);}
+function conectarImagens(){
+  var S=NV.sdk, prov=new S.GoogleAuthProvider();
+  if(NV.usuario)prov.setCustomParameters({login_hint:NV.usuario.email});
+  return S.signInWithPopup(NV.img.auth,prov).catch(function(e){
+    if(e&&e.code==="auth/popup-blocked")return S.signInWithRedirect(NV.img.auth,prov);
+    if(e&&(e.code==="auth/popup-closed-by-user"||e.code==="auth/cancelled-popup-request"))return;
+    throw e;
+  });
+}
 function baixarImagensCapitulo(id){
-  var S=NV.sdk;
-  return S.getDoc(S.doc(NV.db,"livros","g-"+id)).then(function(d){
+  var S=NV.sdk, db=dbImagens();
+  return S.getDoc(S.doc(db,"livros","g-"+id)).then(function(d){
     if(!d.exists())return [];
     var x=d.data(), pedidos=[];
-    for(var i=2;i<=(x.partes||1);i++)pedidos.push(S.getDoc(S.doc(NV.db,"livros","g-"+id+"~"+i)));
+    for(var i=2;i<=(x.partes||1);i++)pedidos.push(S.getDoc(S.doc(db,"livros","g-"+id+"~"+i)));
     return Promise.all(pedidos).then(function(resto){
       var dados=(x.imgs||[]).slice();
       resto.forEach(function(r){if(r.exists())dados=dados.concat(r.data().imgs||[]);});
@@ -2578,6 +2591,7 @@ function imagensCapitulo(id){
     // um reenvio muda a quantidade: a cópia local antiga é trocada
     if(l&&(!n||l.length===n))return l;
     if(!livrosNaNuvem())throw new Error("entre na nuvem para ver as imagens");
+    if(!imagensAcessiveis())throw new Error("clique em Conectar imagens para ver as imagens");
     return baixarImagensCapitulo(src).then(function(l2){guardarImagensLocal(src,l2);return l2;});
   }).then(function(l){IMG.cache[src]=l;delete IMG.carregando[src];return l;},
           function(e){delete IMG.carregando[src];throw e;});
@@ -2620,6 +2634,17 @@ function renderImagens(){
     return;
   }
   var totalImgs=ids.reduce(function(s,id){return s+qtdImagens(id);},0);
+  var semCache=ids.some(function(id){return qtdImagens(id)&&!IMG.cache[fonteImagens(id)];});
+  if(totalImgs&&semCache&&livrosNaNuvem()&&nuvemImagensSeparada()&&!NV.img.usuario){
+    $("img-resumo").innerHTML="";
+    grade.innerHTML='<div class="aviso">As imagens dos livros ficam numa nuvem só delas. Na primeira vez, conecte-se a ela com a mesma conta Google'+
+      (NV.usuario?" (<strong>"+esc(NV.usuario.email)+"</strong>)":"")+'. Depois o navegador lembra.'+
+      '<div style="margin-top:10px"><button type="button" class="botao" id="btn-conectar-imagens">Conectar imagens</button></div></div>';
+    $("btn-conectar-imagens").addEventListener("click",function(){
+      conectarImagens().catch(function(e){msg("img-resumo","Não foi possível conectar ("+esc(e&&e.code||e&&e.message||"erro")+"). Tente de novo.","erro");});
+    });
+    return;
+  }
   $("img-resumo").innerHTML=!totalImgs
     ? "Os capítulos marcados não têm imagens guardadas."
     : manual
@@ -2790,7 +2815,12 @@ function gerarComImagens(p,lista,tipoImg,botao,idProg,aoAvisar){
 /* ---- envio das imagens pelo administrador: um arquivo por série ---- */
 var PESO_DOC_IMG=900000;
 function enviarImagensSerie(pacote,avisar){
-  var S=NV.sdk, docs=[];
+  var S=NV.sdk, docs=[], db=dbImagens();
+  if(nuvemImagensSeparada()&&!NV.img.usuario)
+    return conectarImagens().then(function(){
+      if(!NV.img.usuario)throw new Error("conecte-se à nuvem de imagens e envie de novo");
+      return enviarImagensSerie(pacote,avisar);
+    });
   Object.keys(pacote.caps).forEach(function(id){
     var lista=pacote.caps[id], blocos=[[]], peso=0;
     lista.forEach(function(im){
@@ -2811,18 +2841,18 @@ function enviarImagensSerie(pacote,avisar){
   var feitos=0, cadeia=Promise.resolve();
   lotes.forEach(function(lote){
     cadeia=cadeia.then(function(){
-      var b=S.writeBatch(NV.db);
-      lote.forEach(function(d){b.set(S.doc(NV.db,"livros",d.id),d.dado);});
+      var b=S.writeBatch(db);
+      lote.forEach(function(d){b.set(S.doc(db,"livros",d.id),d.dado);});
       return b.commit().then(function(){feitos+=lote.length;avisar(feitos,docs.length);});
     });
   });
-  // por último, o índice da série passa a dizer quantas imagens cada capítulo tem
+  // por último, o índice da série (no projeto principal) passa a dizer quantas imagens cada capítulo tem;
+  // uma série pode vir em mais de um arquivo, então só os capítulos deste arquivo mudam
   return cadeia.then(function(){return S.getDoc(S.doc(NV.db,"livros","indice-"+pacote.chave));}).then(function(d){
     if(!d.exists())throw new Error("envie primeiro o texto dos livros desta série");
     var ind=d.data(), prof=pacote.prof||{}, n=0;
     ind.livros.forEach(function(L){L.caps.forEach(function(c){
-      delete c.g;delete c.gDe;
-      if(pacote.caps[c.id]){c.g=pacote.caps[c.id].length;n++;}
+      if(pacote.caps[c.id]){c.g=pacote.caps[c.id].length;delete c.gDe;n++;}
       else if(prof[c.id]&&pacote.caps[prof[c.id]]){c.g=pacote.caps[prof[c.id]].length;c.gDe=prof[c.id];n++;}
     });});
     ind.t=S.serverTimestamp();
@@ -8533,11 +8563,17 @@ var NUVEM_CONFIG={
   appId:"1:568594517067:web:1e843ef7816e672ef6d1ce"
 };
 var NUVEM_ADMIN="matheusernandes09@gmail.com";
+/* as imagens dos livros SESI ocupam mais que o espaço grátis que sobra no projeto principal,
+   então moram num segundo projeto do Firebase, só delas. Cada professor entra nele uma vez
+   com a mesma conta Google ("Conectar imagens"); o navegador lembra. Sem esta configuração,
+   as imagens ficam no projeto principal.                                                    */
+var NUVEM_IMG_CONFIG=null;
 var CHAVE_NUVEM="bancoQuestoes.nuvem.v1";
 var FATIA=300000, LOTE_DOCS=400, LOTE_PESO=7000000, FOLGA_MARCO=300000;
 var NV={sdk:null,auth:null,db:null,usuario:null,membro:false,admin:false,pronto:false,
         ouvinte:null,marco:0,h:{},enviando:null,denovo:false,espera:null,
-        versoes:{},aplicado:{},fila:Promise.resolve(),teste:false};
+        versoes:{},aplicado:{},fila:Promise.resolve(),teste:false,
+        img:{auth:null,db:null,usuario:null,pronto:false}};
 try{
   var nuvemSalva=JSON.parse(ler(CHAVE_NUVEM)||"null");
   if(nuvemSalva){
@@ -8625,6 +8661,21 @@ function nuvemIniciar(){
     NV.auth=S.getAuth(app);
     NV.db=S.getFirestore(app);
     NV.dbLite=S.liteGetFirestore(app);
+    var cfgImg=emulador?{apiKey:"teste",authDomain:"localhost",projectId:"demo-imagens"}:NUVEM_IMG_CONFIG;
+    if(cfgImg){
+      var appImg=S.initializeApp(cfgImg,"imagens");
+      NV.img.auth=S.getAuth(appImg);
+      NV.img.db=S.getFirestore(appImg);
+      if(emulador){
+        S.connectAuthEmulator(NV.img.auth,"http://127.0.0.1:9099",{disableWarnings:true});
+        S.connectFirestoreEmulator(NV.img.db,"127.0.0.1",8080);
+      }
+      S.onAuthStateChanged(NV.img.auth,function(u){
+        NV.img.pronto=true;
+        NV.img.usuario=u&&u.email?{email:u.email.toLowerCase()}:null;
+        if(typeof renderImagens==="function")renderImagens();
+      });
+    }
     if(emulador){
       S.connectAuthEmulator(NV.auth,"http://127.0.0.1:9099",{disableWarnings:true});
       S.connectFirestoreEmulator(NV.db,"127.0.0.1",8080);
@@ -8639,7 +8690,11 @@ function nuvemIniciar(){
         },
         nv:NV,
         provas:function(){return {carregadas:provasCarregadas,atual:provaAtual};},
-        livros:{ls:LS,emUso:livrosEmUso,ativos:ativos,textoIA:textoDosAtivos}
+        livros:{ls:LS,emUso:livrosEmUso,ativos:ativos,textoIA:textoDosAtivos},
+        entrarImagens:function(email){
+          return S.signInWithCredential(NV.img.auth,S.GoogleAuthProvider.credential(
+            JSON.stringify({sub:email,email:email,email_verified:true})));
+        }
       };
     }
     S.onAuthStateChanged(NV.auth,function(u){
