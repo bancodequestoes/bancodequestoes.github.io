@@ -1,0 +1,19 @@
+rules_version = '2';
+// Regras do projeto do Firebase só das imagens dos livros SESI.
+// Quem entrou com uma conta Google verificada lê; só o administrador envia.
+// (A lista de professores liberados continua no projeto principal: o site só
+//  mostra as imagens para quem já entrou lá.)
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function logado() {
+      return request.auth != null && request.auth.token.email_verified == true;
+    }
+    function admin() {
+      return logado() && request.auth.token.email == 'matheusernandes09@gmail.com';
+    }
+    match /livros/{item} {
+      allow read: if logado();
+      allow write: if admin();
+    }
+  }
+}
