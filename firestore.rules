@@ -28,6 +28,14 @@ service cloud.firestore {
       allow write: if admin();
     }
 
+    // apresentações de slides: cada professor só vê e altera as próprias
+    match /apresentacoes/{id} {
+      allow read: if membro() && (resource == null || resource.data.dono == request.auth.token.email);
+      allow delete: if membro() && resource.data.dono == request.auth.token.email;
+      allow create: if membro() && request.resource.data.dono == request.auth.token.email;
+      allow update: if membro() && resource.data.dono == request.auth.token.email && request.resource.data.dono == request.auth.token.email;
+    }
+
     // ===== Gabarito (correção de provas) =====
     // Cada professor liberado só lê e altera os próprios dados.
     match /gab_perfis/{uid} {
