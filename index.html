@@ -271,13 +271,16 @@ input[type=file]::file-selector-button:hover{background:var(--primaria-hover);bo
 .livre-caminho strong{font-size:16px}
 .livre-caminho>span{font-size:14px;color:var(--cinza);line-height:1.5}
 .livre-caminho>.botao{align-self:flex-start;margin-top:4px}
-.livre-caminho>.botao[aria-expanded=true]{background:var(--primaria);color:#fff;border-color:var(--primaria)}
+.livre-caminho>.botao{background:#4F7A3E;color:#fff;border-color:#4F7A3E}
+.livre-caminho>.botao:hover{background:#426833;border-color:#426833}
+.livre-caminho>.botao[aria-expanded=true]{background:#fff;color:#4F7A3E;border-color:#4F7A3E}
 .livre-slot{margin-top:6px}
 .livre-caminho #det-texto-avulso>summary::after{content:"Abrir"}
 .livre-caminho #det-texto-avulso[open]>summary::after{content:"✕ Fechar"}
 .arquivo-escondido{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden}
 .botao-arquivo{display:inline-flex;align-items:center;gap:8px;font-family:var(--sans);font-size:14px;font-weight:700;color:var(--primaria);background:#fff;border:2px solid var(--primaria-borda);border-radius:12px;padding:9px 16px;cursor:pointer;transition:background .15s,border-color .15s,box-shadow .15s}
 .botao-arquivo:hover{background:var(--primaria-hover);border-color:var(--primaria);box-shadow:0 2px 6px var(--primaria-sombra)}
+.arquivo-nome{font-size:13px;color:var(--cinza);margin-left:10px;word-break:break-word}
 .arquivo-escondido:focus-visible+.botao-arquivo{outline:2px solid var(--primaria);outline-offset:2px}
 .livre-caminho #campo-assunto label{display:none}
 .livre-caminho #conteudo-material>label:first-child{margin-top:0}
@@ -1265,7 +1268,7 @@ input[type=range]{width:100%;accent-color:var(--primaria)}
           <div id="conteudo-material">
           <label for="arquivos" style="margin-top:0">Arquivos guardados (PDF) <span class="opcional">opcional</span></label>
           <p class="ajuda">Provas, apostilas e outros PDFs que não estão nos livros SESI. Anexe cada arquivo uma única vez, dê um título e marque quando ele deve alimentar a próxima geração.</p>
-            <input type="file" id="arquivos" class="arquivo-escondido" accept="application/pdf" multiple><label for="arquivos" class="botao-arquivo" style="margin:0">📎 Escolher arquivo PDF</label>
+            <input type="file" id="arquivos" accept="application/pdf" multiple>
             <details id="det-texto-avulso" style="margin-top:12px"><summary><span>Colar um texto avulso</span></summary>
             <textarea id="texto-extra" placeholder="Cole aqui trechos, fontes históricas ou anotações que devem entrar apenas nesta geração."></textarea>
             </details>
@@ -1278,7 +1281,7 @@ input[type=range]{width:100%;accent-color:var(--primaria)}
             <div class="botoes" style="margin-top:12px">
               <p class="ajuda" style="margin:10px 0 4px">Os dois botões abaixo servem apenas para levar esta biblioteca a outro computador ou a um colega: um gera o arquivo, o outro carrega o arquivo recebido.</p>
               <button class="botao secundario" id="btn-exportar-biblioteca">Baixar biblioteca</button>
-              <button class="botao secundario" id="btn-importar-biblioteca">Importar biblioteca</button>
+              <button class="botao-arquivo" id="btn-importar-biblioteca">📎 Importar biblioteca</button>
               <input type="file" id="arquivo-biblioteca" accept="application/json" style="display:none">
             </div>
             <div id="retorno-biblioteca"></div>
@@ -1700,7 +1703,7 @@ input[type=range]{width:100%;accent-color:var(--primaria)}
     </div>
     <div class="so-admin" style="margin-top:14px">
       <p class="ajuda" style="margin:0 0 6px"><strong>Enviar livros e imagens (administrador).</strong> Escolha os arquivos livros-sesi-*.json. Pode marcar vários de uma vez (Cmd+A na pasta). Para as imagens, conecte-se acima antes.</p>
-      <button class="botao secundario" type="button" id="btn-ls-enviar">Enviar livros e imagens para a nuvem</button>
+      <button class="botao-arquivo" type="button" id="btn-ls-enviar">📎 Enviar livros e imagens para a nuvem</button>
       <input type="file" id="arquivo-livros" accept="application/json,.json,.gz" multiple style="display:none">
       <div id="ls-envio"></div>
     </div>
@@ -1749,7 +1752,7 @@ input[type=range]{width:100%;accent-color:var(--primaria)}
     <p class="ajuda">Gera um único arquivo com as questões, a biblioteca de materiais e o modelo timbrado. Quem receber importa por aqui e passa a ter o mesmo conjunto, sem reanexar nada. A chave de acesso à IA não vai junto: cada pessoa usa a sua.</p>
     <div class="botoes" style="margin-top:0">
       <button class="botao" id="btn-exportar-tudo">Baixar pacote completo</button>
-      <button class="botao secundario" id="btn-importar-tudo">Importar pacote completo</button>
+      <button class="botao-arquivo" id="btn-importar-tudo">📎 Importar pacote completo</button>
     </div>
     <label style="margin-top:4px"><input type="checkbox" id="incluir-chave" style="width:auto;margin-right:7px">Incluir minha chave de acesso à IA no pacote</label>
     <p class="ajuda" style="margin-top:2px">Sem marcar, cada colega cadastra a própria chave — é o recomendado, porque a cota diária é por conta. Marcando, todos passam a consumir a sua.</p>
@@ -1762,7 +1765,7 @@ input[type=range]{width:100%;accent-color:var(--primaria)}
     <p class="ajuda">Peças avulsas, para quando você quiser enviar só as questões. Para montar um colega do zero, use o pacote completo acima.</p>
     <div class="botoes" style="margin-top:0">
       <button class="botao secundario" id="btn-exportar">Baixar acervo</button>
-      <button class="botao secundario" id="btn-importar">Importar acervo</button>
+      <button class="botao-arquivo" id="btn-importar">📎 Importar acervo</button>
       <button class="botao perigo" id="btn-apagar">Apagar tudo</button>
     </div>
     <input type="file" id="arquivo-import" accept="application/json" style="display:none">
@@ -2589,7 +2592,7 @@ function renderMateriais(){
   var alvo=$("lista-materiais");
   if(!materiais.length){
     resumoBiblioteca();
-    alvo.innerHTML='<div class="aviso">Nenhum arquivo guardado. Anexe acima um PDF, como uma prova ou apostila, e ele ficará disponível para as próximas gerações.</div>';
+    alvo.innerHTML='<div class="aviso">Nenhum arquivo guardado.</div>';
     return;
   }
   preencherFiltrosMaterial();
@@ -3496,7 +3499,7 @@ $("arquivos").addEventListener("change",function(ev){
       if(!ok)recado+=" O navegador recusou guardar tudo: o acervo ficou grande demais. Remova algum material antigo.";
       status.className="progresso";
       msg("status-pdf",esc(recado),ok&&uteis.length?"ok":"");
-      $("arquivos").value="";
+      $("arquivos").value="";atualizarNomeArquivo($("arquivos"));
     }
   });
 });
@@ -4273,6 +4276,29 @@ function moverCamposLivre(livre){
   if(livre){["assunto","texto-extra"].forEach(function(id){if($(id).value.trim())abrirCaminhoLivre(id==="assunto"?"assunto":"material",true);});
     if($("texto-extra").value.trim())$("det-texto-avulso").open=true;}
 }
+// todo campo de anexar arquivo do site vira o mesmo botão arredondado "📎 Escolher …", com o nome do arquivo ao lado
+function textoBotaoArquivo(inp){
+  var a=(inp.getAttribute("accept")||"").toLowerCase(), v=inp.multiple;
+  if(/pdf/.test(a))return v?"📎 Escolher arquivos PDF":"📎 Escolher arquivo PDF";
+  if(/docx|word/.test(a))return "📎 Escolher arquivo Word (.docx)";
+  if(/image/.test(a))return v?"📎 Escolher imagens":"📎 Escolher imagem";
+  if(/json/.test(a))return "📎 Escolher arquivo";
+  return v?"📎 Escolher arquivos":"📎 Escolher arquivo";
+}
+function atualizarNomeArquivo(inp){
+  var s=inp.parentNode&&inp.parentNode.querySelector('.arquivo-nome[data-de="'+inp.id+'"]');if(!s)return;
+  var f=inp.files||[];s.textContent=f.length>1?f.length+" arquivos escolhidos":(f.length?f[0].name:"");
+}
+function enfeitarArquivos(raiz){
+  (raiz||document).querySelectorAll('input[type=file]').forEach(function(inp){
+    if(inp.dataset.enfeitado||inp.hidden||inp.style.display==="none"||!inp.id)return;
+    inp.dataset.enfeitado="1";inp.classList.add("arquivo-escondido");
+    var l=document.createElement("label");l.className="botao-arquivo";l.htmlFor=inp.id;l.style.margin="0";l.textContent=textoBotaoArquivo(inp);
+    var n=document.createElement("span");n.className="arquivo-nome";n.dataset.de=inp.id;
+    inp.after(l,n);inp.addEventListener("change",function(){atualizarNomeArquivo(inp);});
+  });
+}
+enfeitarArquivos(document);
 // os botões verdes das duas caixas abrem (ou fecham) o campo dentro da própria caixa
 function abrirCaminhoLivre(qual,abrir){
   var b=$(qual==="assunto"?"btn-livre-assunto":"btn-livre-material"), slot=$(qual==="assunto"?"livre-assunto-slot":"livre-material-slot");
@@ -4424,7 +4450,7 @@ $("btn-limpar-form").addEventListener("click",function(){
   ["objetiva","dissertativa","adaptada","imagem"].forEach(function(t){var c=$("q-"+t);if(c)c.value="0";});
   IMG.escolhidas={};IMG.ordem=[];
   atualizarTotalPedido();renderImagens();
-  $("arquivos").value="";
+  $("arquivos").value="";atualizarNomeArquivo($("arquivos"));
   $("status-pdf").className="progresso";$("status-pdf").innerHTML="";
   $("retorno-geracao").innerHTML="";
 });
@@ -7878,7 +7904,7 @@ $("btn-processar-prova").addEventListener("click",function(){
             ? "A classificação por matéria e assunto não foi concluída ("+esc(questoes.falhaClassificacao)+"). As questões estão salvas; use o botão <strong>Classificar por matéria</strong> quando a cota voltar."
             : semClasse+" questões estão sem matéria e assunto. Use o botão <strong>Classificar por matéria</strong> para preencher.");
           msg("retorno-prova",recado,"ok");
-          $("pdf-prova").value="";$("pdf-gabarito").value="";$("gabarito-colado").value="";$("nome-prova").value="";
+          $("pdf-prova").value="";$("pdf-gabarito").value="";atualizarNomeArquivo($("pdf-prova"));atualizarNomeArquivo($("pdf-gabarito"));$("gabarito-colado").value="";$("nome-prova").value="";
           oficiaisSelecionadas={};
           return recarregarProvas().then(function(){
             $("prova-escolhida").value=prova.id;
@@ -11694,7 +11720,7 @@ function apEscolherImagem(fim){
           escolher({src:im.d,livro:im.id||"",legenda:s.img&&s.img.legenda||apTxt(String(im.l||"").split(/\n/)[0].slice(0,140))});});});
       });
     }else if(qual==="pc"){
-      c.innerHTML='<p class="ajuda">Escolha uma foto ou um print da página do livro. Ela é reduzida para não pesar.</p><input type="file" id="ap-img-arq" accept="image/*"><div id="ap-img-msg"></div>';
+      c.innerHTML='<p class="ajuda">Escolha uma foto ou um print da página do livro. Ela é reduzida para não pesar.</p><input type="file" id="ap-img-arq" accept="image/*"><div id="ap-img-msg"></div>';enfeitarArquivos(c);
       $("ap-img-arq").addEventListener("change",function(){
         var f=this.files[0];if(!f)return;
         var u=URL.createObjectURL(f);msg("ap-img-msg","Preparando a imagem…","");
