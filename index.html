@@ -3343,7 +3343,8 @@ $("btn-img-conectar").addEventListener("click",function(){
 /* o PDF dos livros traz marcadores de lista que viram "€" (e bolinhas) no texto das legendas:
    tira esses símbolos do começo e de qualquer ponto da legenda, inclusive das cópias já guardadas no navegador */
 function limparLegenda(l){
-  return String(l||"").replace(/(^|\s)[€•▪■◆●▶►✓]+(?=\s|$)/g,"$1").replace(/€/g,"").replace(/^[\-–—·\s]+/,"").replace(/[ \t]{2,}/g," ").trim();
+  // no texto extraído dos PDFs o marcador vem como o caractere de controle U+0080, que a tela desenha como "€"
+  return String(l||"").replace(/[\u0080-\u009f\u200b\ufeff\ufffd]/g," ").replace(/(^|\s)[€•▪■◆●▶►✓]+(?=\s|$)/g,"$1").replace(/€/g,"").replace(/^[\-–—·\s]+/,"").replace(/[ \t]{2,}/g," ").trim();
 }
 function baixarImagensCapitulo(id){
   var S=NV.sdk, db=dbImagens();
