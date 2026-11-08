@@ -2896,9 +2896,36 @@ document.addEventListener("click",function(ev){
 function cliqueEmCampo(el){
   return !!(el.closest&&el.closest("input,select,textarea,button,a,label,summary,option,[role=button],[contenteditable],.calendario,#chat-ia,#janela-questao,.fundo-janela"));
 }
+/* regra do site todo: clicar numa parte vazia fecha toda seção aberta (details) e as caixas da
+   "Outra fonte"; a página volta para onde estava antes de a seção ser aberta pelo professor */
+function guardarRolagem(el){el._rolagem={y:window.scrollY,t:Date.now()};}
+function voltarRolagem(fechados){
+  var melhor=null;
+  fechados.forEach(function(el){var r=el._rolagem;if(r&&(!melhor||r.t<melhor.t))melhor=r;delete el._rolagem;});
+  if(melhor)window.scrollTo({top:melhor.y,behavior:"auto"});
+}
+// abrir pelo resumo (summary) guarda a rolagem; fechar pelo próprio resumo também volta para ela
+document.addEventListener("click",function(ev){
+  var sm=ev.target.closest&&ev.target.closest("summary");if(!sm)return;
+  var d=sm.parentNode;if(!d||d.tagName!=="DETAILS")return;
+  if(!d.open){
+    var pai=d.parentNode&&d.parentNode.closest&&d.parentNode.closest("details[open]");
+    if(!pai||!pai._rolagem)guardarRolagem(d);
+  }else if(d._rolagem){var r=d._rolagem;delete d._rolagem;setTimeout(function(){window.scrollTo({top:r.y,behavior:"auto"});},0);}
+},true);
 document.addEventListener("click",function(ev){
   var alvo=ev.target;
   if(!alvo||!document.body.contains(alvo)||cliqueEmCampo(alvo))return;
+  var fechados=[];
+  document.querySelectorAll("main details[open]").forEach(function(d){
+    if(d.contains(alvo)||d.closest(".fundo-janela,#janela-questao"))return;
+    d.open=false;fechados.push(d);
+  });
+  var pl=$("painel-livre");
+  if(pl&&!pl.contains(alvo)&&(!$("livre-assunto-slot").hidden||!$("livre-material-slot").hidden)){
+    abrirCaminhoLivre("assunto",false);abrirCaminhoLivre("material",false);fechados.push(pl);
+  }
+  if(fechados.length)voltarRolagem(fechados);
   var dl=$("det-ls-lista");
   if(dl&&dl.open&&!dl.contains(alvo))dl.open=false;
   var caps=$("pm-capitulos");
@@ -4276,7 +4303,7 @@ function moverCamposLivre(livre){
     else if(el.parentNode!==LUGAR_ORIGINAL[par[0]].pai)LUGAR_ORIGINAL[par[0]].pai.insertBefore(el,LUGAR_ORIGINAL[par[0]].depois);
   });
   $("det-material-extra").hidden=livre;
-  if(livre){["assunto","texto-extra"].forEach(function(id){if($(id).value.trim())abrirCaminhoLivre(id==="assunto"?"assunto":"material",true);});
+  if(livre){if($("assunto").value.trim())abrirCaminhoLivre("assunto",true);else if($("texto-extra").value.trim())abrirCaminhoLivre("material",true);
     if($("texto-extra").value.trim())$("det-texto-avulso").open=true;}
 }
 // todo campo de anexar arquivo do site vira o mesmo botão arredondado "📎 Escolher …", com o nome do arquivo ao lado
@@ -4310,8 +4337,17 @@ function abrirCaminhoLivre(qual,abrir){
   b.textContent=abrir?"✕ Fechar":(qual==="assunto"?"Escrever o assunto":"Anexar material");
   if(abrir&&qual==="assunto")setTimeout(function(){$("assunto").focus();},50);
 }
-$("btn-livre-assunto").addEventListener("click",function(){abrirCaminhoLivre("assunto");});
-$("btn-livre-material").addEventListener("click",function(){abrirCaminhoLivre("material");});
+// abrir uma caixa fecha a outra; a posição da rolagem antes de abrir fica guardada para a volta
+function cliqueCaminhoLivre(qual){
+  var outro=qual==="assunto"?"material":"assunto", slot=$(qual==="assunto"?"livre-assunto-slot":"livre-material-slot");
+  if(slot.hidden){
+    var aberto=!$("livre-assunto-slot").hidden||!$("livre-material-slot").hidden;
+    if(!aberto)guardarRolagem($("painel-livre"));
+    abrirCaminhoLivre(outro,false);abrirCaminhoLivre(qual,true);
+  }else{abrirCaminhoLivre(qual,false);voltarRolagem([$("painel-livre")]);}
+}
+$("btn-livre-assunto").addEventListener("click",function(){cliqueCaminhoLivre("assunto");});
+$("btn-livre-material").addEventListener("click",function(){cliqueCaminhoLivre("material");});
 $("en-area").addEventListener("change",function(){$("en-comp").value="";$("en-hab").value="";renderFiltroEnem();});
 $("en-comp").addEventListener("change",function(){$("en-hab").value="";renderFiltroEnem();});
 $("en-hab").addEventListener("change",infoAcervo);
