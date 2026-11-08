@@ -463,6 +463,7 @@ input[type=file]::file-selector-button:hover{background:var(--primaria-hover);bo
 .q-oficial{font-size:14.5px;line-height:1.55}
 .rotulo-oficial{font-family:var(--serif);font-weight:700;font-size:14px;margin:0 0 12px;letter-spacing:.02em}
 .apoio-oficial{white-space:pre-wrap;margin:0 0 12px}
+.alt-vazia{color:#A12A1F;font-size:.9em}
 .fig-oficial{text-align:center;margin:4px 0 12px}
 .fig-oficial img{max-width:100%;height:auto}
 .fig-falta{font-size:12px;color:var(--vermelho);margin:4px 0 10px}
@@ -585,12 +586,12 @@ summary .opcional{vertical-align:2px}
 .abrir-q svg{width:13px;height:13px}
 
 /* ---------- questão aberta em destaque, sobre a página ---------- */
-#janela-questao{position:fixed;inset:0;z-index:95;display:flex;align-items:center;justify-content:center;padding:18px 64px;
+#janela-questao{position:fixed;inset:0;z-index:95;display:flex;align-items:center;justify-content:center;padding:12px 60px;
   background:rgba(28,36,56,.16);backdrop-filter:blur(1.5px);-webkit-backdrop-filter:blur(1.5px);opacity:0;transition:opacity .2s ease}
 #janela-questao.aberta{opacity:1}
 #janela-questao[hidden]{display:none}
 .jq-cartao{position:relative;background:#fff;border-radius:20px;box-shadow:0 24px 60px rgba(28,36,56,.22);
-  width:min(880px,100%);max-height:calc(100vh - 36px);display:flex;flex-direction:column;
+  width:100%;height:calc(100vh - 24px);height:calc(100dvh - 24px);display:flex;flex-direction:column;
   transform:translateY(10px) scale(.98);transition:transform .22s cubic-bezier(.2,.8,.2,1)}
 #janela-questao.aberta .jq-cartao{transform:none}
 .jq-topo{display:flex;align-items:center;gap:10px;padding:12px 16px 10px 22px;border-bottom:1px solid var(--regua);font-size:12.5px;color:var(--cinza);font-weight:700}
@@ -599,7 +600,9 @@ summary .opcional{vertical-align:2px}
 .jq-topo label input{width:15px;height:15px;accent-color:var(--primaria)}
 .jq-fechar{background:none;border:none;font-size:22px;line-height:1;color:var(--cinza);cursor:pointer;padding:2px 6px;border-radius:8px}
 .jq-fechar:hover{background:rgba(0,0,0,.05);color:var(--tinta)}
-.jq-corpo{overflow:auto;padding:18px 26px 22px}
+/* a questão ocupa a tela toda e a letra cresce até preencher o espaço (bom para o projetor) */
+.jq-corpo{flex:1;min-height:0;overflow:auto;padding:22px 34px 26px}
+.jq-conteudo{max-width:100%}
 .jq-corpo .fig-oficial img{max-height:var(--altura-fig,48vh);width:auto;max-width:100%}
 .jq-seta{position:absolute;top:50%;transform:translateY(-50%);width:38px;height:38px;border-radius:50%;
   border:1px solid rgba(255,255,255,.7);background:rgba(255,255,255,.82);color:var(--primaria);cursor:pointer;
@@ -611,7 +614,7 @@ summary .opcional{vertical-align:2px}
 .jq-prox{right:-52px}
 @media(max-width:760px){
   #janela-questao{padding:10px 10px 64px}
-  .jq-cartao{max-height:calc(100vh - 80px)}
+  .jq-cartao{height:calc(100vh - 80px);height:calc(100dvh - 80px)}
   .jq-seta{top:auto;bottom:-54px;transform:none}
   .jq-ant{left:calc(50% - 46px)}
   .jq-prox{right:calc(50% - 46px)}
@@ -2038,7 +2041,7 @@ function imagemHtml(k){
 }
 function figurasHtml(q){
   return (q.figuras||[]).map(function(k){return '<div class="fig-oficial">'+imagemHtml(k)+"</div>";}).join("")+
-    (q.legendaFig&&(q.figuras||[]).length?'<p class="leg-fig">'+esc(q.legendaFig)+"</p>":"");
+    (q.legendaFig&&(q.figuras||[]).length?'<p class="leg-fig">'+esc(limparLegenda(q.legendaFig))+"</p>":"");
 }
 /* ---------------- catálogo de figuras geométricas ----------------
    A IA não desenha: ela devolve, no campo "figura", a descrição de um dos modelos
@@ -2384,7 +2387,8 @@ function alternativasHtml(q,marcarCerta){
   var fa=temFigAlt(q);
   return '<ul class="alts">'+q.alternativas.map(function(a,i){
     return '<li data-letra="'+letra(q,i)+')"'+(marcarCerta&&i===q.correta?' class="certa"':"")+">"+
-      (fa?imagemHtml(q.figAlt[i])+(a?" "+esc(a):""):esc(a))+"</li>";
+      (fa?imagemHtml(q.figAlt[i])+(a?" "+esc(a):""):
+        (String(a||"").trim()?esc(a):'<em class="alt-vazia">alternativa vazia: clique em Editar e preencha</em>'))+"</li>";
   }).join("")+"</ul>";
 }
 /* sem chave, os botões que dependem dela ficam apagados e explicam o motivo,
@@ -3234,6 +3238,11 @@ $("btn-img-conectar").addEventListener("click",function(){
     msg("img-nuvem-estado","Não foi possível conectar ("+esc(e&&e.code||e&&e.message||"erro")+").","erro");
   });
 });
+/* o PDF dos livros traz marcadores de lista que viram "€" (e bolinhas) no texto das legendas:
+   tira esses símbolos do começo e de qualquer ponto da legenda, inclusive das cópias já guardadas no navegador */
+function limparLegenda(l){
+  return String(l||"").replace(/(^|\s)[€•▪■◆●▶►✓]+(?=\s|$)/g,"$1").replace(/€/g,"").replace(/^[\-–—·\s]+/,"").replace(/[ \t]{2,}/g," ").trim();
+}
 function baixarImagensCapitulo(id){
   var S=NV.sdk, db=dbImagens();
   return S.getDoc(S.doc(db,"livros","g-"+id)).then(function(d){
@@ -3244,7 +3253,7 @@ function baixarImagensCapitulo(id){
       var dados=(x.imgs||[]).slice();
       resto.forEach(function(r){if(r.exists())dados=dados.concat(r.data().imgs||[]);});
       return (x.meta||[]).map(function(m,k){
-        return {id:id+"#"+k,l:String(m.l||"").replace(/^[€•▪■◆●▶►✓\-–—·\s]+/,""),p:m.p||0,w:m.w||0,h:m.h||0,d:dados[k]?"data:image/jpeg;base64,"+dados[k]:""};
+        return {id:id+"#"+k,l:limparLegenda(m.l),p:m.p||0,w:m.w||0,h:m.h||0,d:dados[k]?"data:image/jpeg;base64,"+dados[k]:""};
       }).filter(function(o){return o.d;});
     });
   });
@@ -3255,7 +3264,7 @@ function imagensCapitulo(id){
   if(IMG.carregando[src])return IMG.carregando[src];
   var pr=lerImagensLocal(src).then(function(l){
     // um reenvio muda a quantidade: a cópia local antiga é trocada
-    if(l&&(!n||l.length===n))return l;
+    if(l&&(!n||l.length===n))return l.map(function(im){im.l=limparLegenda(im.l);return im;});
     if(!livrosNaNuvem())throw new Error("entre na nuvem para ver as imagens");
     if(!imagensAcessiveis())throw new Error("clique em Conectar imagens para ver as imagens");
     return baixarImagensCapitulo(src).then(function(l2){guardarImagensLocal(src,l2);return l2;});
@@ -3411,7 +3420,7 @@ function trechoDaImagem(texto,legenda){
   return t.slice(Math.max(0,i-3500),i+2500);
 }
 var LIMITE_LEGENDA=260;
-function legendaCurta(l){l=normTexto(l).replace(/^[€•▪■◆●▶►✓\-–—·\s]+/,"");return l.length>LIMITE_LEGENDA?l.slice(0,LIMITE_LEGENDA-1).replace(/\s+\S*$/,"")+"…":l;}
+function legendaCurta(l){l=limparLegenda(normTexto(l));return l.length>LIMITE_LEGENDA?l.slice(0,LIMITE_LEGENDA-1).replace(/\s+\S*$/,"")+"…":l;}
 function blocoDaImagem(im,nomeCap,tipo){
   return [
 "QUESTÃO A PARTIR DE IMAGEM DO LIVRO DIDÁTICO — regra principal deste pedido:",
@@ -3458,6 +3467,7 @@ function gerarComImagens(p,lista,tipoImg,botao,idProg,aoAvisar){
         b.tipo=tipo;
         var q=normalizar(b,pImg);
         if(!q.enunciado)throw new Error("a IA devolveu a questão sem enunciado");
+        if(q.incompleta)throw new Error("a IA devolveu a questão com alternativa vazia");
         // a imagem entra depois da primeira linha: garante que essa linha exista
         if(q.enunciado.indexOf("\n")<0)q.enunciado="Observe a imagem a seguir.\n"+q.enunciado;
         var k2=idFigura();
@@ -4117,7 +4127,12 @@ function limparLetrasDaJustificativa(t){
 function normalizar(bruta,p){
   var tipo=String(bruta.tipo||"objetiva").toLowerCase();
   if(TIPOS_VALIDOS.indexOf(tipo)<0)tipo="objetiva";
-  var alts=Array.isArray(bruta.alternativas)?bruta.alternativas.map(function(a){return String(a).replace(/^\s*[A-Ea-e]\s*[\)\.\-–—:]\s+/,"").trim();}):[];
+  // a IA às vezes devolve a alternativa como objeto ({texto:"..."}) ou nula: vira texto, nunca "[object Object]"
+  var alts=Array.isArray(bruta.alternativas)?bruta.alternativas.map(function(a){
+    if(a&&typeof a==="object")a=a.texto||a.text||a.alternativa||a.conteudo||"";
+    if(a===null||a===undefined)a="";
+    return String(a).replace(/^\s*[A-Ea-e]\s*[\)\.\-–—:]\s+/,"").trim();
+  }):[];
   var correta=typeof bruta.correta==="number"?bruta.correta:parseInt(bruta.correta,10);
   if(isNaN(correta))correta=0;
   if(tipo==="dissertativa"){alts=[];correta=-1;}
@@ -4130,6 +4145,8 @@ function normalizar(bruta,p){
     }
     if(correta<0||correta>=alts.length)correta=0;
   }
+  // objetiva com alternativa vazia (ou com menos de duas) não entra no banco: o lote pede outra no lugar
+  var incompleta=tipo!=="dissertativa"&&(alts.length<2||alts.some(function(a){return !a;}));
   return {
     id:id(),tipo:tipo,
     componente:p.componente,serie:p.serie,unidade:p.unidade,
@@ -4144,7 +4161,8 @@ function normalizar(bruta,p){
     justificativa:limparLetrasDaJustificativa(bruta.justificativa),
     resolucao:String(bruta.resolucao||"").trim(),
     figuraDesc:(bruta.figura&&typeof bruta.figura==="object"&&desenharFigura(bruta.figura))?bruta.figura:undefined,
-    criadaEm:new Date().toISOString()
+    criadaEm:new Date().toISOString(),
+    incompleta:incompleta||undefined
   };
 }
 
@@ -4216,7 +4234,7 @@ function rodarGeracao(p,quantidades,botao,idProgresso,idRetorno,rotuloBotao,aoFi
       anunciar("Lote "+(indice+1)+" de "+lotes.length+". "+aviso);
     }).then(function(txt){
       var novas=extrairArray(txt).map(function(b){return normalizar(b,p);})
-                .filter(function(q){return q.enunciado.length>0;});
+                .filter(function(q){return q.enunciado.length>0&&!q.incompleta;});
       novas=limitarAoPedido(novas,lotes[indice],p.etapa);
       // o modelo concentra a resposta certa nas primeiras letras; corrige-se já na origem,
       // considerando o que os lotes anteriores desta mesma rodada já usaram
@@ -4250,7 +4268,7 @@ function rodarGeracao(p,quantidades,botao,idProgresso,idRetorno,rotuloBotao,aoFi
           anunciar("Refazendo o lote "+(fila[k]+1)+". "+aviso);
         }).then(function(txt){
           var novas=extrairArray(txt).map(function(b){return normalizar(b,p);})
-                    .filter(function(q){return q.enunciado.length>0;});
+                    .filter(function(q){return q.enunciado.length>0&&!q.incompleta;});
           novas=limitarAoPedido(novas,lotes[fila[k]],p.etapa);
           equilibrarGabarito(novas,usosGabarito);
           prepararFiguras(novas);
@@ -4991,7 +5009,7 @@ function fichaEditor(q){
     '<label for="ed-assunto">Assunto</label><input type="text" id="ed-assunto" value="'+esc(q.assunto)+'">'+
     '<label for="ed-base">Texto-base</label><textarea id="ed-base" placeholder="Deixe vazio se a questão não tiver texto-base.">'+esc(q.textoBase)+"</textarea>"+
     '<label for="ed-fonte">Fonte</label><input type="text" id="ed-fonte" value="'+esc(q.fonte||"")+'">'+
-    ((q.figuras||[]).length?'<label for="ed-legfig">Legenda da imagem <span class="opcional">sai logo abaixo da imagem</span></label><input type="text" id="ed-legfig" value="'+esc(q.legendaFig||"")+'">':"")+
+    ((q.figuras||[]).length?'<label for="ed-legfig">Legenda da imagem <span class="opcional">sai logo abaixo da imagem</span></label><input type="text" id="ed-legfig" value="'+esc(limparLegenda(q.legendaFig))+'">':"")+
     '<label for="ed-enunciado">Enunciado</label><textarea id="ed-enunciado">'+esc(q.enunciado)+"</textarea>"+
     (q.figuraDesc||q.componente==="Matemática"
       ?'<label for="ed-figura">Figura desenhada pelo app <span style="font-weight:400;color:var(--cinza)">— descrição; altere um rótulo ou medida e salve para redesenhar, ou apague para tirar a figura</span></label>'+
@@ -5712,17 +5730,9 @@ $("arquivo-pacote").addEventListener("change",function(ev){
       return listarProvas().then(function(atuais){
         var porNome={};atuais.forEach(function(pr){porNome[pr.nome]=pr;});
         var mudadas={}, feitas=0;
-        var CAMPOS=["partes","fonte","comando","alternativas","alternativasFigura","temFigura","texto","gabarito"];
         correcoes.forEach(function(c){
           var pr=c&&porNome[c.prova];if(!pr||!c.chave)return;
-          var q=(pr.questoes||[]).filter(function(x){return x.chave===c.chave;})[0];
-          if(!q){
-            // questão que faltava na prova: entra inteira, na ordem do caderno
-            if(!c.questao)return;
-            var pos=0;pr.questoes.forEach(function(x,i){if(x.numero<c.questao.numero)pos=i+1;});
-            pr.questoes.splice(pos,0,c.questao);
-          }else CAMPOS.forEach(function(k){if(k in c)q[k]=c[k];});
-          mudadas[pr.id]=pr;feitas++;
+          if(corrigirQuestaoDaProva(pr,c)){mudadas[pr.id]=pr;feitas++;}
         });
         var lista=Object.keys(mudadas).map(function(k){return mudadas[k];});
         return Promise.all(lista.map(gravarProva)).then(function(){
@@ -6772,9 +6782,18 @@ function limparRuido(itens,altura){
     var t=(it.texto||"").trim();
     if(!t)return false;
     for(var i=0;i<RUIDO.length;i++) if(RUIDO[i].test(t))return false;
-    if(/^\d{1,3}$/.test(t)&&(it.y<altura*0.07||it.y>altura-altura*0.07)&&!titulos.some(function(y){return Math.abs(y-it.y)<=6;}))return false;
+    if(/^\d{1,3}$/.test(t)&&(it.y<altura*0.07||it.y>altura-altura*0.07)&&!titulos.some(function(y){return Math.abs(y-it.y)<=6;})&&
+       !numeroDeAlternativa(it))return false;
     return true;
   });
+  /* um número curto no pé da página pode ser a última alternativa ("E 0"), não o número da página:
+     fica quando está acima do rodapé reconhecido ou tem uma letra de alternativa ao lado */
+  function numeroDeAlternativa(it){
+    if(it.y>altura*0.5&&rodape<altura&&it.y<rodape-6)return true;
+    return itens.some(function(o){
+      return o!==it&&Math.abs(o.y-it.y)<=6&&o.x<it.x&&it.x-o.x<90&&/^[A-E]\)?$/.test((o.texto||"").trim());
+    });
+  }
   return {itens:limpos,rodape:rodape-10};
 }
 
@@ -6872,9 +6891,26 @@ function extrairDoPdf(buffer,aoProgresso){
           if(desenhar){
             tela=document.createElement("canvas");
             tela.width=vista.width;tela.height=vista.height;
-            pronta=pagina.render({canvasContext:tela.getContext("2d"),viewport:vista}).promise;
+            pronta=pagina.render({canvasContext:tela.getContext("2d"),viewport:vista,annotationMode:0}).promise;
           }
           return pronta.then(function(){
+            var antes=questoes.length, comunsAntes=comuns.length, coletorAntes=coletor, brutoAntes=coletor?coletor.bruto:null;
+            lerColunas();
+            // alternativa que não veio como texto (fórmula, fração, gráfico): a página é desenhada
+            // e as alternativas daquela questão entram como imagem, em vez de ficarem vazias
+            if(!tela&&questoes.slice(antes).some(function(q){return alternativasFalhas(estruturarQuestao(q.bruto));})){
+              questoes.length=antes;comuns.length=comunsAntes;coletor=coletorAntes;
+              if(coletor)coletor.bruto=brutoAntes;
+              tela=document.createElement("canvas");
+              tela.width=vista.width;tela.height=vista.height;
+              return pagina.render({canvasContext:tela.getContext("2d"),viewport:vista,annotationMode:0}).promise.then(function(){
+                lerColunas();
+                return proxima(pg+1);
+              });
+            }
+            return proxima(pg+1);
+          });
+          function lerColunas(){
             colunas.forEach(function(col,ic){
               var daCol=itens.filter(function(it){return it.x>=col.ini-2&&it.x<col.fim;});
               if(!daCol.length)return;
@@ -6896,11 +6932,11 @@ function extrairDoPdf(buffer,aoProgresso){
               }
               daColuna.forEach(function(r){
                 var q={numero:r.numero,pagina:pg,bruto:sequenciaDaRegiao(itens,r,tela,col)};
+                alternativasComoImagem(q,r,tela,col);
                 questoes.push(q);coletor=q;
               });
             });
-            return proxima(pg+1);
-          });
+          }
         });
       });
     }
@@ -6911,6 +6947,41 @@ function extrairDoPdf(buffer,aoProgresso){
   });
 }
 
+/* (a página é desenhada sem as anotações do PDF: o caderno de 2013 do INEP traz o gabarito
+   marcado com círculos em anotação, que apareceriam nos recortes) */
+/* alternativas lidas pela metade: alguma vazia, quantidade errada ou caracteres de fonte matemática */
+function alternativasFalhas(e){
+  if(e.alternativasFigura)return false;
+  var a=e.alternativas||[];
+  if(!a.length)return false;
+  if(a.length!==4&&a.length!==5)return true;
+  return a.some(function(x){
+    var t=String(x||"").trim();
+    // "10 12,00", "36 3", "64 40": expoente, raiz ou fração que perdeu o desenho (milhar "1 100" vale)
+    return !t||/[\u0000-\u001f]/.test(t)||/ENEM\s?20\d\d.*ENEM\s?20\d\d/i.test(t)||
+           /\d\s+[-−]?(?!\d{3,4}(?:\D|$))\d/.test(t)||/^\d+\s[aªº]$/.test(t);
+  });
+}
+/* troca as alternativas falhas pelo recorte da página, da letra A até o fim da questão */
+function alternativasComoImagem(q,r,tela,col){
+  if(!tela)return;
+  var e=estruturarQuestao(q.bruto);
+  if(!alternativasFalhas(e))return;
+  var b=q.bruto, iA=-1;
+  for(var i=b.length-1;i>=0;i--){
+    if(b[i].tipo==="linha"&&/^A(\s|\)|$)/.test(b[i].texto)&&typeof b[i].y==="number"){iA=i;break;}
+  }
+  if(iA<0)return;
+  // começa logo abaixo da última linha de texto que vem antes; o que está colado à letra A
+  // (numerador de fração, expoente) entra no recorte
+  var ant=null;
+  for(var k=iA-1;k>=0;k--)if(b[k].tipo==="linha"&&typeof b[k].y==="number"&&b[k].y<b[iA].y-34){ant=b[k];break;}
+  var topo=Math.max(r.topo,ant?ant.y+8:b[iA].y-60);
+  var img=recortarFigura(tela,r.ini,topo,r.fim-r.ini,r.base-4-topo);
+  if(!img)return;
+  // o que vinha depois da letra A (inclusive figuras soltas) sai: está no recorte
+  q.bruto=b.slice(0,iA).concat([{tipo:"alternativasFigura",imagem:img}]);
+}
 /* linhas e figuras de uma região, na ordem em que aparecem */
 /* Fórmulas e equações químicas chegam desmontadas do PDF: os expoentes e índices
    viram linhas soltas e as fontes matemáticas devolvem caracteres de controle.
@@ -7026,7 +7097,7 @@ function sequenciaDaRegiao(itens,r,tela,col){
     }
     if(emFormula[idx]){anterior=l.y+10;return;}
     var t=l.texto.replace(/^\s*QUEST[ÃAÂÁã]O\s*\d{1,3}\s*/i,"").replace(/QUEST[ãÃ]O/g,"QUESTÃO").trim();
-    if(t)seq.push({tipo:"linha",texto:t,x:l.x,rel:(l.x-col.ini)/largCol,cheia:l.fim>=direita-largCol*0.08});
+    if(t)seq.push({tipo:"linha",texto:t,x:l.x,y:l.y,rel:(l.x-col.ini)/largCol,cheia:l.fim>=direita-largCol*0.08});
     anterior=l.y+10;
   });
   if(corteAlternativas){
@@ -7448,6 +7519,61 @@ function pontuarTema(q,termos){
 /* ---- tela ---- */
 var provasCarregadas=[], provaAtual=null, oficiaisSelecionadas={};
 var PASSO_OFICIAIS=30, visiveisOficiais=PASSO_OFICIAIS;
+/* correção de uma questão de prova oficial: troca só o conteúdo e mantém a classificação feita aqui */
+var CAMPOS_CORRECAO=["partes","fonte","comando","alternativas","alternativasFigura","temFigura","texto","gabarito"];
+function corrigirQuestaoDaProva(pr,c){
+  var q=(pr.questoes||[]).filter(function(x){return x.chave===c.chave;})[0];
+  if(!q){
+    // questão que faltava na prova: entra inteira, na ordem do caderno
+    if(!c.questao)return false;
+    var pos=0;pr.questoes.forEach(function(x,i){if(x.numero<c.questao.numero)pos=i+1;});
+    pr.questoes.splice(pos,0,c.questao);
+    return true;
+  }
+  CAMPOS_CORRECAO.forEach(function(k){if(k in c)q[k]=c[k];});
+  return true;
+}
+/* Correções publicadas junto com o site (ex.: alternativas que o leitor de PDF tinha perdido):
+   entram sozinhas, sem ninguém importar nada. Cada prova é corrigida uma vez por navegador;
+   a prova gravada sobe para a nuvem e chega aos outros professores já corrigida.
+   Prova que ainda não está neste aparelho fica para quando chegar.                         */
+var CORRECOES_SITE=[{versao:"alternativas-2026-11",arquivo:"correcoes/alternativas-2026-11.json"}];
+var CHAVE_CORRECOES_SITE="bancoQuestoes.correcoesSite.v1", correcoesSiteRodando=false, correcoesSiteDados={};
+function aplicarCorrecoesDoSite(){
+  if(correcoesSiteRodando||!provasCarregadas.length||!window.fetch)return Promise.resolve(0);
+  var feitas={};
+  try{feitas=JSON.parse(ler(CHAVE_CORRECOES_SITE)||"{}")||{};}catch(e){feitas={};}
+  var porNome={};provasCarregadas.forEach(function(pr){porNome[pr.nome]=pr;});
+  var total=0;
+  correcoesSiteRodando=true;
+  return CORRECOES_SITE.reduce(function(cadeia,pac){
+    return cadeia.then(function(){
+      var minhas=feitas[pac.versao]||(feitas[pac.versao]={});
+      var pega=correcoesSiteDados[pac.versao]?Promise.resolve(correcoesSiteDados[pac.versao]):
+        fetch(pac.arquivo+"?v="+pac.versao,{cache:"no-cache"}).then(function(r){if(!r.ok)throw new Error("sem arquivo");return r.json();});
+      return pega.then(function(d){
+        correcoesSiteDados[pac.versao]=d;
+        var porProva={};
+        (d.correcoes||[]).forEach(function(c){
+          if(c&&porNome[c.prova]&&!minhas[c.prova])(porProva[c.prova]=porProva[c.prova]||[]).push(c);
+        });
+        return Object.keys(porProva).reduce(function(cad,nome){
+          return cad.then(function(){
+            return lerProva(porNome[nome].id).then(function(pr){
+              if(!pr)return;
+              var n=0;porProva[nome].forEach(function(c){if(corrigirQuestaoDaProva(pr,c))n++;});
+              return (n?gravarProva(pr):Promise.resolve()).then(function(){total+=n;minhas[nome]=1;});
+            });
+          });
+        },Promise.resolve());
+      });
+    });
+  },Promise.resolve()).catch(function(){}).then(function(){
+    gravar(CHAVE_CORRECOES_SITE,JSON.stringify(feitas));
+    correcoesSiteRodando=false;
+    return total;
+  });
+}
 function recarregarProvas(){
   return listarProvasLeves().then(function(bruto){
     var antigas=bruto.filter(function(p){return (p.versaoExtracao||1)<VERSAO_EXTRACAO;});
@@ -7468,6 +7594,7 @@ function recarregarProvas(){
     if(anterior&&provasCarregadas.some(function(p){return p.id===anterior;}))sel.value=anterior;
     trocarProvaAtual(provasCarregadas.filter(function(p){return p.id===sel.value;})[0]||null);
     renderEscolhaProva();preencherFiltrosOficiais();renderOficiais();
+    aplicarCorrecoesDoSite().then(function(n){if(n)recarregarProvas();});
   });
 }
 /* a prova aberta é lida inteira (com as figuras) e a anterior volta a ser leve */
@@ -7870,8 +7997,34 @@ function partesHtml(partes){
   return (partes||[]).map(function(b){
     return b.tipo==="figura"
       ? '<div class="fig-oficial"><img src="'+b.imagem+'" alt="Figura da questão"></div>'
-      : '<p class="apoio-oficial">'+esc(b.texto)+"</p>";
+      : '<p class="apoio-oficial">'+esc(refluirParaTela(b.texto))+"</p>";
   }).join("");
+}
+/* Provas lidas antes trazem a quebra de linha da coluna estreita do caderno; na tela larga
+   isso deixava o texto espremido numa faixa fina. A linha que vai até a margem da coluna
+   continua na seguinte; linha curta (verso, item de quadro, fim de parágrafo) mantém a quebra. */
+function refluirParaTela(t){
+  t=String(t||"");
+  if(t.indexOf("\n")<0)return t;
+  var ls=t.split("\n");
+  if(ls.length<3)return t;
+  var numeradas=ls.filter(function(l){return /^\d{1,3}\s\S/.test(l);}).length;
+  if(numeradas>=Math.max(3,ls.length*0.5))return t;
+  var maior=Math.max.apply(null,ls.map(function(l){return l.length;}));
+  if(maior<40)return t;
+  var cheias=ls.filter(function(l){return l.length>=maior*0.8;}).length;
+  if(cheias<(ls.length-1)*0.4)return t;      // poema, letra de canção: cada linha fica como está
+  var out=ls[0];
+  for(var i=1;i<ls.length;i++){
+    var ant=ls[i-1], l=ls[i];
+    var cheia=ant.length>=maior*0.8;
+    var fimDeFrase=/[.!?:;”"»)]$/.test(ant.trim());
+    if(cheia&&!(fimDeFrase&&/^[A-ZÁÉÍÓÚÂÊÔÃÕÇ0-9“"(]/.test(l))){
+      if(/[a-záéíóúâêôãõç]-$/.test(ant)&&/^[a-záéíóúâêôãõç]/.test(l))out=out.slice(0,-1)+l;
+      else out+=" "+l;
+    }else out+="\n"+l;
+  }
+  return out;
 }
 function comumDe(q){
   if(!q.comum||!provaAtual||!provaAtual.comuns)return null;
@@ -7899,7 +8052,8 @@ function corpoDaQuestao(q,rotulo,comComum,modo){
     return "<li><span>"+"ABCDE"[i]+")</span> "+esc(a)+"</li>";
   }).join("");
   var letrasFig="";
-  if(interativa&&q.alternativasFigura&&!alts)
+  // alternativas em figura (ou dentro da própria figura da questão): letras para responder
+  if(interativa&&!alts&&(q.alternativasFigura||(q.temFigura&&/^[A-E]$/.test(q.gabarito||""))))
     letrasFig='<div class="letras-fig">Responder:'+letrasDaQuestao(q).split("").map(function(l){
       return '<span class="letra" data-alt="'+l+'" role="button" tabindex="0">'+l+"</span>";}).join("")+"</div>";
   var gab="";
@@ -8255,7 +8409,7 @@ function mostrarNaJanela(){
   var corpo=$("jq-corpo");
   corpo.style.zoom="";
   corpo.style.removeProperty("--altura-fig");
-  corpo.innerHTML=corpoDaQuestao(q,rotuloQuestao(q.numero)+(q.variante?" — "+q.variante:""),true,"janela");
+  corpo.innerHTML='<div class="jq-conteudo">'+corpoDaQuestao(q,rotuloQuestao(q.numero)+(q.variante?" — "+q.variante:""),true,"janela")+"</div>";
   corpo.scrollTop=0;
   $("jq-conta").textContent="Questão "+(JQ.i+1)+" de "+JQ.lista.length+" do filtro";
   $("jq-marcar").checked=!!oficiaisSelecionadas[q.chave];
@@ -8264,17 +8418,36 @@ function mostrarNaJanela(){
   ajustarJanela();
   corpo.querySelectorAll("img").forEach(function(im){if(!im.complete)im.addEventListener("load",ajustarJanela);});
 }
-/* a questão cabe na tela: primeiro encolhe as figuras, depois a letra (até 70%); o resto rola */
+/* a questão preenche a tela: a letra cresce até o maior tamanho em que tudo cabe sem rolar
+   (questão curta fica grande, para ler no projetor); a figura ocupa no máximo pouco mais
+   da metade da altura. Questão muito longa não desce abaixo de uma letra confortável
+   (cerca de 18 px) e passa a rolar.                                                     */
+var JQ_ZOOM_MIN=1.25, JQ_ZOOM_MAX=2.6;
 function ajustarJanela(){
-  var corpo=$("jq-corpo");
-  corpo.style.zoom="";
-  var cabe=corpo.clientHeight, precisa=corpo.scrollHeight;
-  if(precisa<=cabe+2)return;
-  corpo.style.setProperty("--altura-fig","32vh");
-  precisa=corpo.scrollHeight;
-  if(precisa<=cabe+2)return;
-  var z=Math.max(0.7,cabe/precisa);
-  if(z<0.99)corpo.style.zoom=String(Math.round(z*100)/100);
+  var corpo=$("jq-corpo"), cont=corpo.querySelector(".jq-conteudo");
+  if(!cont)return;
+  var cs=getComputedStyle(corpo);
+  var cabe=corpo.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom);
+  if(!(cabe>50))return;
+  var estreita=window.innerWidth<=760;
+  var zMin=estreita?1:JQ_ZOOM_MIN, zMax=estreita?1.4:JQ_ZOOM_MAX;
+  var fracFig=0.56;
+  function aplicar(z){
+    cont.style.zoom=String(z);
+    corpo.style.setProperty("--altura-fig",Math.round(cabe*fracFig/z)+"px");
+    return cont.getBoundingClientRect().height<=cabe+1;
+  }
+  if(aplicar(zMax))return;
+  // não coube nem com a letra mínima: a figura diminui (até cerca de um quarto da altura) antes de rolar
+  while(!aplicar(zMin)&&fracFig>0.26)fracFig-=0.06;
+  // nem assim: a questão vai rolar de qualquer jeito, então a figura volta ao tamanho legível
+  if(!aplicar(zMin)){fracFig=0.56;aplicar(zMin);return;}
+  var lo=zMin, hi=zMax;
+  for(var i=0;i<9;i++){
+    var m=(lo+hi)/2;
+    if(aplicar(m))lo=m;else hi=m;
+  }
+  aplicar(Math.floor(lo*100)/100);
 }
 function andarJanela(passo){
   var n=JQ.i+passo;
@@ -8463,7 +8636,7 @@ function figurasWord(q,ctx){
     if(!FIGURAS[k])return paragrafo("[figura não encontrada neste navegador]",{italico:true,cor:"C00000"});
     if(FIGURAS[k].indexOf("data:image/jpeg")!==0){converterParaJpeg(k);return paragrafo("[figura ainda em preparo; gere o Word de novo]",{italico:true,cor:"C00000"});}
     return figuraOficial(FIGURAS[k],ctx);
-  }).join("")+(q.legendaFig&&(q.figuras||[]).length?paragrafo(q.legendaFig,{italico:true,tamanho:16,alinhar:"center",cor:"5B655E",depois:100}):"");
+  }).join("")+(q.legendaFig&&(q.figuras||[]).length?paragrafo(limparLegenda(q.legendaFig),{italico:true,tamanho:16,alinhar:"center",cor:"5B655E",depois:100}):"");
 }
 function alternativaFiguraWord(q,j,ctx){
   var k=q.figAlt[j], txt=q.alternativas[j];
