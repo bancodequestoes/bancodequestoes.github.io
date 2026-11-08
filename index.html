@@ -2909,23 +2909,51 @@ function voltarRolagem(fechados){
 }
 /* ao abrir uma seção ou escolher uma opção que revela mais coisas abaixo, a página desce junto,
    para mostrar o que apareceu, sem esconder o que foi clicado (ele fica logo abaixo da barra do topo) */
-var SEGUIR={el:null,antes:0};
-function abaixoDe(el){var r=el.getBoundingClientRect();return document.documentElement.scrollHeight-(r.bottom+window.scrollY);}
+var SEGUIR=null, FOLGA_BAIXO=110;
+/* depois do clique, observa o que muda abaixo do item clicado (inclusive o que chega da nuvem, até 3 s);
+   quando a página para de mudar, desce o bastante para mostrar o que apareceu, com folga embaixo */
 function seguirAbertura(ev){
   var el=ev.target&&ev.target.closest&&ev.target.closest("summary,button,label,input,select,.cartao-origem,[role=button]");
   if(!el||!el.closest("main")||el.closest(".fundo-janela,#janela-questao,.apr,#chat-ia,.calendario"))return;
-  var alvo=el.tagName==="LABEL"||el.tagName==="INPUT"?(el.closest("label")||el):el;
-  SEGUIR={el:alvo,antes:abaixoDe(alvo)};
-  var meu=SEGUIR;
-  setTimeout(function(){
-    if(SEGUIR!==meu||!document.body.contains(alvo))return;
-    var cresceu=abaixoDe(alvo)-meu.antes;if(cresceu<40)return;
-    var r=alvo.getBoundingClientRect(), topo=(parseInt(getComputedStyle(document.documentElement).getPropertyValue("--altura-topo"))||72)+12;
-    var fimNovo=r.bottom+cresceu, sobra=fimNovo-(window.innerHeight-16);
-    if(sobra<=0||r.height===0)return;
+  // marcar caixinhas (capítulos, habilidades) não puxa a página; fechar também não
+  if((el.matches("input[type=checkbox]"))||(el.tagName==="LABEL"&&el.querySelector("input[type=checkbox]")))return;
+  if(el.getAttribute("aria-expanded")==="true")return;
+  if(el.tagName==="SUMMARY"&&el.parentNode&&el.parentNode.open)return;
+  var alvo=el.tagName==="INPUT"?(el.closest("label")||el):el;
+  if(SEGUIR)SEGUIR.parar();
+  var mudou=[], inicio=Date.now(), espera=null, obs;
+  function fim(){
+    obs.disconnect();clearTimeout(espera);if(SEGUIR===meu)SEGUIR=null;
+    if(!document.body.contains(alvo))return;
+    var r=alvo.getBoundingClientRect();if(!r.height)return;
+    var baixo=0;
+    mudou.forEach(function(n){
+      if(!n.getBoundingClientRect||!document.body.contains(n))return;
+      var q=n.getBoundingClientRect();if(!q.height||q.bottom<=r.bottom)return;
+      // inclui a borda e o respiro da caixa que contém o que apareceu
+      var fimq=q.bottom, pai=n.parentElement;
+      while(pai&&pai.tagName!=="MAIN"){var bp=pai.getBoundingClientRect().bottom;if(bp-fimq>80)break;fimq=bp;pai=pai.parentElement;}
+      if(fimq>baixo)baixo=fimq;
+    });
+    if(!baixo)return;
+    var topo=(parseInt(getComputedStyle(document.documentElement).getPropertyValue("--altura-topo"))||72)+16;
+    var sobra=baixo+FOLGA_BAIXO-window.innerHeight;
+    if(sobra<=8)return;
     var desce=Math.min(sobra,r.top-topo);
     if(desce>8)window.scrollBy({top:desce,behavior:"smooth"});
-  },160);
+  }
+  function quieto(){clearTimeout(espera);espera=setTimeout(fim,Date.now()-inicio>3000?0:220);}
+  obs=new MutationObserver(function(lista){
+    lista.forEach(function(m){
+      if(m.type==="childList")m.addedNodes.forEach(function(n){mudou.push(n.nodeType===1?n:n.parentNode);});
+      else mudou.push(m.target);
+    });
+    quieto();
+  });
+  var meu={parar:function(){obs.disconnect();clearTimeout(espera);}};
+  SEGUIR=meu;
+  obs.observe(document.querySelector("main"),{childList:true,subtree:true,attributes:true,attributeFilter:["open","hidden","style","class"]});
+  espera=setTimeout(fim,600); // sem mudança nenhuma: encerra
 }
 // na fase de captura: mede antes de o próprio botão ou select mudar a página
 document.addEventListener("click",seguirAbertura,true);
