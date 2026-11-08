@@ -256,6 +256,7 @@ input[type=file]::file-selector-button:hover{background:var(--primaria-hover);bo
 #det-ls-lista{margin-top:10px}
 #det-ls-lista>summary::after{content:"Mostrar os livros"}
 #det-ls-lista[open]>summary::after{content:"✕ Esconder os livros"}
+@media(max-width:640px){#det-ls-lista>summary::after{content:"Mostrar"}#det-ls-lista[open]>summary::after{content:"✕ Esconder"}}
 .livros-sesi .caderno summary .sub{font-weight:400;color:var(--cinza);font-size:12px}
 .livros-sesi label.cap{display:flex;gap:8px;align-items:flex-start;padding:4px 0 4px 6px;cursor:pointer}
 .livros-sesi label.cap input{width:16px;height:16px;margin-top:2px;accent-color:var(--primaria);flex:none}
@@ -749,7 +750,10 @@ input[type=range]{width:100%;accent-color:var(--primaria)}
 .ap-tema strong{font-size:15px}
 .ap-tema>span:last-child{font-size:12px;color:var(--cinza)}
 .ap-trans{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}
-.ap-ver-trans{margin-top:12px}
+.ap-ver-trans{display:none;align-self:flex-start;margin:4px 0 2px;padding:4px 11px;border:1.5px solid var(--acento,#F79425);border-radius:999px;background:transparent;color:var(--acento-escuro,#B35F00);font:inherit;font-size:12.5px;font-weight:800;cursor:pointer;line-height:1.3}
+.ap-ver-trans:hover{background:var(--acento,#F79425);color:#fff}
+.ap-trans .origem.marcado .ap-ver-trans{display:inline-flex;animation:apVerSurge .25s ease-out}
+@keyframes apVerSurge{from{opacity:0;transform:translateY(-3px)}to{opacity:1;transform:none}}
 .ap-progresso{margin-top:18px;border:1px solid var(--primaria-borda);background:var(--primaria-fundo);border-radius:14px;padding:16px 18px;font-size:14px}
 .ap-progresso ol{list-style:none;padding:0;margin:10px 0 0;display:flex;flex-direction:column;gap:6px}
 .ap-progresso li{color:var(--cinza)}
@@ -761,6 +765,7 @@ input[type=range]{width:100%;accent-color:var(--primaria)}
 /* editor */
 #vista-apres.ap-modo-editor .cabeca-vista{display:none}
 .ap-ed{display:flex;flex-direction:column;gap:12px}
+.ap-ed-fim{justify-content:space-between;margin-top:4px}
 .ap-ed-barra{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:#fff;border:1px solid var(--regua);border-radius:14px;padding:8px 10px;position:sticky;top:calc(var(--altura-topo) + 8px);z-index:20;box-shadow:var(--sombra)}
 .ap-ed-barra input[type=text]{flex:1 1 220px;min-width:160px;font-weight:800;font-size:15px;padding:8px 10px}
 .ap-ed-barra select{width:auto;padding:8px 10px;font-size:13px}
@@ -793,6 +798,12 @@ input[type=range]{width:100%;accent-color:var(--primaria)}
 .ap-ed-escala [data-m]:hover{box-shadow:0 0 0 6px rgba(247,148,37,.6)}
 .ap-ed-escala .ap-sel{box-shadow:0 0 0 4px #F79425 !important}
 .ap-ed-escala .aps-extra{cursor:move;touch-action:none}
+.ap-ed-escala [data-bloco]{cursor:pointer}
+.ap-mold{position:absolute;pointer-events:none;z-index:30;outline:calc(3px * var(--inv,1)) dashed rgba(247,148,37,.9);outline-offset:calc(4px * var(--inv,1))}
+.ap-mold-mover,.ap-mold-tam{position:absolute;pointer-events:auto;touch-action:none;background:#F79425;color:#fff;box-shadow:0 0 0 calc(2px * var(--inv,1)) #fff,0 calc(2px * var(--inv,1)) calc(8px * var(--inv,1)) rgba(0,0,0,.3)}
+.ap-mold-mover{left:0;top:0;width:calc(34px * var(--inv,1));height:calc(34px * var(--inv,1));transform:translate(-55%,-55%);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:calc(20px * var(--inv,1));line-height:1;cursor:move}
+.ap-mold-tam{right:0;bottom:0;width:calc(24px * var(--inv,1));height:calc(24px * var(--inv,1));transform:translate(55%,55%);border-radius:calc(6px * var(--inv,1));cursor:nwse-resize}
+.ap-setas .ap-bt{min-width:38px}
 .ap-alca{position:absolute;right:0;bottom:0;width:44px;height:44px;background:#F79425;border-top-left-radius:16px;cursor:nwse-resize;display:none}
 .ap-sel .ap-alca,.aps-extra:hover .ap-alca{display:block}
 .ap-dica{font-size:12.5px;color:var(--cinza);margin:8px 2px 0}
@@ -926,6 +937,11 @@ input[type=range]{width:100%;accent-color:var(--primaria)}
 .aps-extra{position:absolute;z-index:5;border-radius:24px;overflow:hidden;box-shadow:0 18px 50px rgba(0,0,0,.18)}
 .aps-extra img{display:block;width:100%;height:auto}
 .aps-extra.aps-video{aspect-ratio:16/9}
+/* slide de vídeo: o vídeo grande no centro, com o que observar embaixo */
+.aps-video-wrap{flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px}
+.aps-midia.aps-video-grande{width:1120px;max-width:100%;flex:none;aspect-ratio:16/9;height:auto}
+.aps-video-txt{--b:30px;text-align:center;max-width:1300px}
+.aps-yt-abrir{position:absolute;right:18px;bottom:18px;z-index:2;background:rgba(0,0,0,.72);color:#fff;text-decoration:none;font:700 22px/1 system-ui,sans-serif;padding:12px 20px;border-radius:999px}
 
 /* grades */
 .aps-grade{display:grid;gap:56px;flex:1;min-height:0}
@@ -1031,7 +1047,12 @@ input[type=range]{width:100%;accent-color:var(--primaria)}
 .apr-camada{position:absolute;inset:0;backface-visibility:hidden;will-change:transform,opacity}
 .apr-varre{position:absolute;top:0;bottom:0;width:30%;left:35%;pointer-events:none;opacity:0;background:linear-gradient(90deg,transparent,rgba(94,234,212,.25),rgba(167,139,250,.35),transparent)}
 .apr-barra{position:absolute;left:50%;bottom:18px;transform:translateX(-50%);display:flex;gap:6px;align-items:center;background:rgba(20,20,24,.82);color:#fff;padding:8px 10px;border-radius:999px;opacity:0;transition:opacity .25s;z-index:3}
-.apr.apr-mexeu .apr-barra,.apr-barra:hover,.apr-barra:focus-within{opacity:1}
+.apr.apr-mexeu .apr-barra{opacity:1}
+.apr:not(.apr-mexeu){cursor:none}
+.apr-x{position:absolute;top:14px;right:14px;width:46px;height:46px;border-radius:50%;border:0;background:rgba(20,20,24,.72);color:#fff;font-size:22px;line-height:1;font-weight:700;cursor:pointer;z-index:6;opacity:0;transition:opacity .25s;display:flex;align-items:center;justify-content:center;padding:0}
+.apr.apr-mexeu .apr-x{opacity:1}
+.apr-x:hover{background:rgba(200,30,30,.85)}
+@media (hover:none),(pointer:coarse){.apr-x{opacity:.9}.apr:not(.apr-mexeu){cursor:auto}}
 .apr-barra button{background:transparent;border:0;color:#fff;font-size:15px;font-weight:700;padding:8px 14px;border-radius:999px;cursor:pointer}
 .apr-barra button:hover{background:rgba(255,255,255,.16)}
 .apr-cont{font-size:14px;min-width:64px;text-align:center;font-variant-numeric:tabular-nums}
@@ -2960,6 +2981,23 @@ function contextoVizinho(el,r){
   if(!v)return Math.min(limite,contextoAcima(el,r));
   return Math.min(limite,Math.max(0,r.top-v.getBoundingClientRect().top+4));
 }
+/* uma escolha que redesenha a tela inteira (ex.: a área na aba Apresentações): o select antigo some, então
+   enquadra o novo depois de desenhado. Em cima, o rótulo dele; embaixo, o que a escolha revelou       */
+function enquadrarEscolha(el){
+  if(!el)return;
+  requestAnimationFrame(function(){
+    if(!document.body.contains(el))return;
+    var r=el.getBoundingClientRect(), topo=alturaTopo(), contexto=contextoVizinho(el,r);
+    var bloco=el.closest(BLOCOS_ENQUADRAR)||el.parentElement;
+    var fim=r.bottom, filhos=bloco.children;
+    // até o último item do que apareceu (sem contar os botões do rodapé do bloco)
+    for(var i=0;i<filhos.length;i++){var f=filhos[i];if(f.classList.contains("botoes"))continue;var q=f.getBoundingClientRect();if(q.height&&q.bottom>fim)fim=q.bottom;}
+    var sobra=fim+FOLGA_BAIXO-window.innerHeight;
+    var desce=Math.min(sobra,r.top-topo-contexto);
+    if(r.top-contexto<topo)desce=r.top-topo-contexto;
+    if(Math.abs(desce)>8)window.scrollBy({top:desce,behavior:"smooth"});
+  });
+}
 function guardarRolagem(el){el._rolagem={y:window.scrollY,t:Date.now()};}
 function voltarRolagem(fechados){
   var melhor=null;
@@ -3020,6 +3058,10 @@ function seguirAbertura(ev){
     // não cola o item clicado na barra do topo: deixa à vista o começo do bloco onde ele está
     // (título e explicação), no máximo um terço da tela; o resto aparece rolando, de forma natural
     var contexto=contextoAcima(alvo,r);
+    // escolher num filtro (série, disciplina) que revela uma lista: o contexto é só a caixa dos filtros,
+    // e a lista que apareceu fica centralizada embaixo, como os capítulos ao abrir um livro
+    var filtros=alvo.tagName==="SELECT"&&alvo.closest(".filtros");
+    if(filtros){var ft=filtros.getBoundingClientRect();if(ft.height<window.innerHeight*0.4)contexto=Math.min(contexto,Math.max(0,r.top-ft.top+14));}
     var desce=Math.min(sobra,r.top-topo-contexto);
     if(desce>8)window.scrollBy({top:desce,behavior:"smooth"});
   }
@@ -3794,6 +3836,24 @@ function chamarIA(prompt,modelo,leve){
 // congestionamento é passageiro, mas insistir no mesmo modelo custa caro:
 // o caminho mais rápido é migrar cedo para o modelo reserva, que costuma estar livre
 function esperar(ms){return new Promise(function(r){setTimeout(r,ms);});}
+/* SEGUNDO PLANO: no celular, ao trocar de app, o navegador congela o site e corta a conexão em andamento.
+   O site não pode impedir isso, mas não desiste: a falha que acontece com a página escondida não conta
+   como erro, e o mesmo pedido é refeito sozinho assim que o professor volta. Enquanto gera, a tela é
+   mantida acesa (para quem fica olhando), e no computador a geração segue normalmente em outra aba. */
+var PAGINA={trocas:0,esperando:[]};
+document.addEventListener("visibilitychange",function(){
+  PAGINA.trocas++;
+  if(!document.hidden){var l=PAGINA.esperando;PAGINA.esperando=[];l.forEach(function(f){f();});telaAcesa(TELA.pedidos>0);}
+});
+function quandoVisivel(){return document.hidden?new Promise(function(r){PAGINA.esperando.push(r);}):Promise.resolve();}
+var TELA={pedidos:0,trava:null};
+function telaAcesa(sim){
+  try{
+    if(sim&&!TELA.trava&&navigator.wakeLock&&!document.hidden){
+      navigator.wakeLock.request("screen").then(function(t){TELA.trava=t;t.addEventListener("release",function(){TELA.trava=null;});}).catch(function(){});
+    }else if(!sim&&TELA.trava){TELA.trava.release().catch(function(){});TELA.trava=null;}
+  }catch(e){}
+}
 // distingue queda de internet de recusa do provedor: são problemas diferentes e exigem respostas diferentes
 function marcarRede(e){
   if(e&&(e.name==="TypeError"||/Failed to fetch|NetworkError|Load failed/i.test(e.message||""))){
@@ -3875,7 +3935,7 @@ function chamarIAComInsistencia(prompt,avisar){
   var distintos={};plano.forEach(function(x){distintos[x[0]]=1;});
   function tentar(i,ultimo){
     if(i>=plano.length)throw ultimo;
-    var modelo=plano[i][0], espera=plano[i][1];
+    var modelo=plano[i][0], espera=plano[i][1], trocasAntes=PAGINA.trocas;
     var passo=espera?esperar(comFolga(espera)):Promise.resolve();
     if(avisar&&i>0){
       var trocou=modelo!==plano[i-1][0];
@@ -3894,6 +3954,12 @@ function chamarIAComInsistencia(prompt,avisar){
       return chamarIA(prompt,modelo);
     }).catch(function(e){
       ultimoErroIA=(e&&e.message)||"";
+      // a página foi para o segundo plano durante o pedido: a conexão cortada é do celular, não do provedor.
+      // Espera o professor voltar e refaz o mesmo pedido, sem contar como falha
+      if(!cancelado&&(document.hidden||PAGINA.trocas!==trocasAntes)&&e&&(e.rede||e.semResposta||e.name==="TypeError"||e.name==="AbortError")){
+        if(avisar)avisar("O aparelho pausou o site enquanto você estava em outro app. A geração retoma sozinha de onde parou, sem perder o que já foi feito.");
+        return quandoVisivel().then(function(){if(cancelado)throw e;return tentar(i,ultimo);});
+      }
       // um modelo extra que não existe na conta é só pulado; o principal sem existir é erro de verdade
       if(e&&e.semModelo&&modelo!==conf.modelo&&!cancelado){
         modelosAusentes[modelo]=1;delete distintos[modelo];
@@ -3939,7 +4005,9 @@ function chamarIAComInsistencia(prompt,avisar){
       return tentar(proxima,e);
     });
   }
-  return Promise.resolve().then(function(){return tentar(0,new Error("falha"));});
+  TELA.pedidos++;telaAcesa(true);
+  function soltar(){TELA.pedidos=Math.max(0,TELA.pedidos-1);if(!TELA.pedidos)telaAcesa(false);}
+  return Promise.resolve().then(function(){return tentar(0,new Error("falha"));}).then(function(v){soltar();return v;},function(e){soltar();throw e;});
 }
 /* o pedido pode ser só texto ou {texto, imagens:["data:image/jpeg;base64,..."]}:
    nas questões com imagem do livro, a IA recebe a própria imagem */
@@ -10511,7 +10579,7 @@ function apMotor(win){
       h+='<div class="aps-extra aps-anim" data-x="'+i+'" style="left:'+(+x.x||0)+"px;top:"+(+x.y||0)+"px;width:"+(+x.w||400)+'px"><img src="'+esc(x.src)+'" alt=""></div>';
     });
     var id=idYoutube(s.video&&s.video.id);
-    if(id&&s.video.solto){
+    if(id&&s.video.solto&&s.tipo!=="video"){
       var v=s.video;
       h+='<div class="aps-extra aps-video aps-anim" data-x="video" style="left:'+(v.x!=null?+v.x:1000)+"px;top:"+(v.y!=null?+v.y:520)+"px;width:"+(+v.w||820)+'px">'+video(s,modo)+"</div>";
     }
@@ -10528,7 +10596,7 @@ function apMotor(win){
     capa:function(s,modo){
       return '<div class="aps-capa-txt">'+etiqueta(s)+T(s,"kicker","aps-kicker aps-anim","div","Capítulo · Aula")+
         T(s,"titulo","aps-h1 aps-anim","h1","Título da aula")+T(s,"subtitulo","aps-sub aps-anim","p","Do que trata a aula")+
-        '<div class="aps-pilulas aps-anim">'+T(s,"paginas","aps-pilula","div","Páginas")+T(s,"duracao","aps-pilula","div","Duração")+"</div></div>"+
+        '<div class="aps-pilulas aps-anim" data-bloco="pilulas">'+T(s,"paginas","aps-pilula","div","Páginas")+T(s,"duracao","aps-pilula","div","Duração")+"</div></div>"+
         midia(s,modo,"aps-forma-capa");
     },
     "texto-imagem":function(s,modo){
@@ -10537,7 +10605,7 @@ function apMotor(win){
     },
     comparacao:function(s){
       var col=function(i){
-        return '<div class="aps-card aps-anim"><div class="aps-card-cab">'+T(s,"colunas."+i+".titulo","aps-card-tit","div","Lado "+(i+1))+
+        return '<div class="aps-card aps-anim" data-bloco="col'+i+'"><div class="aps-card-cab">'+T(s,"colunas."+i+".titulo","aps-card-tit","div","Lado "+(i+1))+
           T(s,"colunas."+i+".sub","aps-card-sub","div","")+"</div>"+lista(s,"colunas."+i+".itens","aps-item","Item")+"</div>";
       };
       return cab(s)+T(s,"intro","aps-p aps-anim","p","Introdução (opcional)")+'<div class="aps-grade aps-g-2" data-fit>'+col(0)+col(1)+"</div>"+citacao(s);
@@ -10545,7 +10613,7 @@ function apMotor(win){
     cards:function(s){
       var n=(s.cards||[]).length||3;
       var h=(s.cards||[]).map(function(_,i){
-        return '<div class="aps-card aps-anim">'+T(s,"cards."+i+".tag","aps-tag","div","")+T(s,"cards."+i+".titulo","aps-card-tit","div","Conceito")+
+        return '<div class="aps-card aps-anim" data-bloco="card'+i+'">'+T(s,"cards."+i+".tag","aps-tag","div","")+T(s,"cards."+i+".titulo","aps-card-tit","div","Conceito")+
           T(s,"cards."+i+".texto","aps-card-txt","div","Explicação")+T(s,"cards."+i+".exemplo","aps-card-ex","div","Exemplo (opcional)")+"</div>";
       }).join("");
       return cab(s)+T(s,"intro","aps-p aps-anim","p","Introdução (opcional)")+'<div class="aps-grade aps-g-cards" style="--n:'+Math.min(4,n)+'" data-fit>'+h+"</div>"+citacao(s);
@@ -10553,7 +10621,7 @@ function apMotor(win){
     linha:function(s,modo){
       var ev=(s.eventos||[]);
       var h=ev.map(function(_,i){
-        return '<div class="aps-ev aps-anim'+(i>=Math.ceil(ev.length/2)?" aps-ev-2":"")+'"><span class="aps-ponto"></span>'+T(s,"eventos."+i+".data","aps-ev-data","div","Data")+
+        return '<div class="aps-ev aps-anim'+(i>=Math.ceil(ev.length/2)?" aps-ev-2":"")+'" data-bloco="ev'+i+'"><span class="aps-ponto"></span>'+T(s,"eventos."+i+".data","aps-ev-data","div","Data")+
           T(s,"eventos."+i+".texto","aps-ev-txt","div","O que aconteceu")+"</div>";
       }).join("");
       var temM=(s.img&&s.img.src)||idYoutube(s.video&&s.video.id)&&!s.video.solto;
@@ -10562,17 +10630,17 @@ function apMotor(win){
     },
     numeros:function(s){
       var h=(s.numeros||[]).map(function(_,i){
-        return '<div class="aps-card aps-num-card aps-anim">'+T(s,"numeros."+i+".valor","aps-valor","div","00")+T(s,"numeros."+i+".legenda","aps-valor-leg","div","O que significa")+"</div>";
+        return '<div class="aps-card aps-num-card aps-anim" data-bloco="num'+i+'">'+T(s,"numeros."+i+".valor","aps-valor","div","00")+T(s,"numeros."+i+".legenda","aps-valor-leg","div","O que significa")+"</div>";
       }).join("");
       return cab(s)+'<div class="aps-grade aps-g-num" data-fit><div class="aps-col">'+T(s,"texto","aps-p aps-anim","p","Explicação")+citacao(s)+
         '</div><div class="aps-nums" style="--n:'+Math.min(2,(s.numeros||[]).length||1)+'">'+h+"</div></div>";
     },
     sintese:function(s,modo){
       var pts=(s.pontos||[]).map(function(_,i){
-        return '<div class="aps-ponto-n aps-anim"><span class="t aps-n">'+(i+1)+"</span>"+T(s,"pontos."+i,"aps-ponto-txt","div","Ponto")+"</div>";
+        return '<div class="aps-ponto-n aps-anim" data-bloco="pt'+i+'"><span class="t aps-n">'+(i+1)+"</span>"+T(s,"pontos."+i,"aps-ponto-txt","div","Ponto")+"</div>";
       }).join("");
       var temM=(s.img&&s.img.src)||idYoutube(s.video&&s.video.id)&&!s.video.solto;
-      var dir='<div class="aps-col">'+citacao(s)+(s.proxima||s._ed?'<div class="aps-prox aps-anim"><div class="t aps-prox-rot">Para a próxima aula</div>'+T(s,"proxima","aps-prox-txt","div","Opcional")+"</div>":"")+"</div>";
+      var dir='<div class="aps-col">'+citacao(s)+(s.proxima||s._ed?'<div class="aps-prox aps-anim" data-bloco="prox"><div class="t aps-prox-rot">Para a próxima aula</div>'+T(s,"proxima","aps-prox-txt","div","Opcional")+"</div>":"")+"</div>";
       if(temM)return cab(s)+'<div class="aps-grade aps-g-sm" data-fit><div class="aps-col aps-col-midia">'+midia(s,modo,"","aps-midia-video")+legenda(s)+
         '</div><div class="aps-col">'+pts+citacao(s)+"</div></div>";
       return cab(s)+'<div class="aps-grade aps-g-2" data-fit><div class="aps-col">'+pts+"</div>"+dir+"</div>";
@@ -10580,32 +10648,63 @@ function apMotor(win){
     questoes:function(s){
       var h=(s.perguntas||[]).map(function(q,i){
         var pg=String(q&&q.pagina||"").replace(/^p\.?\s*/i,"");
-        return '<div class="aps-card aps-q aps-anim"><div class="aps-q-cab"><span class="t aps-tag">'+(i+1)+"</span>"+T(s,"perguntas."+i+".hab","aps-tag aps-tag-2","span","Habilidade")+
+        return '<div class="aps-card aps-q aps-anim" data-bloco="q'+i+'"><div class="aps-q-cab"><span class="t aps-tag">'+(i+1)+"</span>"+T(s,"perguntas."+i+".hab","aps-tag aps-tag-2","span","Habilidade")+
           "</div><div>"+T(s,"perguntas."+i+".texto","aps-q-txt","span","Pergunta")+' <b class="t aps-q-pg" data-c="perguntas.'+i+'.pagina" data-prefixo="p. ">'+esc(pg)+"</b></div></div>";
       }).join("");
       return cab(s)+'<div class="aps-grade aps-g-q" data-fit>'+h+"</div>";
     },
+    video:function(s,modo){
+      var id=idYoutube(s.video&&s.video.id);
+      var area=id?'<div class="aps-midia aps-video aps-video-grande aps-anim" data-m="video">'+video(s,modo)+
+          (modo==="palco"?'<a class="aps-yt-abrir" href="https://www.youtube.com/watch?v='+id+'" target="_blank" rel="noopener">Abrir no YouTube ↗</a>':"")+"</div>"
+        :'<div class="aps-midia aps-video-grande aps-anim vazia" data-m="video"><span class="aps-sem-img">▶ Clique aqui e cole o link do YouTube</span></div>';
+      return cab(s)+'<div class="aps-video-wrap">'+area+T(s,"texto","aps-p aps-video-txt aps-anim","p","O que observar no vídeo (opcional)")+"</div>";
+    },
     mapa:function(s){
       var r=(s.ramos||[]).slice(0,6), meio=Math.ceil(r.length/2);
       var ramo=function(i){
-        return '<div class="aps-ramo aps-anim aps-ramo-'+(i%2?"b":"a")+'"><div class="aps-ramo-cab">'+T(s,"ramos."+i+".titulo","aps-card-tit","div","Eixo")+
+        return '<div class="aps-ramo aps-anim aps-ramo-'+(i%2?"b":"a")+'" data-bloco="ramo'+i+'"><div class="aps-ramo-cab">'+T(s,"ramos."+i+".titulo","aps-card-tit","div","Eixo")+
           T(s,"ramos."+i+".hab","aps-ramo-hab","div","")+"</div>"+lista(s,"ramos."+i+".itens","aps-item aps-item-mapa","Tópico")+"</div>";
       };
       var esq="",dir="";
       r.forEach(function(_,i){if(i<meio)esq+=ramo(i);else dir+=ramo(i);});
       return etiqueta(s)+T(s,"titulo","aps-h2 aps-h2-mapa aps-anim","h2","")+'<div class="aps-mapa" data-fit><div class="aps-mapa-col">'+esq+
-        '</div><div class="aps-mapa-centro aps-anim">'+T(s,"centro","aps-centro-txt","div","Tema do capítulo")+'</div><div class="aps-mapa-col">'+dir+"</div></div>";
+        '</div><div class="aps-mapa-centro aps-anim" data-bloco="centro">'+T(s,"centro","aps-centro-txt","div","Tema do capítulo")+'</div><div class="aps-mapa-col">'+dir+"</div></div>";
     }
   };
   var CLASSE_FUNDO={escuro:"aps-escuro",destaque:"aps-destaque"};
+  /* ajuste manual: cada caixa (texto, bloco ou espaço da imagem) pode ser movida e ter outro tamanho.
+     s.pos["c:titulo"|"b:card0"|"m"]={x,y,w,h} em pixels do slide (1920×1080); vale no editor, na
+     apresentação, nas miniaturas e nos arquivos baixados                                          */
+  function seletorPos(k){
+    var m=/^([cbm])(?::([\w.-]+))?$/.exec(String(k||""));if(!m)return "";
+    if(m[1]==="m")return "[data-m]";
+    if(!m[2])return "";
+    return m[1]==="c"?'[data-c="'+m[2]+'"]':'[data-bloco="'+m[2]+'"]';
+  }
+  function idSlide(s){return String(s&&s.id||"").replace(/[^\w-]/g,"");}
+  function cssPos(s){
+    var sid=idSlide(s), r="";
+    if(!sid||!s.pos)return "";
+    Object.keys(s.pos).forEach(function(k){
+      var p=s.pos[k], sel=seletorPos(k), d="";
+      if(!p||!sel)return;
+      if(+p.x||+p.y)d+="position:relative;left:"+Math.round(+p.x||0)+"px;top:"+Math.round(+p.y||0)+"px;z-index:4;";
+      if(+p.w)d+="width:"+Math.round(+p.w)+"px;max-width:none;flex:none;justify-self:start;align-self:flex-start;";
+      if(+p.h)d+="height:"+Math.round(+p.h)+"px;max-height:none;flex:none;";
+      if(d)r+='.aps[data-sid="'+sid+'"] '+sel+"{"+d+"}";
+    });
+    return r?"<style>"+r+"</style>":"";
+  }
   // modo: "palco" (apresentação, com vídeo de verdade), "editor" (campos editáveis) ou "mini"
   function render(s,deck,modo){
     var tipo=DESENHO[s.tipo]?s.tipo:"texto-imagem";
     var fundo=s.fundo||(tipo==="capa"?"escuro":tipo==="sintese"?"destaque":"");
     var c=Object.assign({},s,{_ed:modo==="editor"});
     var k=s.k&&s.k<1?s.k:1;
-    return '<div class="aps apt-'+esc(deck.tema||"organico")+" apk-"+tipo+" "+(CLASSE_FUNDO[fundo]||"")+(modo==="editor"?" aps-ed":"")+'" style="--k:'+k+'">'+
-      DESENHO[tipo](c,modo)+extras(c,modo)+"</div>";
+    var sid=idSlide(s);
+    return '<div class="aps apt-'+esc(deck.tema||"organico")+" apk-"+tipo+" "+(CLASSE_FUNDO[fundo]||"")+(modo==="editor"?" aps-ed":"")+'"'+(sid?' data-sid="'+sid+'"':"")+' style="--k:'+k+'">'+
+      cssPos(s)+DESENHO[tipo](c,modo)+extras(c,modo)+"</div>";
   }
   // encolhe o texto do slide até caber, sem passar de 24px no mínimo (regra da escola)
   function transborda(el){
@@ -10658,8 +10757,9 @@ function apMotor(win){
       '<button type="button" data-a="prox" title="Próximo (→)">›</button><span class="apr-esp"></span>'+
       '<button type="button" data-a="notas" title="Notas do professor (N)">Notas</button><button type="button" data-a="grade" title="Ver todos os slides (G)">Slides</button>'+
       '<button type="button" data-a="tela" title="Tela cheia (F)">⛶</button><button type="button" data-a="sair" title="Sair (Esc)">Sair</button></div>'+
-      '<div class="apr-grade" hidden></div>';
+      '<div class="apr-grade" hidden></div><button type="button" class="apr-x" title="Fechar (Esc)" aria-label="Fechar">✕</button>';
     doc.body.appendChild(raiz);
+    raiz.querySelector(".apr-x").addEventListener("click",function(ev){ev.stopPropagation();sair();});
     var palco=raiz.querySelector(".apr-palco"), barra=raiz.querySelector(".apr-barra");
     function escala(){
       var w=raiz.clientWidth,h=raiz.clientHeight, e=Math.min(w/1920,h/1080);
@@ -10748,6 +10848,8 @@ function apMotor(win){
     barra.addEventListener("click",function(ev){
       var b=ev.target.closest("button");if(!b)return;
       var a=b.dataset.a;
+      // o botão não fica com o foco: a barra some de novo quando o mouse para
+      try{b.blur();}catch(e){}
       if(a==="ant")mostrar(atual-1,true);else if(a==="prox")mostrar(atual+1);
       else if(a==="notas"){notasVis=!notasVis;atualizarBarra();}
       else if(a==="grade")grade(raiz.querySelector(".apr-grade").hidden);
@@ -10760,7 +10862,9 @@ function apMotor(win){
       if(ev.clientX>r.left+r.width*0.35)mostrar(atual+1);else mostrar(atual-1,true);
     });
     var sumir;
-    raiz.addEventListener("mousemove",function(){raiz.classList.add("apr-mexeu");clearTimeout(sumir);sumir=setTimeout(function(){raiz.classList.remove("apr-mexeu");},2200);});
+    function mexeu(){raiz.classList.add("apr-mexeu");clearTimeout(sumir);sumir=setTimeout(function(){raiz.classList.remove("apr-mexeu");},2200);}
+    // por cima do vídeo do YouTube o movimento fica dentro dele: entrar nele também mostra os botões
+    raiz.addEventListener("mousemove",mexeu);raiz.addEventListener("mouseover",mexeu);
     var toque=null;
     raiz.addEventListener("touchstart",function(ev){toque=ev.touches[0].clientX;},{passive:true});
     raiz.addEventListener("touchend",function(ev){
@@ -10777,9 +10881,11 @@ function apMotor(win){
     win.addEventListener("keydown",tecla,true);win.addEventListener("resize",escala);
     escala();mostrar(atual);
     if(opc.telaCheia!==false)tela();
+    // prévia da animação: passa sozinha para o próximo slide, para a animação aparecer logo
+    if(opc.demo&&slides.length>1)setTimeout(function(){if(raiz.isConnected&&atual===0)mostrar(1);},900);
     return {sair:sair,ir:mostrar};
   }
-  return {render:render,ajustar:ajustar,apresentar:apresentar,limpo:limpo,pega:pega,idYoutube:idYoutube,TRANSICOES:TRANSICOES,miniatura:miniatura};
+  return {render:render,ajustar:ajustar,apresentar:apresentar,limpo:limpo,pega:pega,idYoutube:idYoutube,TRANSICOES:TRANSICOES,miniatura:miniatura,cssPos:cssPos};
 }
 var APM=apMotor(window);
 
@@ -10814,7 +10920,7 @@ var AP_TRANSICOES=[
 ];
 var AP_TIPOS=[
   ["capa","Capa da aula"],["texto-imagem","Texto + imagem"],["comparacao","Comparação (duas colunas)"],["cards","Cartões de conceitos"],
-  ["linha","Linha do tempo"],["numeros","Números em destaque"],["sintese","Síntese da aula"],["questoes","Questões de revisão"],["mapa","Mapa mental"]
+  ["linha","Linha do tempo"],["numeros","Números em destaque"],["sintese","Síntese da aula"],["video","Vídeo do YouTube"],["questoes","Questões de revisão"],["mapa","Mapa mental"]
 ];
 var AP_LINGUAGENS=[
   {id:"professoral",nome:"Professoral",desc:"Clara e didática, como na sala"},
@@ -11103,8 +11209,8 @@ function apTelaCapitulo(){
   }
   h+='<div class="botoes"><button class="botao secundario" type="button" id="ap-voltar0">Voltar</button><button class="botao" type="button" id="ap-seguir1"'+(n.capId?"":" disabled")+">Continuar</button></div></div>";
   c.innerHTML=h;
-  $("ap-serie").addEventListener("change",function(){n.serie=this.value;n.area="";n.livro="";n.capId="";AP.pref.serie=n.serie;apPrefGuardar();apTelaCapitulo();});
-  if($("ap-area"))$("ap-area").addEventListener("change",function(){n.area=this.value;n.livro="";n.capId="";AP.pref.area=n.area;apPrefGuardar();apTelaCapitulo();});
+  $("ap-serie").addEventListener("change",function(){n.serie=this.value;n.area="";n.livro="";n.capId="";AP.pref.serie=n.serie;apPrefGuardar();apTelaCapitulo();enquadrarEscolha($("ap-serie"));});
+  if($("ap-area"))$("ap-area").addEventListener("change",function(){n.area=this.value;n.livro="";n.capId="";AP.pref.area=n.area;apPrefGuardar();apTelaCapitulo();enquadrarEscolha($("ap-area"));});
   c.querySelectorAll("[data-livro]").forEach(function(b){b.addEventListener("click",function(){n.livro=this.dataset.livro;n.capId="";apTelaCapitulo();
     var caps=c.querySelector(".ap-caps");if(caps)caps.scrollIntoView({behavior:"smooth",block:"nearest"});});});
   c.querySelectorAll('input[name="ap-cap"]').forEach(function(r){r.addEventListener("change",function(){
@@ -11170,8 +11276,8 @@ function apTelaVisual(){
         "<strong>"+esc(t.nome)+"</strong><span>"+esc(t.desc)+"</span></label>";
     }).join("")+"</div>"+
     '<label>Animação entre os slides</label><div class="ap-trans">'+AP_TRANSICOES.map(function(t){
-      return '<label class="origem'+(t.id===n.transicao?" marcado":"")+'"><input type="radio" name="ap-trans" value="'+t.id+'"'+(t.id===n.transicao?" checked":"")+"><strong>"+esc(t.nome)+"</strong><span>"+esc(t.desc)+"</span></label>";
-    }).join("")+'</div><button type="button" class="botao secundario ap-ver-trans" id="ap-ver-trans">▶ Ver a animação escolhida</button>'+
+      return '<label class="origem'+(t.id===n.transicao?" marcado":"")+'"><input type="radio" name="ap-trans" value="'+t.id+'"'+(t.id===n.transicao?" checked":"")+"><strong>"+esc(t.nome)+"</strong>"+(t.id==="nenhuma"?"":'<button type="button" class="ap-ver-trans" data-ver-trans="'+t.id+'">▶ Ver animação</button>')+"<span>"+esc(t.desc)+"</span></label>";
+    }).join("")+'</div>'+
     '<div id="ap-progresso" class="ap-progresso" hidden></div>'+
     '<div class="botoes"><button class="botao secundario" type="button" id="ap-voltar2">Voltar</button>'+
     (soVisual&&!AP.novo.deDeck?"":"")+
@@ -11181,10 +11287,12 @@ function apTelaVisual(){
   apEscalarMinis(c);
   c.querySelectorAll('input[name="ap-tema"]').forEach(function(r){r.addEventListener("change",function(){
     n.tema=this.value;c.querySelectorAll(".ap-tema").forEach(function(l){l.classList.toggle("marcado",l.contains(r));});});});
-  c.querySelectorAll('input[name="ap-trans"]').forEach(function(r){r.addEventListener("change",function(){n.transicao=this.value;});});
-  $("ap-ver-trans").addEventListener("click",function(){
-    APM.apresentar({tema:n.tema,transicao:n.transicao,slides:[AP_AMOSTRA_CAPA,AP_AMOSTRA,Object.assign({},AP_AMOSTRA,{tipo:"sintese",titulo:"Síntese",pontos:["Democracia = soberania popular.","Atenas: direta e restrita.","Hoje: representativa."]})]},0,{telaCheia:false});
-  });
+  c.querySelectorAll('input[name="ap-trans"]').forEach(function(r){r.addEventListener("change",function(){
+    n.transicao=this.value;c.querySelectorAll(".ap-trans .origem").forEach(function(l){l.classList.toggle("marcado",l.contains(r));});});});
+  c.querySelectorAll("[data-ver-trans]").forEach(function(b){b.addEventListener("click",function(ev){
+    ev.preventDefault();ev.stopPropagation();
+    APM.apresentar({tema:n.tema,transicao:n.transicao,slides:[AP_AMOSTRA_CAPA,AP_AMOSTRA,Object.assign({},AP_AMOSTRA,{tipo:"sintese",titulo:"Síntese",pontos:["Democracia = soberania popular.","Atenas: direta e restrita.","Hoje: representativa."]})]},0,{telaCheia:false,demo:true});
+  });});
   $("ap-voltar2").addEventListener("click",function(){apIr(AP.novo&&AP.novo.capId?2:4);});
   if($("ap-aplicar"))$("ap-aplicar").addEventListener("click",function(){
     apHist();AP.deck.tema=n.tema;AP.deck.transicao=n.transicao;AP.pref.tema=n.tema;AP.pref.transicao=n.transicao;apPrefGuardar();apMudou();AP.novo=null;apIr(4);
@@ -11322,7 +11430,7 @@ var AP_TIPO_ALIAS={"texto_imagem":"texto-imagem","textoimagem":"texto-imagem","t
 function apNormalizar(r,imgs){
   r=r||{};
   var tipo=String(r.tipo||"texto-imagem").toLowerCase().trim();tipo=AP_TIPO_ALIAS[tipo]||tipo;
-  if(!APM.render||!/^(capa|texto-imagem|comparacao|cards|linha|numeros|sintese|questoes|mapa)$/.test(tipo))tipo="texto-imagem";
+  if(!APM.render||!/^(capa|texto-imagem|comparacao|cards|linha|numeros|sintese|video|questoes|mapa)$/.test(tipo))tipo="texto-imagem";
   var s={id:apNovoId(),tipo:tipo,etiqueta:apTxt(r.etiqueta),titulo:apTxt(r.titulo),notas:String(r.notas||"").trim()};
   ["kicker","subtitulo","paginas","duracao","texto","intro","proxima","centro"].forEach(function(k){if(r[k]!=null&&r[k]!=="")s[k]=apTxt(r[k]);});
   var c=r.citacao||r.cit;
@@ -11520,8 +11628,12 @@ function apTelaEditor(){
     '<button type="button" class="botao secundario" id="ap-ir-usar">Baixar</button><button type="button" class="botao" id="ap-tocar">▶ Apresentar</button></div>'+
     '<div class="ap-ed-corpo"><aside class="ap-ed-lista" id="ap-lista-slides"></aside>'+
     '<div class="ap-ed-centro"><div class="ap-ed-palco" id="ap-palco"><div class="ap-ed-escala" id="ap-escala"></div></div>'+
-    '<p class="ap-dica">Clique num texto para editar. Clique na imagem para trocar. Clique fora para ver as opções do slide.</p></div>'+
-    '<aside class="ap-ed-painel" id="ap-painel"></aside></div></div>';
+    '<p class="ap-dica">Clique num texto para editar ou na imagem para trocar. Depois de clicar, arraste a bolinha ✥ para mudar de lugar e o quadradinho do canto para mudar o tamanho. Clique fora para ver as opções do slide.</p></div>'+
+    '<aside class="ap-ed-painel" id="ap-painel"></aside></div>'+
+    '<div class="botoes ap-ed-fim"><button type="button" class="botao secundario" id="ap-ed-voltar">Voltar</button>'+
+    '<button type="button" class="botao" id="ap-avancar">Avançar: apresentar e baixar →</button></div></div>';
+  $("ap-ed-voltar").addEventListener("click",function(){apIr(3);});
+  $("ap-avancar").addEventListener("click",function(){apIr(5);});
   $("ap-titulo").addEventListener("input",function(){d.titulo=this.value;apMudou();});
   $("ap-desfazer").addEventListener("click",function(){apDesfazer(false);});
   $("ap-refazer").addEventListener("click",function(){apDesfazer(true);});
@@ -11617,6 +11729,7 @@ function apDesenharSlide(){
       var v=el.dataset.prefixo?el.textContent.replace(/^p\.\s*/i,"").trim():APM.limpo(el.innerHTML);
       apDefinir(s,el.dataset.c,v);
       el.classList.toggle("vazio",!el.textContent.trim());
+      apMoldura();
       apMudou();clearTimeout(AP.miniT);AP.miniT=setTimeout(function(){apAtualizarMini(i);},400);
     });
     el.addEventListener("blur",function(){setTimeout(function(){if(raiz.isConnected&&!raiz.contains(document.activeElement)){s.k=APM.ajustar(raiz);apAtualizarMini(i);}},50);});
@@ -11633,12 +11746,17 @@ function apDesenharSlide(){
   raiz.querySelectorAll(".aps-extra").forEach(function(el){apArrastavel(el,s);});
   raiz.addEventListener("click",function(ev){
     if(ev.target.closest("[data-c],[data-m],.aps-extra"))return;
+    var bl=ev.target.closest("[data-bloco]");
+    if(bl&&raiz.contains(bl)){
+      if(document.activeElement&&raiz.contains(document.activeElement))document.activeElement.blur();
+      apSelecionar({bloco:bl.dataset.bloco},bl);return;
+    }
     if(document.activeElement&&raiz.contains(document.activeElement))document.activeElement.blur();
     AP.sel=null;apMarcarSel(null);apPainel();
   });
   // depois de redesenhar, a seleção continua no mesmo elemento
   if(AP.sel){
-    var q=AP.sel.campo?'[data-c="'+AP.sel.campo+'"]':AP.sel.midia?"[data-m]":AP.sel.extra!=null?'[data-x="'+AP.sel.extra+'"]':"";
+    var q=AP.sel.campo?'[data-c="'+AP.sel.campo+'"]':AP.sel.midia?"[data-m]":AP.sel.extra!=null?'[data-x="'+AP.sel.extra+'"]':AP.sel.bloco!=null?'[data-bloco="'+AP.sel.bloco+'"]':"";
     var el=q&&raiz.querySelector(q);
     if(el)apMarcarSel(el);else AP.sel=null;
   }
@@ -11655,6 +11773,104 @@ function apDefinir(o,cam,v){
 function apMarcarSel(el){
   document.querySelectorAll("#ap-escala .ap-sel").forEach(function(x){x.classList.remove("ap-sel");});
   if(el)el.classList.add("ap-sel");
+  apMoldura();
+}
+/* ---- ajuste manual: mover e mudar o tamanho de textos, blocos e do espaço da imagem ou do vídeo ---- */
+// o que se move junto: o bloco em volta do texto (cartão, citação, evento…), o próprio texto, ou a mídia
+function apUnidade(el){
+  if(!el||el.classList.contains("aps-extra"))return null;
+  var raiz=el.closest(".aps");if(!raiz)return null;
+  if(el.matches("[data-m]"))return {k:"m",el:el};
+  var b=el.closest("[data-bloco]");
+  if(b&&raiz.contains(b))return {k:"b:"+b.dataset.bloco,el:b};
+  if(el.dataset.c)return {k:"c:"+el.dataset.c,el:el};
+  return null;
+}
+function apUnidadeSel(){return apUnidade(document.querySelector("#ap-escala .aps .ap-sel"));}
+function apAplicarPos(s){
+  var raiz=document.querySelector("#ap-escala .aps");if(!raiz)return;
+  var velho=raiz.querySelector(":scope > style");if(velho)velho.remove();
+  var css=APM.cssPos(s);if(css)raiz.insertAdjacentHTML("afterbegin",css);
+}
+function apMoldura(){
+  var e=$("ap-escala");if(!e)return;
+  var m=e.querySelector(".ap-mold"), u=apUnidadeSel(), raiz=e.querySelector(".aps");
+  if(!u||!raiz){if(m)m.remove();return;}
+  if(!m){
+    m=document.createElement("div");m.className="ap-mold";
+    m.innerHTML='<span class="ap-mold-mover" title="Arraste para mover">✥</span><span class="ap-mold-tam" title="Arraste para mudar o tamanho"></span>';
+    e.appendChild(m);apLigarMoldura(m);
+  }
+  var R=raiz.getBoundingClientRect(), r=u.el.getBoundingClientRect(), k=R.width/1920||1;
+  m.style.left=((r.left-R.left)/k)+"px";m.style.top=((r.top-R.top)/k)+"px";
+  m.style.width=(r.width/k)+"px";m.style.height=(r.height/k)+"px";
+  m.style.setProperty("--inv",String(Math.min(8,1/k)));
+}
+function apLigarMoldura(m){
+  m.querySelectorAll(".ap-mold-mover,.ap-mold-tam").forEach(function(h){
+    h.addEventListener("pointerdown",function(ev){
+      ev.preventDefault();ev.stopPropagation();
+      var u=apUnidadeSel(), s=apSlideAtual();if(!u)return;
+      var esc=$("ap-palco").clientWidth/1920, redim=h.classList.contains("ap-mold-tam");
+      var p0=(s.pos&&s.pos[u.k])||{}, x0=ev.clientX, y0=ev.clientY;
+      var ox=+p0.x||0, oy=+p0.y||0, ow=+p0.w||u.el.offsetWidth, oh=+p0.h||u.el.offsetHeight;
+      var ar=getComputedStyle(u.el).aspectRatio, fixo=!!ar&&ar!=="auto";
+      var mexeu=false;
+      try{h.setPointerCapture(ev.pointerId);}catch(e){}
+      function mover(e2){
+        var dx=(e2.clientX-x0)/esc, dy=(e2.clientY-y0)/esc;
+        if(!mexeu&&Math.abs(dx)+Math.abs(dy)>3){mexeu=true;apHist();}
+        if(!mexeu)return;
+        s.pos=s.pos||{};
+        var p=Object.assign({},s.pos[u.k]||{});
+        if(redim){p.w=Math.round(Math.max(80,Math.min(1920,ow+dx)));if(!fixo)p.h=Math.round(Math.max(40,Math.min(1080,oh+dy)));}
+        else{p.x=Math.round(Math.max(-1700,Math.min(1800,ox+dx)));p.y=Math.round(Math.max(-1000,Math.min(1000,oy+dy)));}
+        s.pos[u.k]=p;apAplicarPos(s);apMoldura();
+      }
+      function soltar(){
+        h.removeEventListener("pointermove",mover);h.removeEventListener("pointerup",soltar);h.removeEventListener("pointercancel",soltar);
+        if(!mexeu)return;
+        var raiz=document.querySelector("#ap-escala .aps");
+        if(redim&&raiz){s.k=APM.ajustar(raiz);apMoldura();}
+        apMudou();apAtualizarMini(apIndiceSel());
+      }
+      h.addEventListener("pointermove",mover);h.addEventListener("pointerup",soltar);h.addEventListener("pointercancel",soltar);
+    });
+  });
+}
+function apPainelPos(){
+  var u=apUnidadeSel();if(!u)return "";
+  var s=apSlideAtual(), mexido=!!(s.pos&&s.pos[u.k]);
+  return '<h3>Posição e tamanho</h3><p class="ajuda">Arraste a bolinha ✥ para mudar de lugar e o quadradinho do canto para mudar o tamanho'+
+    (u.k.indexOf("b:")===0?" (move o bloco inteiro)":"")+'. Ou use as setas:</p>'+
+    '<div class="ap-linha-bt ap-setas"><button type="button" class="ap-bt" data-mexe="-20,0" title="Para a esquerda">←</button><button type="button" class="ap-bt" data-mexe="0,-20" title="Para cima">↑</button>'+
+    '<button type="button" class="ap-bt" data-mexe="0,20" title="Para baixo">↓</button><button type="button" class="ap-bt" data-mexe="20,0" title="Para a direita">→</button>'+
+    '<button type="button" class="ap-bt" data-tam="-40" title="Menor">−</button><button type="button" class="ap-bt" data-tam="40" title="Maior">+</button></div>'+
+    (mexido?'<button type="button" class="botao secundario ap-largo" id="ap-pos-limpar">Voltar ao lugar e tamanho originais</button>':"");
+}
+function apLigarPainelPos(s){
+  var u=apUnidadeSel();if(!u)return;
+  function feito(redim){
+    apAplicarPos(s);
+    var raiz=document.querySelector("#ap-escala .aps");if(redim&&raiz)s.k=APM.ajustar(raiz);
+    apMoldura();apMudou();apAtualizarMini(apIndiceSel());
+  }
+  document.querySelectorAll("#ap-painel [data-mexe]").forEach(function(b){b.addEventListener("click",function(){
+    var d=this.dataset.mexe.split(",");apHist();s.pos=s.pos||{};var p=Object.assign({},s.pos[u.k]||{});
+    p.x=(+p.x||0)+(+d[0]);p.y=(+p.y||0)+(+d[1]);s.pos[u.k]=p;feito(false);
+    if(!$("ap-pos-limpar"))apPainel();
+  });});
+  document.querySelectorAll("#ap-painel [data-tam]").forEach(function(b){b.addEventListener("click",function(){
+    var d=+this.dataset.tam, ar=getComputedStyle(u.el).aspectRatio, fixo=!!ar&&ar!=="auto";
+    apHist();s.pos=s.pos||{};var p=Object.assign({},s.pos[u.k]||{});
+    var w=+p.w||u.el.offsetWidth, h=+p.h||u.el.offsetHeight;
+    p.w=Math.round(Math.max(80,Math.min(1920,w+d)));
+    if(!fixo&&p.h)p.h=Math.round(Math.max(40,Math.min(1080,h+d*h/w)));
+    s.pos[u.k]=p;feito(true);
+    if(!$("ap-pos-limpar"))apPainel();
+  });});
+  var l=$("ap-pos-limpar");
+  if(l)l.addEventListener("click",function(){apHist();delete s.pos[u.k];if(!Object.keys(s.pos).length)delete s.pos;feito(true);apPainel();});
 }
 function apSelecionar(sel,el){AP.sel=sel;apMarcarSel(el);apPainel();}
 function apArrastavel(el,s){
@@ -11716,11 +11932,14 @@ function apPainel(){
       '<p class="ajuda">Dica: selecione uma palavra e aperte Ctrl+B (ou ⌘B) para pôr só ela em negrito.</p>'+
       '<button type="button" class="botao secundario ap-largo" id="ap-est-limpar">Voltar ao estilo do modelo</button>';
     if(li)h+='<h3>Lista</h3><div class="ap-linha-bt"><button type="button" class="botao secundario" id="ap-item-mais">+ Item abaixo</button><button type="button" class="botao perigo" id="ap-item-menos">Remover item</button></div>';
+    h+=apPainelPos();
+  }else if(sel&&sel.bloco!=null){
+    h+='<h3>Bloco selecionado</h3><p class="ajuda">Para editar o texto, clique nele dentro do bloco.</p>'+apPainelPos();
   }else if(sel&&sel.midia){
     var img=s.img||{};
     if(sel.midia==="video"){
       h+='<h3>Vídeo do slide</h3><p class="ajuda">Na apresentação o vídeo toca dentro do slide. Precisa de internet.</p>'+apCampoVideo(s)+
-        '<button type="button" class="botao perigo ap-largo" id="ap-video-tirar">Tirar o vídeo</button>';
+        (s.video&&s.video.id?'<button type="button" class="botao perigo ap-largo" id="ap-video-tirar">Tirar o vídeo</button>':"");
     }else{
       h+='<h3>Imagem</h3><button type="button" class="botao ap-largo" id="ap-img-trocar">'+(img.src?"Trocar imagem":"Escolher imagem")+"</button>";
       if(img.src)h+='<label>Zoom</label><input type="range" id="ap-zoom" min="1" max="3" step="0.05" value="'+(img.zoom||1)+'">'+
@@ -11729,6 +11948,7 @@ function apPainel(){
         (img.cred?'<p class="ajuda">'+esc(img.cred)+"</p>":"")+
         '<button type="button" class="botao perigo ap-largo" id="ap-img-tirar">Tirar a imagem</button>';
     }
+    h+=apPainelPos();
   }else if(sel&&sel.extra!=null){
     var x=sel.extra==="video"?s.video:(s.extras||[])[+sel.extra];
     if(!x){AP.sel=null;return apPainel();}
@@ -11748,6 +11968,7 @@ function apPainel(){
       (/^(texto-imagem|comparacao|cards|linha|numeros|sintese)$/.test(s.tipo)?'<button type="button" class="botao secundario ap-largo" id="ap-cit-tog">'+(s.cit?"Tirar o card de citação":"+ Card de citação")+"</button>":"")+
       '<h3>Vídeo do YouTube</h3>'+apCampoVideo(s)+
       (s.video&&s.video.id?'<button type="button" class="botao perigo ap-largo" id="ap-video-tirar">Tirar o vídeo</button>':"")+
+      (s.tipo!=="video"?'<button type="button" class="botao secundario ap-largo" id="ap-slide-video">+ Slide só de vídeo, depois deste</button>':"")+
       '<h3>Notas do professor</h3><textarea id="ap-notas" placeholder="Aparecem só para você, no modo apresentação (tecla N).">'+esc(s.notas||"")+"</textarea>"+
       '<h3>Refazer com a IA</h3><textarea id="ap-refazer-txt" placeholder="Ex.: troque a citação por outra da p. 43; deixe mais curto; transforme em linha do tempo."></textarea>'+
       '<button type="button" class="botao secundario ap-largo" id="ap-refazer-ia">Refazer este slide</button><div id="ap-refazer-ret"></div>';
@@ -11772,6 +11993,7 @@ function apLigarPainel(s){
     s.k=APM.ajustar(raiz);apMudou();apAtualizarMini(apIndiceSel());
   }
   function um(id,ev,fn){var el=$(id);if(el)el.addEventListener(ev,fn);}
+  apLigarPainelPos(s);
   if(sel&&sel.campo){
     document.querySelectorAll("#ap-painel [data-f]").forEach(function(b){b.addEventListener("click",function(){
       apHist();var e=est();e.f=Math.max(0.6,Math.min(2,Math.round(((e.f||1)+(+this.dataset.f))*100)/100));aplicarEstilo();apPainel();});});
@@ -11814,12 +12036,18 @@ function apLigarPainel(s){
     apHist();
     var temSlot=/^(texto-imagem|linha|sintese|capa)$/.test(s.tipo)&&!(s.img&&s.img.src&&s.tipo!=="sintese");
     s.video=Object.assign({},s.video||{},{id:id});
-    if(s.video.solto==null)s.video.solto=!temSlot||s.tipo==="capa";
+    if(s.tipo==="video")s.video.solto=false;
+    else if(s.video.solto==null)s.video.solto=!temSlot||s.tipo==="capa";
     apMudou();apDesenharSlide();apAtualizarMini(apIndiceSel());
     apStatus("Vídeo colocado no slide "+(apIndiceSel()+1));
   }
   um("ap-video-por","click",porVideo);
   um("ap-video-url","keydown",function(ev){if(ev.key==="Enter"){ev.preventDefault();porVideo();}});
+  um("ap-slide-video","click",function(){
+    var d=AP.deck, i=apIndiceSel();apHist();d.slides.splice(i+1,0,apSlideVazio("video",s));d._atual=i+1;AP.sel={midia:"video"};
+    apMudou();apDesenharLista2();apDesenharSlide();
+    var u=$("ap-video-url");if(u)u.focus();
+  });
   um("ap-video-tirar","click",function(){apHist();delete s.video;AP.sel=null;apMudou();apDesenharSlide();apAtualizarMini(apIndiceSel());});
   um("ap-video-encaixar","click",function(){apHist();s.video.solto=false;if(!/^(texto-imagem|linha|sintese)$/.test(s.tipo))s.tipo="sintese";AP.sel=null;apMudou();apDesenharSlide();apAtualizarMini(apIndiceSel());});
   um("ap-larg","input",function(){
@@ -11848,6 +12076,12 @@ function apTrocarTipo(s,tipo){
   ["id","etiqueta","titulo","cit","notas","img","video","extras","est","fundo","sugVideo"].forEach(function(k){if(s[k]!==undefined&&!(k==="cit"&&!/^(texto-imagem|comparacao|cards|linha|numeros|sintese)$/.test(tipo)))novo[k]=s[k];});
   if(tipo==="capa"){novo.subtitulo=texto;}
   if(/^(texto-imagem|numeros)$/.test(tipo))novo.texto=texto||itens.join("<br>");
+  if(tipo==="video")novo.texto=texto;
+  if(novo.video){
+    novo.video=Object.assign({},novo.video);
+    if(tipo==="video")novo.video.solto=false;
+    else if(s.tipo==="video")novo.video.solto=!/^(texto-imagem|linha|sintese)$/.test(tipo)||!!(novo.img&&novo.img.src);
+  }
   if(/^(comparacao|cards)$/.test(tipo))novo.intro=texto;
   if(tipo==="sintese"&&itens.length)novo.pontos=itens.slice(0,5);
   if(tipo==="cards"&&itens.length)novo.cards=itens.slice(0,4).map(function(t){return {tag:"",titulo:"",texto:t,exemplo:""};});
