@@ -207,7 +207,9 @@ input[type=text],input[type=number],input[type=password],select,textarea{
   width:100%;padding:10px 12px;border:1.5px solid #E6D8CC;border-radius:12px;background:var(--carta)}
 input[type=text]:focus,input[type=number]:focus,input[type=password]:focus,select:focus,textarea:focus{border-color:var(--primaria);outline:none;box-shadow:0 0 0 3px var(--primaria-sombra)}
 textarea{min-height:76px;resize:vertical}
-input[type=file]{font-size:13px}
+input[type=file]{font-size:13px;font-family:var(--sans);color:var(--cinza);max-width:100%}
+input[type=file]::file-selector-button,input[type=file]::-webkit-file-upload-button{font-family:var(--sans);font-size:14px;font-weight:700;color:var(--primaria);background:#fff;border:2px solid var(--primaria-borda);border-radius:12px;padding:9px 16px;margin-right:12px;cursor:pointer;transition:background .15s,border-color .15s,box-shadow .15s}
+input[type=file]::file-selector-button:hover{background:var(--primaria-hover);border-color:var(--primaria);box-shadow:0 2px 6px var(--primaria-sombra)}
 .linha{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 #linha-prova{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
 .quatro{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
@@ -264,10 +266,19 @@ input[type=file]{font-size:13px}
 .origens{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
 .origens-5{grid-template-columns:repeat(5,1fr)}
 .livre-titulo{margin:0 0 12px;font-size:15.5px;color:var(--tinta)}
-.livre-caminhos{display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:start}
+.livre-caminhos{display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:stretch}
 .livre-caminho{display:flex;flex-direction:column;gap:6px;background:#fff;border:1.5px solid var(--primaria-borda);border-radius:14px;padding:14px 16px}
 .livre-caminho strong{font-size:16px}
 .livre-caminho>span{font-size:14px;color:var(--cinza);line-height:1.5}
+.livre-caminho>.botao{align-self:flex-start;margin-top:4px}
+.livre-caminho>.botao[aria-expanded=true]{background:var(--primaria);color:#fff;border-color:var(--primaria)}
+.livre-slot{margin-top:6px}
+.livre-caminho #det-texto-avulso>summary::after{content:"Abrir"}
+.livre-caminho #det-texto-avulso[open]>summary::after{content:"✕ Fechar"}
+.arquivo-escondido{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden}
+.botao-arquivo{display:inline-flex;align-items:center;gap:8px;font-family:var(--sans);font-size:14px;font-weight:700;color:var(--primaria);background:#fff;border:2px solid var(--primaria-borda);border-radius:12px;padding:9px 16px;cursor:pointer;transition:background .15s,border-color .15s,box-shadow .15s}
+.botao-arquivo:hover{background:var(--primaria-hover);border-color:var(--primaria);box-shadow:0 2px 6px var(--primaria-sombra)}
+.arquivo-escondido:focus-visible+.botao-arquivo{outline:2px solid var(--primaria);outline-offset:2px}
 .livre-caminho #campo-assunto label{display:none}
 .livre-caminho #conteudo-material>label:first-child{margin-top:0}
 .livre-caminho textarea{min-height:90px}
@@ -1102,14 +1113,16 @@ input[type=range]{width:100%;accent-color:var(--primaria)}
       <div class="livre-caminhos">
         <div class="livre-caminho">
           <strong>Só um tema ou assunto</strong>
-          <span>Escreva o tema e a IA cria as questões sobre ele.</span>
-          <div id="livre-assunto-slot"></div>
+          <span>Escreva o tema e a IA cria as questões sobre ele. Ex.: Revolução Pernambucana de 1817.</span>
+          <button type="button" class="botao secundario" id="btn-livre-assunto" aria-expanded="false">Escrever o assunto</button>
+          <div id="livre-assunto-slot" class="livre-slot" hidden></div>
         </div>
         <div class="livre-ou">OU</div>
         <div class="livre-caminho">
           <strong>Um material seu</strong>
-          <span>Cole um texto ou anexe um PDF; a IA cria as questões a partir dele.</span>
-          <div id="livre-material-slot"></div>
+          <span>Anexe um PDF ou cole um texto; a IA cria as questões a partir dele.</span>
+          <button type="button" class="botao secundario" id="btn-livre-material" aria-expanded="false">Anexar material</button>
+          <div id="livre-material-slot" class="livre-slot" hidden></div>
         </div>
       </div>
       <p class="ajuda" style="margin:10px 0 0">Se quiser, pode usar os dois juntos. A estrutura das objetivas você escolhe acima e a série, no passo 2.</p>
@@ -1250,11 +1263,12 @@ input[type=range]{width:100%;accent-color:var(--primaria)}
         <details id="det-material-extra" style="margin-top:10px">
           <summary><span><strong>Material extra</strong> <span class="opcional">opcional</span> <span class="sumario">— anexar um PDF ou colar um texto só para apoio <span id="resumo-outros"></span></span></span></summary>
           <div id="conteudo-material">
-          <label for="texto-extra">Texto avulso <span class="opcional">opcional</span></label>
-          <textarea id="texto-extra" placeholder="Cole aqui trechos, fontes históricas ou anotações que devem entrar apenas nesta geração."></textarea>
-          <label style="margin-top:12px">Arquivos guardados (PDF) <span class="opcional">opcional</span></label>
+          <label for="arquivos" style="margin-top:0">Arquivos guardados (PDF) <span class="opcional">opcional</span></label>
           <p class="ajuda">Provas, apostilas e outros PDFs que não estão nos livros SESI. Anexe cada arquivo uma única vez, dê um título e marque quando ele deve alimentar a próxima geração.</p>
-            <input type="file" id="arquivos" accept="application/pdf" multiple>
+            <input type="file" id="arquivos" class="arquivo-escondido" accept="application/pdf" multiple><label for="arquivos" class="botao-arquivo" style="margin:0">📎 Escolher arquivo PDF</label>
+            <details id="det-texto-avulso" style="margin-top:12px"><summary><span>Colar um texto avulso</span></summary>
+            <textarea id="texto-extra" placeholder="Cole aqui trechos, fontes históricas ou anotações que devem entrar apenas nesta geração."></textarea>
+            </details>
             <div id="status-pdf" class="progresso"></div>
             <div class="filtros" style="margin:14px 0 4px">
               <select id="fm-tipo"><option value="">Todos os tipos</option></select>
@@ -4256,7 +4270,19 @@ function moverCamposLivre(livre){
     else if(el.parentNode!==LUGAR_ORIGINAL[par[0]].pai)LUGAR_ORIGINAL[par[0]].pai.insertBefore(el,LUGAR_ORIGINAL[par[0]].depois);
   });
   $("det-material-extra").hidden=livre;
+  if(livre){["assunto","texto-extra"].forEach(function(id){if($(id).value.trim())abrirCaminhoLivre(id==="assunto"?"assunto":"material",true);});
+    if($("texto-extra").value.trim())$("det-texto-avulso").open=true;}
 }
+// os botões verdes das duas caixas abrem (ou fecham) o campo dentro da própria caixa
+function abrirCaminhoLivre(qual,abrir){
+  var b=$(qual==="assunto"?"btn-livre-assunto":"btn-livre-material"), slot=$(qual==="assunto"?"livre-assunto-slot":"livre-material-slot");
+  if(abrir===undefined)abrir=slot.hidden;
+  slot.hidden=!abrir;b.setAttribute("aria-expanded",abrir?"true":"false");
+  b.textContent=abrir?"✕ Fechar":(qual==="assunto"?"Escrever o assunto":"Anexar material");
+  if(abrir&&qual==="assunto")setTimeout(function(){$("assunto").focus();},50);
+}
+$("btn-livre-assunto").addEventListener("click",function(){abrirCaminhoLivre("assunto");});
+$("btn-livre-material").addEventListener("click",function(){abrirCaminhoLivre("material");});
 $("en-area").addEventListener("change",function(){$("en-comp").value="";$("en-hab").value="";renderFiltroEnem();});
 $("en-comp").addEventListener("change",function(){$("en-hab").value="";renderFiltroEnem();});
 $("en-hab").addEventListener("change",infoAcervo);
