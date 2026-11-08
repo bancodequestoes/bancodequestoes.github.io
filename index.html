@@ -887,6 +887,8 @@ body.ap-arrastando,body.ap-arrastando *{cursor:grabbing !important}
 .ap-camada-nome{flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start;background:none;border:0;padding:3px 0;cursor:pointer;font:inherit;text-align:left}
 .ap-camada-nome b{font-size:12.5px}
 .ap-camada-nome small{font-size:11px;color:var(--cinza);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.ap-dica-flut{position:fixed;z-index:9500;pointer-events:none;background:#1f2333;color:#fff;font:700 14.5px/1.35 'Nunito Sans',system-ui,sans-serif;padding:8px 13px;border-radius:9px;box-shadow:0 8px 24px rgba(0,0,0,.25);max-width:300px;opacity:0;transform:translateY(-2px);transition:opacity .08s,transform .08s}
+.ap-dica-flut.vis{opacity:1;transform:none}
 .ap-toast{position:absolute;left:50%;bottom:34px;transform:translate(-50%,10px);background:#2b2b33;color:#fff;font-size:13px;font-weight:600;padding:9px 16px;border-radius:999px;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:40;max-width:90%;text-align:center}
 .ap-toast.vis{opacity:1;transform:translate(-50%,0)}
 /* cortar */
@@ -12509,7 +12511,7 @@ function apCtx(){
     var gir=k.charAt(0)==="x"?+(apExtraObj(s,k)||{}).r:s.livre&&s.pos&&s.pos[k]?+s.pos[k].r:0;
     if(gir)h+=apBotaoIco("desgirar","girar","Desfazer o giro ("+Math.round(gir)+"°)");
     if(k.charAt(0)==="x"&&k!=="x:video")h+=apBotaoIco("duplicar","duplicar","Duplicar (Ctrl+D)");
-    if(tipo!=="video")h+=apBotaoIco("excluir","lixo",k.charAt(0)==="x"?"Apagar (Delete)":"Esconder do slide (Delete). Volta pelo botão Camadas");
+    if(tipo!=="video")h+=k.charAt(0)==="x"?apBotaoIco("excluir","lixo","Apagar (Delete)"):apBotaoIco("excluir","olhoNao","Esconder do slide (Delete). Volta pelo botão Camadas");
     if(tipo==="bloco")h+='<span class="ap-ctx-dica">Clique de novo num texto do bloco para escrever.</span>';
   }
   c.innerHTML=h;
@@ -12913,8 +12915,31 @@ function apColarEvento(ev){
 }
 // há alguma janela do site aberta por cima? (as janelas escondidas ficam no HTML com display:none)
 function apJanelaAberta(){return [].some.call(document.querySelectorAll(".fundo-janela"),function(j){return j.isConnected&&getComputedStyle(j).display!=="none"&&!j.hidden;});}
+function apDicaMostrar(el){
+  var t=el.getAttribute("title");
+  if(t){el.dataset.dica=t;el.removeAttribute("title");}
+  t=el.dataset.dica;if(!t)return;
+  var d=document.querySelector(".ap-dica-flut");
+  if(!d){d=document.createElement("div");d.className="ap-dica-flut";d.setAttribute("role","tooltip");document.body.appendChild(d);}
+  d.textContent=t;d.classList.add("vis");
+  var r=el.getBoundingClientRect(), w=d.offsetWidth, h=d.offsetHeight, x, y;
+  if(el.closest(".ap-trilho")){x=r.left-w-10;y=r.top+r.height/2-h/2;d.dataset.lado="esq";}
+  else{x=r.left+r.width/2-w/2;y=r.bottom+8;d.dataset.lado="baixo";if(y+h>window.innerHeight-6){y=r.top-h-8;d.dataset.lado="cima";}}
+  d.style.left=Math.max(6,Math.min(window.innerWidth-w-6,x))+"px";d.style.top=Math.max(6,y)+"px";
+  AP.dicaEl=el;
+}
+function apDicaEsconder(){var d=document.querySelector(".ap-dica-flut");if(d)d.classList.remove("vis");AP.dicaEl=null;}
 function apOuvintesEditor(){
   if(AP.ouvintes)return;AP.ouvintes=true;
+  document.addEventListener("mouseover",function(ev){
+    if(AP.passo!==4||!ev.target.closest)return;
+    var el=ev.target.closest(".ap-ed [title],.ap-ed [data-dica],.ap-pop [title],.ap-pop [data-dica]");
+    if(el&&el.closest("#ap-escala")&&!el.closest(".ap-mold"))el=null;
+    if(!el){if(AP.dicaEl)apDicaEsconder();return;}
+    if(el!==AP.dicaEl)apDicaMostrar(el);
+  });
+  document.addEventListener("pointerdown",apDicaEsconder,true);
+  window.addEventListener("scroll",apDicaEsconder,{passive:true});
   document.addEventListener("paste",apColarEvento,true);
   // clique num lugar vazio (fora do slide e das barras) desmarca e fecha as janelinhas
   document.addEventListener("pointerdown",function(ev){
