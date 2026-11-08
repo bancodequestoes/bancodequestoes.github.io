@@ -2957,6 +2957,15 @@ function contextoAcima(el,r){
   if(bloco){var bt=bloco.getBoundingClientRect().top;contexto=Math.min(contexto,Math.max(0,r.top-bt+12));}
   return contexto;
 }
+/* ao fechar, o contexto é só o que está logo acima da seção (ex.: a caixa dos capítulos marcados, ou os
+   filtros): ele fica colado na barra do topo, sem expor o resto do bloco                               */
+function contextoVizinho(el,r){
+  var v=el.previousElementSibling;
+  while(v&&!v.getBoundingClientRect().height)v=v.previousElementSibling;
+  var limite=Math.round(window.innerHeight*0.33);
+  if(!v)return Math.min(limite,contextoAcima(el,r));
+  return Math.min(limite,Math.max(0,r.top-v.getBoundingClientRect().top+4));
+}
 function guardarRolagem(el){el._rolagem={y:window.scrollY,t:Date.now()};}
 function voltarRolagem(fechados){
   var melhor=null;
@@ -2972,7 +2981,7 @@ function voltarRolagem(fechados){
     if(!rA||r.top<rA.top){ancora=el;rA=r;}
   });
   if(!ancora)return;
-  var alvoTopo=alturaTopo()+contextoAcima(ancora,rA);
+  var alvoTopo=alturaTopo()+contextoVizinho(ancora,rA);
   if(rA.top<alvoTopo-8||rA.top>window.innerHeight*0.6)window.scrollBy({top:rA.top-alvoTopo,behavior:"auto"});
 }
 /* ao abrir uma seção ou escolher uma opção que revela mais coisas abaixo, a página desce junto,
