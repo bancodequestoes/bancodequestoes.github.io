@@ -2946,21 +2946,34 @@ function cliqueEmCampo(el){
 }
 /* regra do site todo: clicar numa parte vazia fecha toda seção aberta (details) e as caixas da
    "Outra fonte"; a página volta para onde estava antes de a seção ser aberta pelo professor */
+/* ENQUADRAMENTO (regra do site todo): sempre que a página se move sozinha, o item em foco não fica colado
+   na barra do topo. Acima dele fica à vista o começo do bloco onde ele está (título, explicação, o que já foi
+   marcado), até um terço da tela; abaixo, o que vem a seguir. Vale para abrir, escolher e fechar.          */
+var BLOCOS_ENQUADRAR=".painel-origem,.painel-imagens,.passo,.bloco,details,fieldset";
+function alturaTopo(){return (parseInt(getComputedStyle(document.documentElement).getPropertyValue("--altura-topo"))||72)+16;}
+function contextoAcima(el,r){
+  var contexto=Math.round(window.innerHeight*0.33);
+  var bloco=el.parentElement&&el.parentElement.closest(BLOCOS_ENQUADRAR);
+  if(bloco){var bt=bloco.getBoundingClientRect().top;contexto=Math.min(contexto,Math.max(0,r.top-bt+12));}
+  return contexto;
+}
 function guardarRolagem(el){el._rolagem={y:window.scrollY,t:Date.now()};}
 function voltarRolagem(fechados){
   var melhor=null;
   fechados.forEach(function(el){var r=el._rolagem;if(r&&(!melhor||r.t<melhor.t))melhor=r;delete el._rolagem;});
   if(melhor){window.scrollTo({top:melhor.y,behavior:"auto"});return;}
   // seção aberta pelo próprio site (ex.: a lista de livros, ao escolher a série): sem posição guardada,
-  // a página encolhe e a tela iria parar bem mais abaixo. Mantém à vista o que acabou de fechar,
-  // logo abaixo da barra do topo, com o que vem depois aparecendo embaixo.
-  var topo=(parseInt(getComputedStyle(document.documentElement).getPropertyValue("--altura-topo"))||72)+16, ancora=null;
+  // a página encolhe e a tela iria parar bem mais abaixo. Enquadra o que acabou de fechar: o contexto
+  // do bloco acima (ex.: os capítulos marcados), a seção fechada e o que vem depois embaixo.
+  var ancora=null, rA=null;
   fechados.forEach(function(el){
     if(!document.body.contains(el))return;
     var r=el.getBoundingClientRect();if(!r.height)return;
-    if(!ancora||r.top<ancora.top)ancora=r;
+    if(!rA||r.top<rA.top){ancora=el;rA=r;}
   });
-  if(ancora&&(ancora.top<topo||ancora.top>window.innerHeight-60))window.scrollBy({top:ancora.top-topo-24,behavior:"auto"});
+  if(!ancora)return;
+  var alvoTopo=alturaTopo()+contextoAcima(ancora,rA);
+  if(rA.top<alvoTopo-8||rA.top>window.innerHeight*0.6)window.scrollBy({top:rA.top-alvoTopo,behavior:"auto"});
 }
 /* ao abrir uma seção ou escolher uma opção que revela mais coisas abaixo, a página desce junto,
    para mostrar o que apareceu, sem esconder o que foi clicado (ele fica logo abaixo da barra do topo) */
@@ -2997,14 +3010,12 @@ function seguirAbertura(ev){
       if(fimq>baixo)baixo=fimq;
     });
     if(!baixo)return;
-    var topo=(parseInt(getComputedStyle(document.documentElement).getPropertyValue("--altura-topo"))||72)+16;
+    var topo=alturaTopo();
     var sobra=baixo+FOLGA_BAIXO-window.innerHeight;
     if(sobra<=8)return;
     // não cola o item clicado na barra do topo: deixa à vista o começo do bloco onde ele está
     // (título e explicação), no máximo um terço da tela; o resto aparece rolando, de forma natural
-    var contexto=Math.round(window.innerHeight*0.33);
-    var bloco=alvo.parentElement&&alvo.parentElement.closest(".painel-origem,.passo,details,fieldset");
-    if(bloco){var bt=bloco.getBoundingClientRect().top;contexto=Math.min(contexto,Math.max(0,r.top-bt+12));}
+    var contexto=contextoAcima(alvo,r);
     var desce=Math.min(sobra,r.top-topo-contexto);
     if(desce>8)window.scrollBy({top:desce,behavior:"smooth"});
   }
