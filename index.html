@@ -3005,7 +3005,8 @@ function seguirAbertura(ev){
     var r=alvo.getBoundingClientRect();if(!r.height)return;
     var baixo=0;
     mudou.forEach(function(n){
-      if(!n.getBoundingClientRect||!document.body.contains(n))return;
+      // um texto que entrou e já saiu da página não tem mais pai: fica de fora
+      if(!n||!n.getBoundingClientRect||!document.body.contains(n))return;
       var q=n.getBoundingClientRect();if(!q.height||q.bottom<=r.bottom)return;
       // inclui a borda e o respiro da caixa que contém o que apareceu
       var fimq=q.bottom, pai=n.parentElement;
@@ -3025,7 +3026,7 @@ function seguirAbertura(ev){
   function quieto(){clearTimeout(espera);espera=setTimeout(fim,Date.now()-inicio>4000?0:220);}
   obs=new MutationObserver(function(lista){
     lista.forEach(function(m){
-      if(m.type==="childList")m.addedNodes.forEach(function(n){mudou.push(n.nodeType===1?n:n.parentNode);});
+      if(m.type==="childList")m.addedNodes.forEach(function(n){var e=n.nodeType===1?n:n.parentNode;if(e)mudou.push(e);});
       else mudou.push(m.target);
     });
     quieto();
