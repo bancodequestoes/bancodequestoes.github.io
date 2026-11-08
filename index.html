@@ -1224,7 +1224,8 @@ input[type=range]{width:100%;accent-color:var(--primaria)}
           </div>
         </div>
         <div id="painel-imagens" class="painel-imagens" hidden>
-          <p class="estilo-titulo"><strong>Questões com imagem</strong> <span>— a IA recebe a imagem e o texto do capítulo de onde ela veio</span></p>
+          <details id="det-imagens" open>
+          <summary><span><strong>Questões com imagem</strong> <span class="sumario" id="img-sumario">— a IA recebe a imagem e o texto do capítulo de onde ela veio</span></span></summary>
           <div class="img-opcoes">
             <div role="radiogroup" aria-label="Quem escolhe as imagens">
               <label><input type="radio" name="img-modo" value="manual" checked> Eu escolho as imagens</label>
@@ -1237,20 +1238,13 @@ input[type=range]{width:100%;accent-color:var(--primaria)}
           </div>
           <p class="ajuda" id="img-resumo"></p>
           <div id="img-grade"></div>
+          </details>
         </div>
         <p class="ajuda" id="total-pedido" style="margin-top:8px;font-weight:700;color:var(--primaria)">Nenhuma questão pedida ainda.</p>
         <p class="ajuda" style="margin-top:4px">Até 20 questões por geração. Para provas maiores, gere em rodadas: o banco acumula tudo.</p>
 
         <details id="det-mais-opcoes" style="margin-top:14px">
-          <summary><span><strong>Mais opções</strong> <span class="opcional">opcional</span> <span class="sumario">— bimestre, habilidades, nível de exigência, orientações</span></span></summary>
-            <label for="unidade">Bimestre <span class="opcional">opcional</span></label>
-            <select id="unidade">
-              <option value="">— não informar —</option>
-              <option value="1º bimestre">1º bimestre</option>
-              <option value="2º bimestre">2º bimestre</option>
-              <option value="3º bimestre">3º bimestre</option>
-              <option value="4º bimestre">4º bimestre</option>
-            </select>
+          <summary><span><strong>Mais opções</strong> <span class="opcional">opcional</span> <span class="sumario">— habilidades, nível de exigência, orientações</span></span></summary>
         <details id="det-habilidades">
           <summary><span><strong>Habilidades da matriz</strong> <span class="opcional">opcional</span> <span id="resumo-hab" class="sumario"></span></span></summary>
           <input type="text" id="busca-hab" placeholder="Filtrar por código ou por palavra do texto">
@@ -1272,7 +1266,7 @@ input[type=range]{width:100%;accent-color:var(--primaria)}
         </details>
 
         <details id="det-material-extra" style="margin-top:10px">
-          <summary><span><strong>Material extra</strong> <span class="opcional">opcional</span> <span class="sumario">— anexar um PDF ou colar um texto só para apoio <span id="resumo-outros"></span></span></span></summary>
+          <summary><span><strong>Material complementar</strong> <span class="opcional">opcional</span> <span class="sumario">— tem outro material seu (PDF ou texto) para apoiar as questões? Adicione aqui <span id="resumo-outros"></span></span></span></summary>
           <div id="conteudo-material">
           <label for="arquivos" style="margin-top:0">Arquivos guardados (PDF) <span class="opcional">opcional</span></label>
           <p class="ajuda">Provas, apostilas e outros PDFs que não estão nos livros SESI. Anexe cada arquivo uma única vez, dê um título e marque quando ele deve alimentar a próxima geração.</p>
@@ -3249,6 +3243,7 @@ function renderImagens(){
   var n=qtdPedidaImagens();
   painel.hidden=!livro||!n;
   if(painel.hidden)return;
+  $("img-sumario").textContent="— marque os capítulos do livro no passo 1";
   var estilo=estiloDoLivro();
   $("img-nota-objetiva").textContent=estilo==="objetiva"?"(simples)":"(molde "+ORIGENS[estilo].nome+")";
   var manual=modoImagens()==="manual", ids=Object.keys(LS.marcados), grade=$("img-grade");
@@ -3279,6 +3274,8 @@ function renderImagens(){
     : manual
       ? "Clique nas imagens que vão virar questão: <strong>"+nEsc+" de "+n+"</strong> "+(n===1?"escolhida":"escolhidas")+". A lupa amplia a imagem."
       : "O sistema vai sortear <strong>"+n+"</strong> "+(n===1?"imagem":"imagens")+" entre as "+totalImgs+" dos capítulos marcados, de preferência as que ainda não viraram questão.";
+  $("img-sumario").textContent=!totalImgs?"— os capítulos marcados não têm imagens":
+    manual?"— "+nEsc+" de "+n+" "+(n===1?"imagem escolhida":"imagens escolhidas"):"— o sistema escolhe "+n+" "+(n===1?"imagem":"imagens");
   var usadas=imagensJaUsadas(), html="";
   ids.forEach(function(id){
     var q=qtdImagens(id), src=fonteImagens(id), lista=IMG.cache[src];
@@ -3332,7 +3329,7 @@ $("img-grade").addEventListener("click",function(e){
 $("img-grade").addEventListener("keydown",function(e){
   if((e.key==="Enter"||e.key===" ")&&e.target.classList.contains("img-livro")){e.preventDefault();e.target.click();}
 });
-$("q-imagem").addEventListener("change",function(){atualizarTotalPedido();renderImagens();});
+$("q-imagem").addEventListener("change",function(){if(qtdPedidaImagens())$("det-imagens").open=true;atualizarTotalPedido();renderImagens();});
 document.querySelectorAll('input[name="img-modo"],input[name="img-tipo"]').forEach(function(r){r.addEventListener("change",renderImagens);});
 
 /* as imagens que vão virar questão: as escolhidas, ou um sorteio que evita as já usadas */
@@ -4538,7 +4535,7 @@ $("btn-gerar").addEventListener("click",function(){
     matriz:matrizDaOrigem(origem),
     anoMatriz:"",
     serie:$("serie").value,
-    unidade:$("unidade").value.trim(),
+    unidade:"", // o bimestre é informado só ao montar a prova, a ficha ou o planejamento
     habilidades:$("habilidades").value.trim(),
     detalheHabilidades:habilidadesDetalhadas(),
     matrizDisponivel:HABILIDADES[chaveMatriz()]||[],
@@ -4624,7 +4621,7 @@ $("btn-gerar").addEventListener("click",function(){
 });
 
 $("btn-limpar-form").addEventListener("click",function(){
-  ["assunto","unidade","habilidades","observacoes","texto-extra","busca-hab"].forEach(function(c){$(c).value="";});
+  ["assunto","habilidades","observacoes","texto-extra","busca-hab"].forEach(function(c){$(c).value="";});
   habSelecionadas={};renderHabilidades();
   ["objetiva","dissertativa","adaptada","imagem"].forEach(function(t){var c=$("q-"+t);if(c)c.value="0";});
   IMG.escolhidas={};IMG.ordem=[];
@@ -10090,7 +10087,7 @@ var GUIA_SITE=[
 "",
 "ENTRADA E CHAVE: o site pede login com Google; o administrador (Matheus) libera o e-mail de cada colega em Ajustes › Nuvem compartilhada. Depois do login, quem não tem chave de IA vê uma tela para cadastrá-la. A chave é gratuita: aistudio.google.com/apikey, entrar com uma conta Google (se a da escola estiver bloqueada, use a pessoal), Criar chave de API, copiar (começa com AQ. ou AIza) e colar em Ajustes › Chave de acesso à IA › Salvar chave › Testar conexão. A chave fica só naquele aparelho e navegador: em outro computador ou navegador é preciso colar de novo. Botão 'Buscar modelos disponíveis na minha conta' escolhe um modelo estável e um reserva.",
 "",
-"GERAR (criar questões novas com a IA). Passo 1, 'Criar a partir de': Livro SESI (escolhe a série, abre o livro e marca os capítulos; os capítulos marcados alimentam a geração; clicar fora do livro fecha a lista; o botão vermelho 'Desmarcar tudo' limpa), ENEM (área, competência, habilidade e dificuldade da matriz do ENEM), SSA (etapa 1, 2 ou 3) ou PASSE. No Livro SESI dá para escolher a 'Estrutura das questões objetivas': Simples, ENEM, SSA ou PASSE. Passo 2, 'Sobre o quê': nível, série, componente e assunto (o assunto é opcional quando há capítulo marcado). Quando há capítulos marcados, aparece um bloco verde 'Habilidades dos capítulos marcados', com as habilidades que cada capítulo cita, separadas por capítulo. Passo 3: quantidade de Objetivas, Dissertativas e Adaptadas (para estudantes atípicos, TEA e TDAH), até 20 por geração; para mais, gere em rodadas, o banco acumula. Também no passo 3, só com Livro SESI: 'Com imagem do livro' (até 10). A questão parte de uma foto, mapa, gravura, charge ou gráfico do capítulo marcado, e a IA recebe a imagem junto com o texto do capítulo, relacionando-a ao contexto que o capítulo trabalha. Abre um quadro com as miniaturas das imagens dos capítulos marcados: em 'Eu escolho as imagens', o professor clica nas imagens (a lupa amplia; aparece 'já usada' quando a imagem já virou questão); em 'O sistema escolhe', o site sorteia entre elas, evitando as já usadas. Dá para escolher se a questão com imagem é Objetiva (no molde escolhido no passo 1) ou Dissertativa. A imagem sai no banco, na prova e no Word, com a legenda logo abaixo (editável no editor da questão, campo 'Legenda da imagem'). Se o capítulo não tiver imagens guardadas, aparece 'sem imagens guardadas'. 'Mais opções' (opcional): bimestre, habilidades da matriz, nível de exigência, elaboração cuidadosa (mais lenta), orientações adicionais. 'Material extra' (opcional): colar um texto ou anexar PDFs próprios. Botões Gerar questões, Cancelar geração e Limpar campos. Ensino Fundamental sai com 4 alternativas (A a D) e Médio com 5 (A a E); adaptadas têm 3.",
+"GERAR (criar questões novas com a IA). Passo 1, 'Criar a partir de': Livro SESI (escolhe a série, abre o livro e marca os capítulos; os capítulos marcados alimentam a geração; clicar fora do livro fecha a lista; o botão vermelho 'Desmarcar tudo' limpa), ENEM (área, competência, habilidade e dificuldade da matriz do ENEM), SSA (etapa 1, 2 ou 3) ou PASSE. No Livro SESI dá para escolher a 'Estrutura das questões objetivas': Simples, ENEM, SSA ou PASSE. Passo 2, 'Sobre o quê': nível, série, componente e assunto (o assunto é opcional quando há capítulo marcado). Quando há capítulos marcados, aparece um bloco verde 'Habilidades dos capítulos marcados', com as habilidades que cada capítulo cita, separadas por capítulo. Passo 3: quantidade de Objetivas, Dissertativas e Adaptadas (para estudantes atípicos, TEA e TDAH), até 20 por geração; para mais, gere em rodadas, o banco acumula. Também no passo 3, só com Livro SESI: 'Com imagem do livro' (até 10). A questão parte de uma foto, mapa, gravura, charge ou gráfico do capítulo marcado, e a IA recebe a imagem junto com o texto do capítulo, relacionando-a ao contexto que o capítulo trabalha. Abre um quadro com as miniaturas das imagens dos capítulos marcados: em 'Eu escolho as imagens', o professor clica nas imagens (a lupa amplia; aparece 'já usada' quando a imagem já virou questão); em 'O sistema escolhe', o site sorteia entre elas, evitando as já usadas. Dá para escolher se a questão com imagem é Objetiva (no molde escolhido no passo 1) ou Dissertativa. A imagem sai no banco, na prova e no Word, com a legenda logo abaixo (editável no editor da questão, campo 'Legenda da imagem'). Se o capítulo não tiver imagens guardadas, aparece 'sem imagens guardadas'. 'Mais opções' (opcional): habilidades da matriz, nível de exigência, elaboração cuidadosa (mais lenta), orientações adicionais. 'Material complementar' (opcional): para quem tem outro material próprio, anexar PDFs ou colar um texto que apoia as questões. Botões Gerar questões, Cancelar geração e Limpar campos. Ensino Fundamental sai com 4 alternativas (A a D) e Médio com 5 (A a E); adaptadas têm 3.",
 "",
 "BANCO: todas as questões geradas e guardadas. Filtros por assunto, nível, componente, série, matriz, material, nível de exigência e formato, e busca por palavra. Cada questão pode ser editada (texto, alternativas, gabarito, resolução) ou excluída. Marque as caixas das questões para usar: aparece a barra azul com 'Montar prova com as selecionadas', 'Baixar sem timbre', 'Reequilibrar gabarito' (espalha as respostas certas entre as letras) e 'Excluir selecionadas'. Também há 'Selecionar tudo que o filtro mostra' e 'Limpar seleção'.",
 "",
