@@ -1097,11 +1097,6 @@ input[type=range]{width:100%;accent-color:var(--primaria)}
               <summary><span><strong>Livros da série</strong> <span class="sumario" id="ls-resumo-lista">— escolha a série acima</span></span></summary>
               <div id="ls-lista"></div>
             </details>
-            <div class="so-admin" style="margin-top:10px">
-              <button class="botao secundario" type="button" id="btn-ls-enviar">Enviar livros para a nuvem</button>
-              <input type="file" id="arquivo-livros" accept="application/json,.json,.gz" multiple style="display:none">
-              <div id="ls-envio"></div>
-            </div>
     </div>
     <div class="painel-origem" id="painel-enem" hidden>
       <p class="ajuda" style="margin-top:0">As questões novas seguem a estrutura do ENEM. A IA recebe como modelo algumas questões reais do acervo (aba Provas oficiais) da habilidade escolhida.</p>
@@ -1642,6 +1637,21 @@ input[type=range]{width:100%;accent-color:var(--primaria)}
       <p class="ajuda" style="margin:16px 0 4px"><strong>Avisos de erro por e-mail.</strong> Quando o assistente do chat de ajuda percebe um defeito do site, ele manda um e-mail para o administrador. O primeiro aviso chega com um pedido de ativação do FormSubmit: é só confirmar uma vez.</p>
       <button class="botao secundario" type="button" id="btn-testar-relato">Testar o aviso de erros por e-mail</button>
       <div id="retorno-relato"></div>
+    </div>
+  </div>
+
+  <div class="bloco" id="bloco-imagens">
+    <h2>Imagens dos livros SESI</h2>
+    <p class="ajuda">As imagens dos livros moram numa nuvem só delas, para não ocupar o espaço das questões. Conecte-se uma vez com a mesma conta Google; depois o navegador lembra.</p>
+    <div id="img-nuvem-estado"></div>
+    <div class="botoes" style="margin-top:6px">
+      <button class="botao" type="button" id="btn-img-conectar">Conectar imagens</button>
+    </div>
+    <div class="so-admin" style="margin-top:14px">
+      <p class="ajuda" style="margin:0 0 6px"><strong>Enviar livros e imagens (administrador).</strong> Escolha os arquivos livros-sesi-*.json. Pode marcar vários de uma vez (Cmd+A na pasta). Para as imagens, conecte-se acima antes.</p>
+      <button class="botao secundario" type="button" id="btn-ls-enviar">Enviar livros e imagens para a nuvem</button>
+      <input type="file" id="arquivo-livros" accept="application/json,.json,.gz" multiple style="display:none">
+      <div id="ls-envio"></div>
     </div>
   </div>
 
@@ -2926,11 +2936,31 @@ function conectarImagens(){
   var S=NV.sdk, prov=new S.GoogleAuthProvider();
   if(NV.usuario)prov.setCustomParameters({login_hint:NV.usuario.email});
   return S.signInWithPopup(NV.img.auth,prov).catch(function(e){
-    if(e&&e.code==="auth/popup-blocked")return S.signInWithRedirect(NV.img.auth,prov);
+    // sem redirecionamento: a volta de outro domínio se perde e vira um ciclo de login
+    if(e&&e.code==="auth/popup-blocked")throw new Error("o navegador bloqueou a janela do Google; permita pop-ups para este site e clique de novo");
     if(e&&(e.code==="auth/popup-closed-by-user"||e.code==="auth/cancelled-popup-request"))return;
     throw e;
   });
 }
+function imgNuvemTela(){
+  var el=$("img-nuvem-estado"), bt=$("btn-img-conectar");
+  if(!el||!bt)return;
+  if(!nuvemImagensSeparada()){el.innerHTML='<div class="aviso">A nuvem das imagens ainda está carregando…</div>';bt.style.display="none";return;}
+  if(NV.img.usuario){
+    el.innerHTML='<div class="aviso ok">Conectado às imagens como <strong>'+esc(NV.img.usuario.email)+'</strong>.</div>';
+    bt.textContent="Trocar de conta";bt.className="botao secundario";
+  }else{
+    el.innerHTML='<div class="aviso">Ainda não conectado às imagens.</div>';
+    bt.textContent="Conectar imagens";bt.className="botao";
+  }
+  bt.style.display="";
+}
+$("btn-img-conectar").addEventListener("click",function(){
+  if(!nuvemImagensSeparada())return;
+  conectarImagens().then(imgNuvemTela).catch(function(e){
+    msg("img-nuvem-estado","Não foi possível conectar ("+esc(e&&e.code||e&&e.message||"erro")+").","erro");
+  });
+});
 function baixarImagensCapitulo(id){
   var S=NV.sdk, db=dbImagens();
   return S.getDoc(S.doc(db,"livros","g-"+id)).then(function(d){
@@ -3180,10 +3210,7 @@ var PESO_DOC_IMG=900000;
 function enviarImagensSerie(pacote,avisar){
   var S=NV.sdk, docs=[], db=dbImagens();
   if(nuvemImagensSeparada()&&!NV.img.usuario)
-    return conectarImagens().then(function(){
-      if(!NV.img.usuario)throw new Error("conecte-se à nuvem de imagens e envie de novo");
-      return enviarImagensSerie(pacote,avisar);
-    });
+    return Promise.reject(new Error("clique antes em Conectar imagens (Ajustes › Imagens dos livros SESI)"));
   Object.keys(pacote.caps).forEach(function(id){
     var lista=pacote.caps[id], blocos=[[]], peso=0;
     lista.forEach(function(im){
@@ -3243,6 +3270,7 @@ function livrosIniciar(){
   ["ls-serie","ls-area","ls-tipo"].forEach(function(id){$(id).addEventListener("change",function(){dl.open=true;});});
   $("btn-ls-enviar").addEventListener("click",function(){
     if(!(NV.admin&&NV.membro)){msg("ls-envio","Entre na nuvem com a conta do administrador para enviar os livros.","erro");return;}
+    if(nuvemImagensSeparada()&&!NV.img.usuario)msg("ls-envio","Atenção: para enviar os arquivos de imagens, clique antes em Conectar imagens, aqui acima. Arquivos só de texto podem seguir.","erro");
     $("arquivo-livros").click();
   });
   $("arquivo-livros").addEventListener("change",function(){
@@ -9092,6 +9120,7 @@ function nuvemIniciar(){
         NV.img.pronto=true;
         NV.img.usuario=u&&u.email?{email:u.email.toLowerCase()}:null;
         if(typeof renderImagens==="function")renderImagens();
+        if(typeof imgNuvemTela==="function")imgNuvemTela();
       });
     }
     if(emulador){
