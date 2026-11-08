@@ -3189,6 +3189,8 @@ function gerarComImagens(p,lista,tipoImg,botao,idProg,aoAvisar){
         q.figuras=[k2];
         q.legendaFig=legendaCurta(b.legendaImagem||im.l||"Imagem reproduzida do livro didático.");
         q.imagemLivro={id:im.id,cap:it.cap,pagina:im.p,legenda:im.l};
+        // sem texto-base, a fonte solta no topo confunde: o crédito da imagem já vai na legenda
+        if(!String(q.textoBase||"").trim())q.fonte="";
         if(q.alternativas.length)equilibrarGabarito([q],usos);
         novas.push(q);
         evitar.push(q.enunciado.replace(/\s+/g," ").slice(0,110));
