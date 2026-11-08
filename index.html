@@ -1640,9 +1640,9 @@ input[type=range]{width:100%;accent-color:var(--primaria)}
     </div>
   </div>
 
-  <div class="bloco" id="bloco-imagens">
+  <div class="bloco so-admin" id="bloco-imagens">
     <h2>Imagens dos livros SESI</h2>
-    <p class="ajuda">As imagens dos livros moram numa nuvem só delas, para não ocupar o espaço das questões. Conecte-se uma vez com a mesma conta Google; depois o navegador lembra.</p>
+    <p class="ajuda">Só você (administrador) vê este bloco. As imagens moram numa nuvem só delas, para não ocupar o espaço das questões. Os professores liberados entram nela sozinhos, junto com o login do site, e a lista de liberados é copiada para lá automaticamente.</p>
     <div id="img-nuvem-estado"></div>
     <div class="botoes" style="margin-top:6px">
       <button class="botao" type="button" id="btn-img-conectar">Conectar imagens</button>
@@ -3030,8 +3030,8 @@ function renderImagens(){
   var semCache=ids.some(function(id){return qtdImagens(id)&&!IMG.cache[fonteImagens(id)];});
   if(totalImgs&&semCache&&livrosNaNuvem()&&nuvemImagensSeparada()&&!NV.img.usuario){
     $("img-resumo").innerHTML="";
-    grade.innerHTML='<div class="aviso">As imagens dos livros ficam numa nuvem só delas. Na primeira vez, conecte-se a ela com a mesma conta Google'+
-      (NV.usuario?" (<strong>"+esc(NV.usuario.email)+"</strong>)":"")+'. Depois o navegador lembra.'+
+    grade.innerHTML='<div class="aviso">As imagens dos livros ainda não foram liberadas neste navegador. Normalmente isso acontece sozinho no login; se não aconteceu, conecte-se com a mesma conta Google'+
+      (NV.usuario?" (<strong>"+esc(NV.usuario.email)+"</strong>)":"")+'.'+
       '<div style="margin-top:10px"><button type="button" class="botao" id="btn-conectar-imagens">Conectar imagens</button></div></div>';
     $("btn-conectar-imagens").addEventListener("click",function(){
       conectarImagens().catch(function(e){msg("img-resumo","Não foi possível conectar ("+esc(e&&e.code||e&&e.message||"erro")+"). Tente de novo.","erro");});
@@ -9019,7 +9019,7 @@ var FATIA=300000, LOTE_DOCS=400, LOTE_PESO=7000000, FOLGA_MARCO=300000;
 var NV={sdk:null,auth:null,db:null,usuario:null,membro:false,admin:false,pronto:false,
         ouvinte:null,marco:0,h:{},enviando:null,denovo:false,espera:null,
         versoes:{},aplicado:{},fila:Promise.resolve(),teste:false,
-        img:{auth:null,db:null,usuario:null,pronto:false}};
+        img:{auth:null,db:null,usuario:null,pronto:false,quandoPronto:null}};
 try{
   var nuvemSalva=JSON.parse(ler(CHAVE_NUVEM)||"null");
   if(nuvemSalva){
@@ -9116,11 +9116,14 @@ function nuvemIniciar(){
         S.connectAuthEmulator(NV.img.auth,"http://127.0.0.1:9099",{disableWarnings:true});
         S.connectFirestoreEmulator(NV.img.db,"127.0.0.1",8080);
       }
+      var avisarPronto;
+      NV.img.quandoPronto=new Promise(function(r){avisarPronto=r;});
       S.onAuthStateChanged(NV.img.auth,function(u){
-        NV.img.pronto=true;
+        NV.img.pronto=true;avisarPronto();
         NV.img.usuario=u&&u.email?{email:u.email.toLowerCase()}:null;
         if(typeof renderImagens==="function")renderImagens();
         if(typeof imgNuvemTela==="function")imgNuvemTela();
+        if(NV.img.usuario&&NV.admin&&NV.membro)nuvemListarMembros();
       });
     }
     if(emulador){
@@ -9165,6 +9168,7 @@ function nuvemVerificarAcesso(){
     NV.membro=ok;
     if(!ok){nuvemEstado("semacesso");return;}
     if(NV.admin)nuvemListarMembros();
+    conferirVinculoImagens();
     figurasProntas.then(nuvemOuvir);
   }).catch(function(e){
     NV.membro=false;
@@ -9604,6 +9608,7 @@ function nuvemListarMembros(){
   return S.getDocs(S.collection(NV.db,"membros")).then(function(r){
     var emails=[];r.forEach(function(d){emails.push(d.id);});
     emails.sort();
+    espelharMembrosImagens(emails);
     $("lista-membros").innerHTML=emails.length
       ? emails.map(function(e){return '<li>'+esc(e)+' <button class="botao secundario" data-remover-membro="'+esc(e)+'" style="padding:3px 10px;font-size:12.5px;margin-left:6px">remover</button></li>';}).join("")
       : '<li style="color:var(--cinza)">nenhum colega liberado ainda</li>';
@@ -9627,12 +9632,62 @@ $("btn-liberar-membro").addEventListener("click",function(){
     return nuvemListarMembros();
   }).catch(function(x){msg("retorno-membros",esc(x&&x.code||"falha ao liberar"),"erro");});
 });
+/* ---- vínculo com a nuvem das imagens ----
+   O mesmo login do Google do site entra também na nuvem das imagens (signInWithCredential),
+   sem o professor clicar em nada. Para isso o projeto das imagens precisa aceitar o ID do
+   cliente web do projeto principal (Authentication › Google › IDs de clientes externos).
+   Quando o login do administrador vincula com sucesso, o site grava livros/vinculo-imagens
+   na nuvem principal; a partir daí, quem já estava logado sem vínculo é convidado UMA vez
+   a entrar de novo (sai e cai na tela de entrada normal).                                   */
+var CHAVE_VINCULO_IMG="bancoQuestoes.vinculoImagens.v1";
+function vincularImagens(r){
+  if(!r||!nuvemImagensSeparada())return;
+  var S=NV.sdk, cred=S.GoogleAuthProvider.credentialFromResult(r);
+  if(!cred)return;
+  var email=(r.user&&r.user.email||"").toLowerCase();
+  return S.signInWithCredential(NV.img.auth,cred).then(function(){
+    gravar(CHAVE_VINCULO_IMG,email);
+    if(email===NUVEM_ADMIN)
+      return S.setDoc(S.doc(NV.db,"livros","vinculo-imagens"),{ok:true,em:S.serverTimestamp()});
+  }).catch(function(e){console.warn("vínculo das imagens falhou",e&&e.code||e);});
+}
+function imagensVinculadas(){
+  return !!(NV.img.usuario&&NV.usuario&&NV.img.usuario.email===NV.usuario.email);
+}
+function conferirVinculoImagens(){
+  if(!nuvemImagensSeparada()||!NV.img.quandoPronto||!NV.usuario)return;
+  var S=NV.sdk, email=NV.usuario.email;
+  NV.img.quandoPronto.then(function(){
+    if(imagensVinculadas()||ler(CHAVE_VINCULO_IMG)===email)return;
+    // o administrador testa o vínculo primeiro; os demais só depois que deu certo com ele
+    var pode=NV.admin?Promise.resolve(true)
+      :S.getDoc(S.doc(NV.db,"livros","vinculo-imagens")).then(function(d){return d.exists();},function(){return false;});
+    return pode.then(function(ok){
+      if(!ok||!NV.usuario||NV.usuario.email!==email||imagensVinculadas())return;
+      gravar(CHAVE_VINCULO_IMG,email);
+      if(NV.img.usuario)S.signOut(NV.img.auth).catch(function(){});
+      $("portao-msg").innerHTML='<div class="aviso">Entre de novo com sua conta Google para liberar as imagens dos livros. É só desta vez.</div>';
+      return S.signOut(NV.auth);
+    });
+  }).catch(function(){});
+}
+function espelharMembrosImagens(emails){
+  if(!nuvemImagensSeparada()||!NV.admin||!NV.img.usuario||NV.img.usuario.email!==NUVEM_ADMIN)return;
+  var S=NV.sdk, db=NV.img.db;
+  S.getDocs(S.collection(db,"membros")).then(function(r){
+    var la=[];r.forEach(function(d){la.push(d.id);});
+    var b=S.writeBatch(db), mudou=0;
+    emails.forEach(function(e){if(la.indexOf(e)<0){b.set(S.doc(db,"membros",e),{em:S.serverTimestamp()});mudou++;}});
+    la.forEach(function(e){if(emails.indexOf(e)<0){b.delete(S.doc(db,"membros",e));mudou++;}});
+    if(mudou)return b.commit();
+  }).catch(function(e){console.warn("espelho dos professores nas imagens falhou",e&&e.code||e);});
+}
 function nuvemEntrar(){
   if(!NV.auth){msg("nuvem-estado","A nuvem ainda está carregando. Tente de novo em alguns segundos.","erro");return;}
   var S=NV.sdk, prov=new S.GoogleAuthProvider();
   prov.setCustomParameters({prompt:"select_account"});
   $("portao-msg").innerHTML="";
-  S.signInWithPopup(NV.auth,prov).catch(function(e){
+  S.signInWithPopup(NV.auth,prov).then(vincularImagens,function(e){
     if(e&&e.code==="auth/popup-blocked")return S.signInWithRedirect(NV.auth,prov);
     if(e&&(e.code==="auth/popup-closed-by-user"||e.code==="auth/cancelled-popup-request"))return;
     msg("portao-msg","Não foi possível entrar ("+esc(e&&e.code||"erro")+"). Tente de novo.","erro");
