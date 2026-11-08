@@ -1122,8 +1122,9 @@ input[type=range]{width:100%;accent-color:var(--primaria)}
     </div>
 
     <h3 class="passo"><span>2</span> Sobre o quê</h3>
-        <div class="linha">
-          <div>
+        <div id="sobre-auto"></div>
+        <div class="linha" id="campo-serie">
+          <div style="display:none">
             <label for="etapa">Nível de ensino</label>
             <select id="etapa">
               <option value="Ensino Fundamental">Ensino Fundamental</option>
@@ -1135,8 +1136,10 @@ input[type=range]{width:100%;accent-color:var(--primaria)}
             <select id="serie"></select>
           </div>
         </div>
-        <label for="componente">Componente curricular</label>
+        <div id="campo-componente">
+        <label for="componente">Componente curricular <span id="nota-componente" style="font-weight:400;color:var(--cinza)"></span></label>
         <select id="componente"></select>
+        </div>
         <label for="assunto">Assunto ou recorte <span class="opcional">opcional</span> <span style="font-weight:400;color:var(--cinza)">— se houver capítulo ou material marcado</span></label>
         <input type="text" id="assunto" placeholder="Ex.: Revolução Pernambucana de 1817 — causas e desdobramentos">
         <div id="hab-dos-capitulos"></div>
@@ -2716,6 +2719,7 @@ function livrosRenderMarcados(){
   if(!alvo)return;
   if(typeof habSelecionadas==="object"&&habSelecionadas)renderHabilidades();
   if($("img-grade"))renderImagens();
+  if(typeof sincronizarSobreOQue==="function"&&$("componente").options.length)sincronizarSobreOQue();
   var ids=Object.keys(LS.marcados);
   if(!ids.length){alvo.innerHTML="";return;}
   alvo.innerHTML='<div class="aviso">'+'<strong>'+ids.length+" "+(ids.length===1?"capítulo marcado":"capítulos marcados")+"</strong> para a próxima geração:"+
@@ -2804,7 +2808,7 @@ function livrosRender(){
       var id=this.dataset.cap, L=ind.livros[+this.dataset.livro], caixa=this;
       var c=L.caps.filter(function(x){return x.id===id;})[0];
       if(!this.checked){livrosDesmarcar(id);return;}
-      LS.marcados[id]={nome:"Livro SESI · "+nomeSerieSesi(ind.chave)+" · "+nomeCaderno(L)+" · "+c.nome,serie:ind.chave,palavras:c.palavras};
+      LS.marcados[id]={nome:"Livro SESI · "+nomeSerieSesi(ind.chave)+" · "+nomeCaderno(L)+" · "+c.nome,serie:ind.chave,palavras:c.palavras,area:L.area||""};
       livrosGuardar();livrosRenderMarcados();
       textoCapitulo(id).then(function(){
         resumoBiblioteca();livrosRenderMarcados();
@@ -4178,6 +4182,7 @@ function origemMudou(guardar){
   Object.keys(ORIGENS).forEach(function(k){$("painel-"+k).hidden=k!==o;});
   $("nota-objetiva").textContent=o==="livro"?notaDoLivro():ORIGENS[o].nota;
   if(o!=="livro"&&$("etapa").value!=="Ensino Médio"){$("etapa").value="Ensino Médio";$("etapa").dispatchEvent(new Event("change"));}
+  if(o!=="livro"&&etapaDaSerie($("serie").value)==="Ensino Fundamental")$("serie").value="";
   if(o==="ssa"){$("serie").value=$("ssa-etapa").value+"ª série";$("serie").dispatchEvent(new Event("change"));}
   if(o==="enem")renderFiltroEnem();else infoAcervo();
   if(guardar)gravar(CHAVE_ORIGEM,o);
@@ -4185,6 +4190,7 @@ function origemMudou(guardar){
   atualizarTotalPedido();
   renderImagens();
   renderHabilidades();
+  sincronizarSobreOQue();
 }
 document.querySelectorAll('input[name="origem"]').forEach(function(r){
   r.addEventListener("change",function(){acervoCache=null;origemMudou(true);});
@@ -4422,11 +4428,52 @@ function capitulosDoGerar(){
   });
 }
 var habSelecionadas={};
+// a série já diz o nível: a lista traz as duas etapas e o nível (escondido) segue a série
 function preencherSeries(){
-  var sel=$("serie"), atual=sel.value, lista=SERIES[$("etapa").value]||[];
-  sel.innerHTML='<option value="">— selecione —</option>'+lista.map(function(s){
-    return '<option value="'+s+'"'+(s===atual?" selected":"")+">"+s+"</option>";
+  var sel=$("serie"), atual=sel.value;
+  sel.innerHTML='<option value="">— selecione —</option>'+["Ensino Fundamental","Ensino Médio"].map(function(et){
+    return '<optgroup label="'+et+'">'+SERIES[et].map(function(s){
+      return '<option value="'+s+'"'+(s===atual?" selected":"")+">"+s+"</option>";}).join("")+"</optgroup>";
   }).join("");
+}
+function etapaDaSerie(v){return SERIES["Ensino Médio"].indexOf(v)>-1?"Ensino Médio":SERIES["Ensino Fundamental"].indexOf(v)>-1?"Ensino Fundamental":"";}
+/* ---- "Sobre o quê" com capítulo do livro marcado: série e componente vêm do livro ---- */
+var COMP_DA_AREA_LIVRO={"Lingua Portuguesa":"Língua Portuguesa","Língua Portuguesa":"Língua Portuguesa","Inglês":"Língua Inglesa","Espanhol":"Língua Espanhola",
+  "Matemática e Suas Tecnologias":"Matemática"};
+function compDoMarcado(m){
+  var a=areaDoMarcado(m);
+  if(!a)return "";
+  var t=COMP_DA_AREA_LIVRO[a]||a, achou="";
+  [].slice.call($("componente").options).forEach(function(o){if(o.value.toLowerCase()===t.toLowerCase())achou=o.value;});
+  return achou;
+}
+function areaDoMarcado(m){
+  if(m.area)return m.area;
+  // marcados antigos: "Livro SESI · 9º ano · História – Caderno 4 (professor) · Capítulo…"
+  var partes=String(m.nome||"").split(" · ");
+  return partes.length>3?partes[2].replace(/\s*\(professor\)\s*$/,"").replace(/\s*–\s*Caderno\s*\d+$/,"").trim():"";
+}
+function sincronizarSobreOQue(){
+  if(!$("sobre-auto"))return;
+  var ids=typeof origemAtual==="function"&&origemAtual()==="livro"?Object.keys(LS.marcados):[];
+  var ms=ids.map(function(id){return LS.marcados[id];});
+  var auto=$("sobre-auto"), cs=$("campo-serie"), cc=$("campo-componente"), nota=$("nota-componente");
+  if(!ms.length){auto.innerHTML="";cs.style.display="";cc.style.display="";nota.textContent="";return;}
+  var sl=SERIES_SESI.filter(function(x){return x[0]===ms[0].serie;})[0];
+  var serie=sl?sl[2]:"";
+  if(serie){
+    var et=etapaDaSerie(serie);
+    if($("etapa").value!==et){$("etapa").value=et;$("etapa").dispatchEvent(new Event("change"));}
+    if($("serie").value!==serie){$("serie").value=serie;$("serie").dispatchEvent(new Event("change"));}
+  }
+  var comps=ms.map(compDoMarcado), comp=comps[0]&&comps.every(function(c){return c===comps[0];})?comps[0]:"";
+  if(comp&&$("componente").value!==comp){$("componente").value=comp;$("componente").dispatchEvent(new Event("change"));}
+  cs.style.display=serie?"none":"";
+  cc.style.display=comp?"none":"";
+  var areas=ms.map(areaDoMarcado).filter(function(a,i,l){return a&&l.indexOf(a)===i;});
+  nota.textContent=comp?"":(areas.length?"— o livro marcado é de "+areas.join(" e ")+": escolha a disciplina":"");
+  auto.innerHTML='<p class="ajuda" style="margin:0 0 6px">Vem dos capítulos marcados no passo 1: <strong>'+esc(serie||"série não identificada")+
+    (comp?" · "+esc(comp):"")+'</strong>. Para criar sem o livro, desmarque os capítulos.</p>';
 }
 function chaveMatriz(){
   return chaveDaMatriz($("etapa").value,$("componente").value,$("serie").value);
@@ -4500,7 +4547,11 @@ $("componente").addEventListener("change",function(){
   if(origemAtual()==="enem"&&ae&&ae!==$("en-area").value){$("en-area").value=ae;$("en-comp").value="";$("en-hab").value="";renderFiltroEnem();}
   else infoAcervo();
 });
-$("serie").addEventListener("change",function(){habSelecionadas={};renderHabilidades();});
+$("serie").addEventListener("change",function(){
+  var et=etapaDaSerie(this.value);
+  if(et&&et!==$("etapa").value){$("etapa").value=et;preencherComponentes();}
+  habSelecionadas={};renderHabilidades();
+});
 preencherComponentes();
 preencherSeries();
 renderHabilidades();
