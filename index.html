@@ -313,7 +313,7 @@ input[type=file]::file-selector-button:hover{background:var(--primaria-hover);bo
 .capa>*{position:absolute;z-index:1}
 .capa-selo{top:7%;left:9%;font-family:var(--sans);font-weight:900;font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--c)}
 .capa-titulo{top:17%;left:9%;right:7%;font-family:var(--titulo);font-weight:700;font-size:14px;color:#164194;line-height:1.05;text-transform:uppercase;
-  display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
+  display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;padding-top:.15em}
 .capa-faixa{top:52%;left:9%;right:7%;background:var(--c2);color:#fff;font-size:9.5px;font-weight:800;line-height:1.2;text-transform:uppercase;padding:5px 8px;
   border-radius:8px}
 .capa-pe{right:7%;bottom:6%;font-size:9.5px;font-weight:800;background:var(--etiqueta);color:var(--etiqueta-tinta);border-radius:8px;padding:2px 6px;color:#333}
@@ -345,6 +345,9 @@ input[type=file]::file-selector-button:hover{background:var(--primaria-hover);bo
 /* os cadernos do Livro SESI viram cartões; aberto, o cartão ocupa a linha toda e mostra os capítulos */
 #ls-lista{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:16px;margin-top:12px}
 #ls-lista>.aviso{grid-column:1/-1}
+#ls-lista>.ls-grupo{grid-column:1/-1;display:flex;flex-direction:column;gap:4px;margin-top:10px;padding:12px 14px;border-left:4px solid #7FCDC1;background:var(--branco,#fff);border-radius:10px;font-size:13.5px;line-height:1.5}
+#ls-lista>.ls-grupo strong{font-family:var(--titulo);color:var(--primaria,#164194);font-size:15px}
+.capa.itinerario .capa-titulo{font-size:12.5px}
 .livros-sesi .caderno.card-capa{display:block;padding:0;border-bottom:1px solid var(--regua);cursor:default}
 .livros-sesi .caderno.card-capa>summary{display:flex;flex-direction:column;align-items:stretch;gap:0;padding:0;border:none;border-radius:16px;background:#fff;box-shadow:none;font-weight:700}
 .livros-sesi .caderno.card-capa>summary::before{display:none}
@@ -1142,7 +1145,6 @@ input[type=range]{width:100%;accent-color:var(--primaria)}
             <div class="filtros" style="margin:8px 0 4px">
               <select id="ls-serie"><option value="">Escolha a série</option></select>
               <select id="ls-area"><option value="">Todas as áreas</option></select>
-              <select id="ls-tipo"><option value="">Aluno e professor</option><option value="aluno">Caderno do aluno</option><option value="professor">Caderno do professor</option></select>
             </div>
             <div id="ls-marcados"></div>
             <details id="det-ls-lista">
@@ -2504,10 +2506,12 @@ function corDaArea(area){
   return ["#7FCDC1","#164194"];
 }
 function capaLivro(L,serie){
-  var c=corDaArea(L.area), n=/(\d+)\s*$/.exec(L.titulo||"");
-  return '<span class="capa" style="--c:'+c[0]+";--c2:"+c[1]+'"><span class="capa-selo">Livro SESI</span>'+
-    '<span class="capa-titulo">'+esc((L.area||"").replace(/^MAP\s*\|\s*/i,""))+"</span>"+
-    '<span class="capa-faixa">'+(n?"Caderno "+n[1]:"Caderno")+(L.tipo==="professor"?" · professor":" · aluno")+"</span>"+
+  var it=typeof itinerarioLivro==="function"?itinerarioLivro(L):null;
+  var c=corDaArea(it?"":L.area), n=typeof numCaderno==="function"?numCaderno(L):((/(\d+)\s*$/.exec(L.titulo||"")||[])[1]||"");
+  var pi=/PROJETO INTEGRADOR/i.test(L.titulo||"");
+  return '<span class="capa'+(it?" itinerario":"")+'" style="--c:'+c[0]+";--c2:"+c[1]+'"><span class="capa-selo">'+(it?"Itinerário formativo":"Livro SESI")+"</span>"+
+    '<span class="capa-titulo">'+esc(it?it.nome:areaVista(L.area).replace(/^MAP\s*\|\s*/i,""))+"</span>"+
+    '<span class="capa-faixa">'+(pi?"Projeto integrador":n?"Caderno "+n:"Caderno")+(L.tipo==="professor"?" · professor":" · aluno")+"</span>"+
     (serie?'<span class="capa-pe">'+esc(serie)+"</span>":"")+"</span>";
 }
 var CORES_BANCA={enem:"#164194",ssa:"#D9606B",passe:"#F79425",unicamp:"#6A80C4",fuvest:"#8AA46D",cebraspe:"#2FA39A",outro:"#8C8F99",
@@ -2707,10 +2711,40 @@ function nomeSerieSesi(chave){
    No Ensino Médio a área é a própria disciplina e continua aparecendo.                     */
 var AREAS_INTEGRADAS={"Ciências Humanas":1,"Ciências da Natureza":1,"Linguagens":1};
 function livroOculto(ind,L){return /^af/.test(ind&&ind.chave||"")&&!!AREAS_INTEGRADAS[L.area];}
-function areaVista(a){return a==="Lingua Portuguesa"?"Língua Portuguesa":a;}
+function areaVista(a){return a==="Lingua Portuguesa"?"Língua Portuguesa":(a||"").replace(/\s+e\s+Suas\s+Tecnologias/i,"").replace(/^MAP\s*\|\s*/i,"").replace(/^Lingua\b/,"Língua");}
+/* Itinerários formativos do Ensino Médio: cadernos de aprofundamento que o SESI escreve juntando
+   duas ou três áreas num livro só ("Matemática + Ciências da Natureza"). Na 3ª série cada um tem
+   um tema ("Biotecnologia e Saúde - Matemática + Ciências da Natureza - Caderno 1").            */
+function tituloBonito(t){
+  return (t||"").toLowerCase().replace(/(^|[\s+(\/])([a-zà-ú])/g,function(m,a,b){return a+b.toUpperCase();})
+    .replace(/\s(Da|De|Do|Das|Dos|E)\s/g,function(m){return m.toLowerCase();}).replace(/\bCh\b/g,"Ciências Humanas").replace(/\bStem\b/g,"STEM");
+}
+function itinerarioLivro(L){
+  var t=(L.titulo||"").replace(/\s+/g," ").trim(), m;
+  if(/^ITINER[ÁA]RIO\b/i.test(t)){m=/-\s*([^-]+)$/.exec(t);return {nome:m?tituloBonito(m[1].trim()):"Itinerário",areas:""};}
+  var partes=t.split(/\s+-\s+/);
+  if(partes.length>=3&&/\+/.test(partes[1]))return {nome:tituloBonito(partes[0]),areas:tituloBonito(partes[1])};
+  if(/\+/.test(partes[0]))return {nome:tituloBonito(partes[0]),areas:""};
+  return null;
+}
+// a área como aparece no filtro, na capa e no nome do caderno
+function areaLivro(L){var it=itinerarioLivro(L);return it?"Itinerário: "+it.nome:areaVista(L.area);}
+function numCaderno(L){var n=/CADERNO\.?\s*0*(\d+)/i.exec(L.titulo||"")||/(\d+)\s*\*?\s*$/.exec(L.titulo||"");return n?n[1]:"";}
+function extraCaderno(L){
+  var t=L.titulo||"", e=/EIXO\s*(\d+)/i.exec(t);
+  return (/PROJETO INTEGRADOR/i.test(t)?" – Projeto integrador":"")+(/\bMAP\b/i.test(t)?" – MAP":"")+(e?" – Eixo "+e[1]:"");
+}
 function nomeCaderno(L){
-  var n=/(\d+)\s*$/.exec(L.titulo);
-  return areaVista(L.area)+(n?" – Caderno "+n[1]:"")+(L.tipo==="professor"?" (professor)":"");
+  var n=numCaderno(L);
+  return areaLivro(L)+extraCaderno(L)+(n?" – Caderno "+n:"")+(L.tipo==="professor"?" (professor)":"");
+}
+/* O caderno do professor traz o mesmo conteúdo do aluno e mais as orientações: quando existem os
+   dois, só o do professor aparece. O do aluno aparece quando não há versão do professor.        */
+function chaveCaderno(L){return areaLivro(L).replace(/^MAP\s*\|\s*/i,"").toUpperCase()+"|"+extraCaderno(L)+"|"+numCaderno(L);}
+function livroRepetido(ind,L){
+  if(L.tipo==="professor")return false;
+  if(!ind._prof){ind._prof={};ind.livros.forEach(function(x){if(x.tipo==="professor")ind._prof[chaveCaderno(x)]=1;});}
+  return !!ind._prof[chaveCaderno(L)];
 }
 function livrosEmUso(){
   return Object.keys(LS.marcados).filter(function(id){return LS.textos[id];}).map(function(id){
@@ -2848,28 +2882,39 @@ function livrosRender(){
     lista.innerHTML='<div class="aviso">Os livros desta série ainda não foram enviados para a nuvem.</div>';
     return;
   }
-  var atualA=area.value, vistos={}, areas=[];
-  ind.livros.forEach(function(L){var a=areaVista(L.area);if(!livroOculto(ind,L)&&!vistos[a]){vistos[a]=1;areas.push(a);}});
+  var atualA=area.value, vistos={}, areas=[], itins=[], areasIt={};
+  function escondido(L){return livroOculto(ind,L)||livroRepetido(ind,L);}
+  ind.livros.forEach(function(L){var a=areaLivro(L);if(!escondido(L)&&!vistos[a]){vistos[a]=1;var it=itinerarioLivro(L);if(it&&it.areas)areasIt[a]=it.areas;(it?itins:areas).push(a);}});
   if(atualA&&!vistos[atualA])atualA="";
-  area.innerHTML='<option value="">Todas as áreas</option>'+areas.sort().map(function(a){
-    return '<option value="'+esc(a)+'"'+(a===atualA?" selected":"")+">"+esc(a)+"</option>";}).join("");
-  var ft=$("ls-tipo").value;
-  var html=ind.livros.map(function(L,i){
-    if(livroOculto(ind,L)||(atualA&&areaVista(L.area)!==atualA)||(ft&&L.tipo!==ft))return "";
+  function opcoes(lista){return lista.sort(function(a,b){return a.localeCompare(b,"pt-BR");}).map(function(a){
+    return '<option value="'+esc(a)+'"'+(a===atualA?" selected":"")+">"+esc(a.replace(/^Itinerário: /,"")+(areasIt[a]?" ("+areasIt[a]+")":""))+"</option>";}).join("");}
+  area.innerHTML='<option value="">Todas as áreas</option>'+opcoes(areas)+
+    (itins.length?'<optgroup label="Itinerários formativos (juntam áreas)">'+opcoes(itins)+"</optgroup>":"");
+  function visivel(L){return !escondido(L)&&!(atualA&&areaLivro(L)!==atualA);}
+  // os itinerários vão para o fim, depois de uma explicação do que são
+  var ordem=ind.livros.map(function(L,i){return i;}).filter(function(i){return visivel(ind.livros[i]);});
+  var comuns=ordem.filter(function(i){return !itinerarioLivro(ind.livros[i]);}), deIt=ordem.filter(function(i){return !!itinerarioLivro(ind.livros[i]);});
+  function cartao(i){
+    var L=ind.livros[i];
     var marc=L.caps.filter(function(c){return LS.marcados[c.id];}).length;
     return '<details class="caderno card-capa'+(marc?" tem-marcados":"")+'"'+(marc?" open":"")+"><summary>"+capaLivro(L,nomeSerieSesi(ind.chave))+
       '<span class="textos"><span class="card-nome">'+esc(nomeCaderno(L))+
-      '</span> <span class="sub">'+L.caps.length+" "+(L.caps.length===1?"capítulo":"capítulos")+(marc?", "+marc+" "+(marc===1?"marcado":"marcados"):"")+"</span></span></summary>"+
+      '</span> <span class="sub">'+(itinerarioLivro(L)&&itinerarioLivro(L).areas?esc(itinerarioLivro(L).areas)+" · ":"")+L.caps.length+" "+(L.caps.length===1?"capítulo":"capítulos")+(marc?", "+marc+" "+(marc===1?"marcado":"marcados"):"")+"</span></span></summary>"+
       L.caps.map(function(c){
         return '<label class="cap"><input type="checkbox" data-cap="'+esc(c.id)+'" data-livro="'+i+'"'+(LS.marcados[c.id]?" checked":"")+">"+
           "<span>"+esc(c.nome)+' <span class="sub">'+(c.palavras||0).toLocaleString("pt-BR")+" palavras"+
           (c.f?' · <a href="https://www.sesieducacao.com.br/pdfreader.php?f='+encodeURIComponent(c.f)+'" target="_blank" rel="noopener">abrir no portal</a>':"")+
           "</span></span></label>";
       }).join("")+"</details>";
-  }).join("");
+  }
+  var html=comuns.map(cartao).join("")+(deIt.length?
+    '<div class="ls-grupo"><strong>Itinerários formativos</strong>'+
+    "<span>No Novo Ensino Médio, além das áreas de sempre, cada turma cursa um itinerário formativo: uma trilha de aprofundamento. "+
+    "O SESI escreve esses cadernos juntando duas ou três áreas num livro só (por exemplo, Matemática + Ciências da Natureza), "+
+    "por isso o nome leva o sinal +. Quase todos existem só na versão do aluno.</span></div>"+deIt.map(cartao).join(""):"");
   lista.innerHTML=html||'<div class="aviso">Nenhum caderno corresponde aos filtros.</div>';
-  var nCad=ind.livros.filter(function(L){return !(livroOculto(ind,L)||(atualA&&areaVista(L.area)!==atualA)||(ft&&L.tipo!==ft));}).length;
-  $("ls-resumo-lista").textContent="— "+nCad+" "+(nCad===1?"caderno":"cadernos")+(atualA?" de "+atualA:"");
+  var nCad=ordem.length;
+  $("ls-resumo-lista").textContent="— "+nCad+" "+(nCad===1?"caderno":"cadernos")+(atualA?" de "+atualA.replace(/^Itinerário: /,"Itinerário "):"");
   lista.querySelectorAll("[data-cap]").forEach(function(cb){
     cb.addEventListener("change",function(){
       var id=this.dataset.cap, L=ind.livros[+this.dataset.livro], caixa=this;
@@ -3429,11 +3474,10 @@ function livrosIniciar(){
     }
   });
   $("ls-area").addEventListener("change",livrosRender);
-  $("ls-tipo").addEventListener("change",livrosRender);
   var dl=$("det-ls-lista");
   dl.open=ler("bancoQuestoes.listaLivrosAberta.v1")==="1";
   dl.addEventListener("toggle",function(){gravar("bancoQuestoes.listaLivrosAberta.v1",this.open?"1":"0");});
-  ["ls-serie","ls-area","ls-tipo"].forEach(function(id){$(id).addEventListener("change",function(){dl.open=true;});});
+  ["ls-serie","ls-area"].forEach(function(id){$(id).addEventListener("change",function(){dl.open=true;});});
   $("btn-ls-enviar").addEventListener("click",function(){
     if(!(NV.admin&&NV.membro)){msg("ls-envio","Entre na nuvem com a conta do administrador para enviar os livros.","erro");return;}
     if(nuvemImagensSeparada()&&!NV.img.usuario)msg("ls-envio","Atenção: para enviar os arquivos de imagens, clique antes em Conectar imagens, aqui acima. Arquivos só de texto podem seguir.","erro");
