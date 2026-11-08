@@ -2918,9 +2918,12 @@ function seguirAbertura(ev){
   // marcar caixinhas (capítulos, habilidades) não puxa a página; fechar também não
   if((el.matches("input[type=checkbox]"))||(el.tagName==="LABEL"&&el.querySelector("input[type=checkbox]")))return;
   if(el.getAttribute("aria-expanded")==="true")return;
+  // abrir a lista de um select não muda nada; só a escolha (evento change) conta.
+  // No Mac o navegador ainda dispara um clique depois da escolha: ele não pode cancelar a observação em curso.
+  if(el.tagName==="SELECT"&&ev.type!=="change")return;
+  if(el.tagName==="OPTION")return;
   if(el.tagName==="SUMMARY"&&el.parentNode&&el.parentNode.open)return;
   var alvo=el.tagName==="INPUT"?(el.closest("label")||el):el;
-  if(SEGUIR)SEGUIR.parar();
   var mudou=[], inicio=Date.now(), espera=null, obs;
   function fim(){
     obs.disconnect();clearTimeout(espera);if(SEGUIR===meu)SEGUIR=null;
@@ -2942,7 +2945,7 @@ function seguirAbertura(ev){
     var desce=Math.min(sobra,r.top-topo);
     if(desce>8)window.scrollBy({top:desce,behavior:"smooth"});
   }
-  function quieto(){clearTimeout(espera);espera=setTimeout(fim,Date.now()-inicio>3000?0:220);}
+  function quieto(){clearTimeout(espera);espera=setTimeout(fim,Date.now()-inicio>4000?0:220);}
   obs=new MutationObserver(function(lista){
     lista.forEach(function(m){
       if(m.type==="childList")m.addedNodes.forEach(function(n){mudou.push(n.nodeType===1?n:n.parentNode);});
