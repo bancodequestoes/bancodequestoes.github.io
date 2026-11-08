@@ -2971,7 +2971,7 @@ function baixarImagensCapitulo(id){
       var dados=(x.imgs||[]).slice();
       resto.forEach(function(r){if(r.exists())dados=dados.concat(r.data().imgs||[]);});
       return (x.meta||[]).map(function(m,k){
-        return {id:id+"#"+k,l:m.l||"",p:m.p||0,w:m.w||0,h:m.h||0,d:dados[k]?"data:image/jpeg;base64,"+dados[k]:""};
+        return {id:id+"#"+k,l:String(m.l||"").replace(/^[€•▪■◆●▶►✓\-–—·\s]+/,""),p:m.p||0,w:m.w||0,h:m.h||0,d:dados[k]?"data:image/jpeg;base64,"+dados[k]:""};
       }).filter(function(o){return o.d;});
     });
   });
@@ -3135,7 +3135,7 @@ function trechoDaImagem(texto,legenda){
   return t.slice(Math.max(0,i-3500),i+2500);
 }
 var LIMITE_LEGENDA=260;
-function legendaCurta(l){l=normTexto(l);return l.length>LIMITE_LEGENDA?l.slice(0,LIMITE_LEGENDA-1).replace(/\s+\S*$/,"")+"…":l;}
+function legendaCurta(l){l=normTexto(l).replace(/^[€•▪■◆●▶►✓\-–—·\s]+/,"");return l.length>LIMITE_LEGENDA?l.slice(0,LIMITE_LEGENDA-1).replace(/\s+\S*$/,"")+"…":l;}
 function blocoDaImagem(im,nomeCap,tipo){
   return [
 "QUESTÃO A PARTIR DE IMAGEM DO LIVRO DIDÁTICO — regra principal deste pedido:",
@@ -3882,7 +3882,7 @@ function rodarGeracao(p,quantidades,botao,idProgresso,idRetorno,rotuloBotao,aoFi
     var seg=Math.round((Date.now()-inicio)/1000);
     var tempo=seg<60?(seg+"s"):(Math.floor(seg/60)+"min "+(seg%60)+"s");
     $(idProgresso).innerHTML=esc(ultimaMsg)+"<br><strong>"+acumuladas.length+" de "+total+
-      " questões já prontas e salvas</strong> · tempo decorrido: "+tempo;
+      " questões já prontas e salvas</strong>"+(p&&p._depoisImg?" · depois vêm mais "+p._depoisImg+" com imagem do livro":"")+" · tempo decorrido: "+tempo;
   }
   var relogio=setInterval(pintar,1000);
   pintar();
@@ -4278,6 +4278,7 @@ $("btn-gerar").addEventListener("click",function(){
   atualizarResumoPedido();
 
   // primeiro as questões de texto (se houver), depois uma a uma as que partem de imagem
+  p._depoisImg=nImg;
   var etapaTexto=total>0
     ? new Promise(function(fim){rodarGeracao(p,quantidades,botao,"progresso-geracao","retorno-geracao","Gerar questões",function(n,f,fa,t){fim({novas:n,falhas:f,falta:fa,total:t});});})
     : Promise.resolve({novas:[],falhas:[],falta:null,total:0});
