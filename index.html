@@ -2913,6 +2913,9 @@ var SEGUIR=null, FOLGA_BAIXO=110;
 /* depois do clique, observa o que muda abaixo do item clicado (inclusive o que chega da nuvem, até 3 s);
    quando a página para de mudar, desce o bastante para mostrar o que apareceu, com folga embaixo */
 function seguirAbertura(ev){
+  // só o que o professor faz conta: eventos disparados pelo próprio código (ex.: escolher a série do livro
+  // também ajusta a série do passo 2) não podem puxar a página para outro lugar
+  if(!ev.isTrusted)return;
   var el=ev.target&&ev.target.closest&&ev.target.closest("summary,button,label,input,select,.cartao-origem,[role=button]");
   if(!el||!el.closest("main")||el.closest(".fundo-janela,#janela-questao,.apr,#chat-ia,.calendario"))return;
   // marcar caixinhas (capítulos, habilidades) não puxa a página; fechar também não
@@ -2954,6 +2957,7 @@ function seguirAbertura(ev){
     quieto();
   });
   var meu={parar:function(){obs.disconnect();clearTimeout(espera);}};
+  if(SEGUIR)SEGUIR.parar(); // uma ação nova do professor substitui a anterior
   SEGUIR=meu;
   obs.observe(document.querySelector("main"),{childList:true,subtree:true,attributes:true,attributeFilter:["open","hidden","style","class"]});
   espera=setTimeout(fim,600); // sem mudança nenhuma: encerra
