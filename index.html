@@ -2655,9 +2655,15 @@ function nomeSerieSesi(chave){
   var s=SERIES_SESI.filter(function(x){return x[0]===chave;})[0];
   return s?s[2]+(s[1]==="Ensino Médio"?" do Ensino Médio":""):chave;
 }
+/* Do 6º ao 9º ano os cadernos de área do aluno (Ciências Humanas, Ciências da Natureza,
+   Linguagens) repetem os capítulos dos cadernos de cada disciplina: ficam fora das listas.
+   No Ensino Médio a área é a própria disciplina e continua aparecendo.                     */
+var AREAS_INTEGRADAS={"Ciências Humanas":1,"Ciências da Natureza":1,"Linguagens":1};
+function livroOculto(ind,L){return /^af/.test(ind&&ind.chave||"")&&!!AREAS_INTEGRADAS[L.area];}
+function areaVista(a){return a==="Lingua Portuguesa"?"Língua Portuguesa":a;}
 function nomeCaderno(L){
   var n=/(\d+)\s*$/.exec(L.titulo);
-  return L.area+(n?" – Caderno "+n[1]:"")+(L.tipo==="professor"?" (professor)":"");
+  return areaVista(L.area)+(n?" – Caderno "+n[1]:"")+(L.tipo==="professor"?" (professor)":"");
 }
 function livrosEmUso(){
   return Object.keys(LS.marcados).filter(function(id){return LS.textos[id];}).map(function(id){
@@ -2796,13 +2802,13 @@ function livrosRender(){
     return;
   }
   var atualA=area.value, vistos={}, areas=[];
-  ind.livros.forEach(function(L){if(!vistos[L.area]){vistos[L.area]=1;areas.push(L.area);}});
+  ind.livros.forEach(function(L){var a=areaVista(L.area);if(!livroOculto(ind,L)&&!vistos[a]){vistos[a]=1;areas.push(a);}});
   if(atualA&&!vistos[atualA])atualA="";
   area.innerHTML='<option value="">Todas as áreas</option>'+areas.sort().map(function(a){
     return '<option value="'+esc(a)+'"'+(a===atualA?" selected":"")+">"+esc(a)+"</option>";}).join("");
   var ft=$("ls-tipo").value;
   var html=ind.livros.map(function(L,i){
-    if((atualA&&L.area!==atualA)||(ft&&L.tipo!==ft))return "";
+    if(livroOculto(ind,L)||(atualA&&areaVista(L.area)!==atualA)||(ft&&L.tipo!==ft))return "";
     var marc=L.caps.filter(function(c){return LS.marcados[c.id];}).length;
     return '<details class="caderno card-capa'+(marc?" tem-marcados":"")+'"'+(marc?" open":"")+"><summary>"+capaLivro(L,nomeSerieSesi(ind.chave))+
       '<span class="textos"><span class="card-nome">'+esc(nomeCaderno(L))+
@@ -2815,7 +2821,7 @@ function livrosRender(){
       }).join("")+"</details>";
   }).join("");
   lista.innerHTML=html||'<div class="aviso">Nenhum caderno corresponde aos filtros.</div>';
-  var nCad=ind.livros.filter(function(L){return !((atualA&&L.area!==atualA)||(ft&&L.tipo!==ft));}).length;
+  var nCad=ind.livros.filter(function(L){return !(livroOculto(ind,L)||(atualA&&areaVista(L.area)!==atualA)||(ft&&L.tipo!==ft));}).length;
   $("ls-resumo-lista").textContent="— "+nCad+" "+(nCad===1?"caderno":"cadernos")+(atualA?" de "+atualA:"");
   lista.querySelectorAll("[data-cap]").forEach(function(cb){
     cb.addEventListener("change",function(){
@@ -8552,14 +8558,14 @@ function renderMaterialPlano(){
     return;
   }
   var etapa=$("pl-etapa").value, comp=$("pl-componente").value, vistos={}, areas=[];
-  ind.livros.forEach(function(L){if(!vistos[L.area]){vistos[L.area]=1;areas.push(L.area);}});
+  ind.livros.forEach(function(L){var a=areaVista(L.area);if(!livroOculto(ind,L)&&!vistos[a]){vistos[a]=1;areas.push(a);}});
   if(PM.area!=="*"&&PM.area!==""&&!vistos[PM.area])PM.area="*";
   area.innerHTML='<option value="*">Livros de '+esc(comp)+'</option><option value="">Todas as áreas</option>'+
     areas.sort().map(function(a){return '<option value="'+esc(a)+'">'+esc(a)+"</option>";}).join("");
   area.value=PM.area;
   var opcoes=[];
   ind.livros.forEach(function(L,i){
-    if(PM.area==="*"?!areaCombina(L.area,etapa,comp):(PM.area&&L.area!==PM.area))return;
+    if(livroOculto(ind,L)||(PM.area==="*"?!areaCombina(L.area,etapa,comp):(PM.area&&areaVista(L.area)!==PM.area)))return;
     opcoes.push({i:i,nome:nomeCaderno(L),L:L});
   });
   if(!opcoes.length&&PM.area==="*"){PM.area="";return renderMaterialPlano();}
@@ -10796,13 +10802,13 @@ function apTelaCapitulo(){
       h+='<div class="aviso'+(ind.erro?" erro":"")+'">'+(ind.erro?esc(ind.erro):ind.carregando?"Carregando os livros da série…":ind.falha?"Não foi possível abrir a lista de livros.":"Os livros desta série ainda não foram enviados para a nuvem.")+"</div>";
     }else{
       var vistos={},areas=[];
-      ind.livros.forEach(function(L){if(!vistos[L.area]){vistos[L.area]=1;areas.push(L.area);}});
+      ind.livros.forEach(function(L){var a=areaVista(L.area);if(!livroOculto(ind,L)&&!vistos[a]){vistos[a]=1;areas.push(a);}});
       areas.sort();
       if(n.area&&!vistos[n.area])n.area="";
       h+='<label for="ap-area">Área</label><select id="ap-area"><option value="">— escolha a área —</option>'+areas.map(function(a){return '<option value="'+esc(a)+'"'+(a===n.area?" selected":"")+">"+esc(a)+"</option>";}).join("")+"</select>";
       if(n.area){
         var livros=[];
-        ind.livros.forEach(function(L,i){if(L.area===n.area)livros.push({i:i,L:L});});
+        ind.livros.forEach(function(L,i){if(!livroOculto(ind,L)&&areaVista(L.area)===n.area)livros.push({i:i,L:L});});
         livros.sort(function(a,b){return (a.L.tipo===b.L.tipo?0:a.L.tipo==="aluno"?-1:1)||nomeCaderno(a.L).localeCompare(nomeCaderno(b.L),"pt-BR",{numeric:true});});
         if(n.livro!==""&&!livros.some(function(x){return String(x.i)===n.livro;}))n.livro="";
         h+='<label>Livro</label><div class="ap-livros">'+livros.map(function(x){
