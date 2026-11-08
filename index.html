@@ -262,6 +262,7 @@ input[type=file]{font-size:13px}
 .passo{font-size:15px;margin:22px 0 8px;display:flex;align-items:center;gap:8px}
 .passo span{display:inline-flex;width:26px;height:26px;border-radius:50%;background:var(--laranja-escola);font-weight:900;color:#fff;font-size:13px;align-items:center;justify-content:center}
 .origens{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.origens-5{grid-template-columns:repeat(5,1fr)}
 .origem{position:relative;display:flex;flex-direction:column;gap:2px;border:1.5px solid var(--regua);border-radius:16px;padding:12px 12px 10px;cursor:pointer;margin:0;background:#fff;color:var(--tinta);transition:border-color .12s,background .12s}
 .origem:hover{border-color:var(--primaria)}
 .origem input{position:absolute;opacity:0;pointer-events:none}
@@ -1052,7 +1053,7 @@ input[type=range]{width:100%;accent-color:var(--primaria)}
 
 <!-- ============ GERAR ============ -->
 <section class="vista ativa" id="vista-gerar">
-  <div class="cabeca-vista"><h1>Gerar questões</h1><p>Crie questões novas a partir do Livro SESI, do ENEM, do SSA ou do PASSE.</p></div>
+  <div class="cabeca-vista"><h1>Gerar questões</h1><p>Crie questões novas a partir do Livro SESI, do ENEM, do SSA, do PASSE ou de um assunto ou arquivo seu.</p></div>
   <div class="aviso-chave-topo" id="aviso-sem-chave" style="display:none">
     <span><strong>Falta a sua chave de acesso à IA.</strong> Ela é gratuita, cada professor usa a sua, e leva dois minutos.</span>
     <button class="botao" type="button" data-abrir-assistente="1">Cadastrar minha chave</button>
@@ -1062,20 +1063,18 @@ input[type=range]{width:100%;accent-color:var(--primaria)}
     <p class="ajuda">Três passos: de onde criar, sobre o quê e quantas questões de cada formato.</p>
 
     <h3 class="passo"><span>1</span> Criar a partir de</h3>
-    <div class="origens" role="radiogroup" aria-label="Criar a partir de">
+    <div class="origens origens-5" role="radiogroup" aria-label="Criar a partir de">
       <label class="origem"><i class="mini-capa" style="--c:#5FAE2E" aria-hidden="true">SESI</i><input type="radio" name="origem" value="livro" checked><strong>Livro SESI</strong><span>capítulos do livro da série</span></label>
       <label class="origem"><i class="mini-capa" style="--c:#164194" aria-hidden="true">ENEM</i><input type="radio" name="origem" value="enem"><strong>ENEM</strong><span>molde das provas do acervo</span></label>
       <label class="origem"><i class="mini-capa" style="--c:#D9606B" aria-hidden="true">SSA</i><input type="radio" name="origem" value="ssa"><strong>SSA</strong><span>molde da UPE, 1ª a 3ª série</span></label>
       <label class="origem"><i class="mini-capa" style="--c:#F79425" aria-hidden="true">PASSE</i><input type="radio" name="origem" value="passe"><strong>PASSE</strong><span>molde das provas PASSE</span></label>
+      <label class="origem"><i class="mini-capa" style="--c:#6B7280" aria-hidden="true">+</i><input type="radio" name="origem" value="livre"><strong>Outra fonte</strong><span>nenhuma das anteriores: assunto ou arquivo seu</span></label>
     </div>
 
-    <div class="painel-origem livros-sesi" id="painel-livro">
-      <p class="ajuda" style="margin-top:0"><strong>Livros SESI</strong> <span id="resumo-biblioteca" class="sumario"></span></p>
-      <p class="ajuda">Os cadernos do portal SESI Educação, guardados na nuvem do grupo. Escolha a série e marque os capítulos que devem alimentar a próxima geração. O texto de cada capítulo é baixado só quando você o marca.</p>
-      <div class="estilo-livro">
-        <p class="estilo-titulo"><strong>Estrutura das questões objetivas</strong> <span>— o conteúdo sai dos capítulos marcados; aqui você escolhe o formato da questão</span></p>
+      <div class="estilo-livro" id="bloco-estilo">
+        <p class="estilo-titulo"><strong>Estrutura das questões objetivas</strong> <span id="estilo-sub">— o conteúdo sai dos capítulos marcados; aqui você escolhe o formato da questão</span></p>
         <div class="origens estilos" role="radiogroup" aria-label="Estrutura das questões objetivas">
-          <label class="origem"><input type="radio" name="estilo-livro" value="objetiva" checked><strong>Simples</strong><span>fiel ao livro</span></label>
+          <label class="origem"><input type="radio" name="estilo-livro" value="objetiva" checked><strong>Simples</strong><span id="estilo-simples-sub">fiel ao livro</span></label>
           <label class="origem"><input type="radio" name="estilo-livro" value="enem"><strong>ENEM</strong><span>estrutura do ENEM</span></label>
           <label class="origem"><input type="radio" name="estilo-livro" value="ssa"><strong>SSA</strong><span>estrutura do SSA/UPE</span></label>
           <label class="origem"><input type="radio" name="estilo-livro" value="passe"><strong>PASSE</strong><span>estrutura do PASSE</span></label>
@@ -1087,6 +1086,17 @@ input[type=range]{width:100%;accent-color:var(--primaria)}
           <option value="passe">Igual ao PASSE</option>
         </select>
       </div>
+    <div class="painel-origem" id="painel-livre" hidden>
+      <p class="ajuda" style="margin-top:0"><strong>Sem livro nem prova como base.</strong> Para gerar, preencha pelo menos uma destas duas coisas:</p>
+      <ol class="ajuda" style="margin:6px 0 8px;padding-left:20px;line-height:1.7">
+        <li><strong>Assunto ou recorte</strong>, no passo 2 logo abaixo (ex.: "Revolução Pernambucana de 1817 — causas e desdobramentos"). <button type="button" class="botao secundario" id="btn-livre-assunto" style="padding:3px 10px;font-size:12.5px">Escrever o assunto</button></li>
+        <li><strong>Material extra</strong>, depois do passo 3: clique em "Material extra" para abrir, anexe um PDF ou cole um texto. A IA cria as questões a partir dele. <button type="button" class="botao secundario" id="btn-livre-material" style="padding:3px 10px;font-size:12.5px">Abrir Material extra</button></li>
+      </ol>
+      <p class="ajuda" style="margin:0">Pode usar os dois juntos. A estrutura das objetivas você escolhe acima.</p>
+    </div>
+    <div class="painel-origem livros-sesi" id="painel-livro">
+      <p class="ajuda" style="margin-top:0"><strong>Livros SESI</strong> <span id="resumo-biblioteca" class="sumario"></span></p>
+      <p class="ajuda">Os cadernos do portal SESI Educação, guardados na nuvem do grupo. Escolha a série e marque os capítulos que devem alimentar a próxima geração. O texto de cada capítulo é baixado só quando você o marca.</p>
             <div class="filtros" style="margin:8px 0 4px">
               <select id="ls-serie"><option value="">Escolha a série</option></select>
               <select id="ls-area"><option value="">Todas as áreas</option></select>
@@ -2607,6 +2617,10 @@ function desmarcarMateriais(){
   salvarMateriais();renderMateriais();
 }
 function ativos(){return materiais.filter(function(m){return m.ativo;}).concat(livrosEmUso());}
+// no Gerar com "Outra fonte", os capítulos do livro marcados antes não entram
+function ativosDaOrigem(){
+  return typeof origemAtual==="function"&&origemAtual()==="livre"?materiais.filter(function(m){return m.ativo;}):ativos();
+}
 function resumoBiblioteca(){
   var alvo=$("resumo-biblioteca");
   if(!alvo)return;
@@ -4043,8 +4057,11 @@ var ORIGENS={
   livro:{nome:"Livro SESI",objetiva:"objetiva",nota:"objetiva simples, fiel ao livro"},
   enem:{nome:"ENEM",objetiva:"enem",nota:"no molde do ENEM"},
   ssa:{nome:"SSA",objetiva:"ssa",nota:"no molde do SSA"},
-  passe:{nome:"PASSE",objetiva:"passe",nota:"no molde do PASSE"}
+  passe:{nome:"PASSE",objetiva:"passe",nota:"no molde do PASSE"},
+  livre:{nome:"Outra fonte",objetiva:"objetiva",nota:"objetiva simples"}
 };
+// livro e "outra fonte" deixam o professor escolher a estrutura da objetiva
+function origemComEstilo(o){return o==="livro"||o==="livre";}
 var FAIXAS_MODELO={facil:[1,2],media:[3],dificil:[4,5]};
 var CHAVE_ORIGEM="bancoQuestoes.origemGerar.v1", CHAVE_ESTILO_LIVRO="bancoQuestoes.estiloLivro.v1", MAX_MODELOS=4, acervoCache=null;
 function origemAtual(){
@@ -4052,7 +4069,7 @@ function origemAtual(){
   return r&&ORIGENS[r.value]?r.value:"livro";
 }
 function matrizDaOrigem(o){
-  return o==="enem"?"ENEM":o==="ssa"?"SSA "+$("ssa-etapa").value:o==="passe"?"PASSE":"Livro didático SESI";
+  return o==="enem"?"ENEM":o==="ssa"?"SSA "+$("ssa-etapa").value:o==="passe"?"PASSE":o==="livre"?"Questão autoral":"Livro didático SESI";
 }
 // no Livro SESI o professor escolhe a estrutura da objetiva (simples, ENEM, SSA ou PASSE)
 function estiloDoLivro(){
@@ -4067,7 +4084,7 @@ function notaDoLivro(){
 function quantidadesDoFormato(prefixo,origem,estilo){
   var q={}, total=0;
   TIPOS_VALIDOS.forEach(function(t){q[t]=0;});
-  [["objetiva",origem==="livro"?(estilo||"objetiva"):ORIGENS[origem].objetiva],["dissertativa","dissertativa"],["adaptada","adaptada"]].forEach(function(par){
+  [["objetiva",origemComEstilo(origem)?(estilo||"objetiva"):ORIGENS[origem].objetiva],["dissertativa","dissertativa"],["adaptada","adaptada"]].forEach(function(par){
     var c=$(prefixo+par[0]), n=c?(parseInt(c.value,10)||0):0;
     q[par[1]]+=n;total+=n;
   });
@@ -4134,9 +4151,9 @@ function textoModelo(c,i){
 }
 function prepararModelos(p){
   var e=p.estiloObjetiva;
-  if(p.origem==="livro"&&(!e||e==="objetiva"))return Promise.resolve([]);
+  if(origemComEstilo(p.origem)&&(!e||e==="objetiva"))return Promise.resolve([]);
   // livro com estrutura de exame: modelos reais do exame, só pela forma
-  var alvo=p.origem==="livro"?{origem:e,componente:p.componente,soEstrutura:true,etapaSsa:(/^([123])/.exec(p.serie||"")||[])[1]}:p;
+  var alvo=origemComEstilo(p.origem)?{origem:e,componente:p.componente,soEstrutura:true,etapaSsa:(/^([123])/.exec(p.serie||"")||[])[1]}:p;
   return acervo().then(function(provas){
     return questoesModelo(provas,alvo).slice(0,MAX_MODELOS).map(textoModelo);
   });
@@ -4180,9 +4197,12 @@ function infoAcervo(){
 function origemMudou(guardar){
   var o=origemAtual();
   Object.keys(ORIGENS).forEach(function(k){$("painel-"+k).hidden=k!==o;});
-  $("nota-objetiva").textContent=o==="livro"?notaDoLivro():ORIGENS[o].nota;
-  if(o!=="livro"&&$("etapa").value!=="Ensino Médio"){$("etapa").value="Ensino Médio";$("etapa").dispatchEvent(new Event("change"));}
-  if(o!=="livro"&&etapaDaSerie($("serie").value)==="Ensino Fundamental")$("serie").value="";
+  $("nota-objetiva").textContent=o==="livro"?notaDoLivro():o==="livre"?(estiloDoLivro()==="objetiva"?"objetiva simples":"no molde do "+ORIGENS[estiloDoLivro()].nome):ORIGENS[o].nota;
+  $("bloco-estilo").hidden=!origemComEstilo(o);
+  $("estilo-sub").textContent=o==="livre"?"— o conteúdo sai do assunto ou do material que você der; aqui você escolhe o formato da questão":"— o conteúdo sai dos capítulos marcados; aqui você escolhe o formato da questão";
+  $("estilo-simples-sub").textContent=o==="livre"?"objetiva direta":"fiel ao livro";
+  if(!origemComEstilo(o)&&$("etapa").value!=="Ensino Médio"){$("etapa").value="Ensino Médio";$("etapa").dispatchEvent(new Event("change"));}
+  if(!origemComEstilo(o)&&etapaDaSerie($("serie").value)==="Ensino Fundamental")$("serie").value="";
   if(o==="ssa"){$("serie").value=$("ssa-etapa").value+"ª série";$("serie").dispatchEvent(new Event("change"));}
   if(o==="enem")renderFiltroEnem();else infoAcervo();
   if(guardar)gravar(CHAVE_ORIGEM,o);
@@ -4195,6 +4215,8 @@ function origemMudou(guardar){
 document.querySelectorAll('input[name="origem"]').forEach(function(r){
   r.addEventListener("change",function(){acervoCache=null;origemMudou(true);});
 });
+$("btn-livre-assunto").addEventListener("click",function(){var a=$("assunto");a.scrollIntoView({behavior:"smooth",block:"center"});setTimeout(function(){a.focus();},300);});
+$("btn-livre-material").addEventListener("click",function(){var d=$("det-material-extra");d.open=true;d.scrollIntoView({behavior:"smooth",block:"start"});});
 $("en-area").addEventListener("change",function(){$("en-comp").value="";$("en-hab").value="";renderFiltroEnem();});
 $("en-comp").addEventListener("change",function(){$("en-hab").value="";renderFiltroEnem();});
 $("en-hab").addEventListener("change",infoAcervo);
@@ -4236,7 +4258,7 @@ $("btn-gerar").addEventListener("click",function(){
   var etapa=$("etapa").value, comp=$("componente").value, origem=origemAtual(), botao=this;
   var p={
     origem:origem,
-    estiloObjetiva:origem==="livro"?estiloDoLivro():"",
+    estiloObjetiva:origemComEstilo(origem)?estiloDoLivro():"",
     dificuldadeAlvo:origem==="enem"&&$("en-dif").value?$("en-dif").options[$("en-dif").selectedIndex].text.toLowerCase():"",
     assunto:$("assunto").value.trim(),
     etapa:etapa,
@@ -4252,7 +4274,7 @@ $("btn-gerar").addEventListener("click",function(){
     nivel:$("nivel").options[$("nivel").selectedIndex].text,
     observacoes:$("observacoes").value.trim(),
     textoExtra:$("texto-extra").value.trim(),
-    material:ativos().map(function(m){return m.nome;}).join(", ")
+    material:ativosDaOrigem().map(function(m){return m.nome;}).join(", ")
   };
   // no ENEM, a habilidade vem da matriz do ENEM: a escolhida, ou a IA escolhe entre as do filtro
   if(origem==="enem"){
@@ -4266,8 +4288,8 @@ $("btn-gerar").addEventListener("click",function(){
   var nImg=qtdPedidaImagens();
 
   if(!conf.chave){msg("retorno-geracao","Falta cadastrar a sua chave de acesso à IA.","erro");abrirAssistenteChave();return;}
-  if(!p.assunto&&!ativos().length&&!p.textoExtra&&!(origem==="enem"&&$("en-hab").value)){
-    msg("retorno-geracao",origem==="livro"?"Marque um capítulo do livro ou informe o assunto antes de gerar.":"Informe o assunto antes de gerar"+(origem==="enem"?", ou escolha uma habilidade do ENEM":"")+".","erro");return;}
+  if(!p.assunto&&!ativosDaOrigem().length&&!p.textoExtra&&!(origem==="enem"&&$("en-hab").value)){
+    msg("retorno-geracao",origem==="livre"?"Na opção Outra fonte, escreva o assunto no passo 2 ou anexe um arquivo em Material extra (depois do passo 3) antes de gerar.":origem==="livro"?"Marque um capítulo do livro ou informe o assunto antes de gerar.":"Informe o assunto antes de gerar"+(origem==="enem"?", ou escolha uma habilidade do ENEM":"")+".","erro");return;}
   if(total===0&&!nImg){msg("retorno-geracao","Escolha a quantidade de pelo menos um formato no passo 3.","erro");return;}
   if(nImg){
     if(!Object.keys(LS.marcados).some(function(id){return qtdImagens(id);})){
