@@ -2945,7 +2945,12 @@ function seguirAbertura(ev){
     var topo=(parseInt(getComputedStyle(document.documentElement).getPropertyValue("--altura-topo"))||72)+16;
     var sobra=baixo+FOLGA_BAIXO-window.innerHeight;
     if(sobra<=8)return;
-    var desce=Math.min(sobra,r.top-topo);
+    // não cola o item clicado na barra do topo: deixa à vista o começo do bloco onde ele está
+    // (título e explicação), no máximo um terço da tela; o resto aparece rolando, de forma natural
+    var contexto=Math.round(window.innerHeight*0.33);
+    var bloco=alvo.parentElement&&alvo.parentElement.closest(".painel-origem,.passo,details,fieldset");
+    if(bloco){var bt=bloco.getBoundingClientRect().top;contexto=Math.min(contexto,Math.max(0,r.top-bt+12));}
+    var desce=Math.min(sobra,r.top-topo-contexto);
     if(desce>8)window.scrollBy({top:desce,behavior:"smooth"});
   }
   function quieto(){clearTimeout(espera);espera=setTimeout(fim,Date.now()-inicio>4000?0:220);}
