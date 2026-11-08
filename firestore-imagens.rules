@@ -1,8 +1,7 @@
 rules_version = '2';
 // Regras do projeto do Firebase só das imagens dos livros SESI.
-// Quem entrou com uma conta Google verificada lê; só o administrador envia.
-// (A lista de professores liberados continua no projeto principal: o site só
-//  mostra as imagens para quem já entrou lá.)
+// Lê quem o administrador liberou (a lista "membros" é copiada pelo site a partir
+// do projeto principal, sempre que o administrador abre Ajustes); só ele envia.
 service cloud.firestore {
   match /databases/{database}/documents {
     function logado() {
@@ -11,8 +10,16 @@ service cloud.firestore {
     function admin() {
       return logado() && request.auth.token.email == 'matheusernandes09@gmail.com';
     }
+    function membro() {
+      return admin() || (logado() &&
+        exists(/databases/$(database)/documents/membros/$(request.auth.token.email)));
+    }
     match /livros/{item} {
-      allow read: if logado();
+      allow read: if membro();
+      allow write: if admin();
+    }
+    match /membros/{email} {
+      allow read: if admin() || (logado() && request.auth.token.email == email);
       allow write: if admin();
     }
   }
