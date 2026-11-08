@@ -2904,6 +2904,29 @@ function voltarRolagem(fechados){
   fechados.forEach(function(el){var r=el._rolagem;if(r&&(!melhor||r.t<melhor.t))melhor=r;delete el._rolagem;});
   if(melhor)window.scrollTo({top:melhor.y,behavior:"auto"});
 }
+/* ao abrir uma seção ou escolher uma opção que revela mais coisas abaixo, a página desce junto,
+   para mostrar o que apareceu, sem esconder o que foi clicado (ele fica logo abaixo da barra do topo) */
+var SEGUIR={el:null,antes:0};
+function abaixoDe(el){var r=el.getBoundingClientRect();return document.documentElement.scrollHeight-(r.bottom+window.scrollY);}
+function seguirAbertura(ev){
+  var el=ev.target&&ev.target.closest&&ev.target.closest("summary,button,label,input,select,.cartao-origem,[role=button]");
+  if(!el||!el.closest("main")||el.closest(".fundo-janela,#janela-questao,.apr,#chat-ia,.calendario"))return;
+  var alvo=el.tagName==="LABEL"||el.tagName==="INPUT"?(el.closest("label")||el):el;
+  SEGUIR={el:alvo,antes:abaixoDe(alvo)};
+  var meu=SEGUIR;
+  setTimeout(function(){
+    if(SEGUIR!==meu||!document.body.contains(alvo))return;
+    var cresceu=abaixoDe(alvo)-meu.antes;if(cresceu<40)return;
+    var r=alvo.getBoundingClientRect(), topo=(parseInt(getComputedStyle(document.documentElement).getPropertyValue("--altura-topo"))||72)+12;
+    var fimNovo=r.bottom+cresceu, sobra=fimNovo-(window.innerHeight-16);
+    if(sobra<=0||r.height===0)return;
+    var desce=Math.min(sobra,r.top-topo);
+    if(desce>8)window.scrollBy({top:desce,behavior:"smooth"});
+  },160);
+}
+// na fase de captura: mede antes de o próprio botão ou select mudar a página
+document.addEventListener("click",seguirAbertura,true);
+document.addEventListener("change",function(ev){if(ev.target&&ev.target.tagName==="SELECT")seguirAbertura(ev);},true);
 // abrir pelo resumo (summary) guarda a rolagem; fechar pelo próprio resumo também volta para ela
 document.addEventListener("click",function(ev){
   var sm=ev.target.closest&&ev.target.closest("summary");if(!sm)return;
