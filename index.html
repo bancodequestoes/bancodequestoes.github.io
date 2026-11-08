@@ -2950,7 +2950,17 @@ function guardarRolagem(el){el._rolagem={y:window.scrollY,t:Date.now()};}
 function voltarRolagem(fechados){
   var melhor=null;
   fechados.forEach(function(el){var r=el._rolagem;if(r&&(!melhor||r.t<melhor.t))melhor=r;delete el._rolagem;});
-  if(melhor)window.scrollTo({top:melhor.y,behavior:"auto"});
+  if(melhor){window.scrollTo({top:melhor.y,behavior:"auto"});return;}
+  // seção aberta pelo próprio site (ex.: a lista de livros, ao escolher a série): sem posição guardada,
+  // a página encolhe e a tela iria parar bem mais abaixo. Mantém à vista o que acabou de fechar,
+  // logo abaixo da barra do topo, com o que vem depois aparecendo embaixo.
+  var topo=(parseInt(getComputedStyle(document.documentElement).getPropertyValue("--altura-topo"))||72)+16, ancora=null;
+  fechados.forEach(function(el){
+    if(!document.body.contains(el))return;
+    var r=el.getBoundingClientRect();if(!r.height)return;
+    if(!ancora||r.top<ancora.top)ancora=r;
+  });
+  if(ancora&&(ancora.top<topo||ancora.top>window.innerHeight-60))window.scrollBy({top:ancora.top-topo-24,behavior:"auto"});
 }
 /* ao abrir uma seção ou escolher uma opção que revela mais coisas abaixo, a página desce junto,
    para mostrar o que apareceu, sem esconder o que foi clicado (ele fica logo abaixo da barra do topo) */
