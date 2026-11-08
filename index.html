@@ -434,7 +434,10 @@ input[type=file]::file-selector-button:hover{background:var(--primaria-hover);bo
 .hab .cod{font-weight:700;color:var(--primaria)}
 /* habilidades citadas nos capítulos escolhidos: bloco em destaque, um grupo por capítulo */
 .hab-caps{border:2px solid var(--destaque);background:var(--destaque-fundo);border-radius:14px;padding:12px 14px 6px;margin:12px 0}
-.hab-caps>.hab-caps-titulo{margin:0 0 2px;font-family:var(--titulo);font-size:13.5px;font-weight:700;color:#2F5E14}
+.hab-caps .hab-caps-titulo{font-family:var(--titulo);font-size:13.5px;font-weight:700;color:#2F5E14}
+.hab-caps .hab-caps-n{font-size:12px;font-weight:600;color:#4A5A3E}
+.hab-caps>summary{background:#fff;border-color:rgba(47,94,20,.35)}
+.hab-caps>summary+*{margin-top:10px}
 .hab-caps>.hab-caps-ajuda{margin:0 0 6px;font-size:12px;color:#4A5A3E}
 .hab-cap-nome{display:flex;gap:8px;align-items:baseline;margin:10px 0 2px;padding-top:8px;border-top:1px dashed rgba(47,94,20,.25);
   font-size:12.5px;font-weight:800;color:var(--tinta)}
@@ -2904,6 +2907,29 @@ function voltarRolagem(fechados){
   fechados.forEach(function(el){var r=el._rolagem;if(r&&(!melhor||r.t<melhor.t))melhor=r;delete el._rolagem;});
   if(melhor)window.scrollTo({top:melhor.y,behavior:"auto"});
 }
+/* ao abrir uma seção ou escolher uma opção que revela mais coisas abaixo, a página desce junto,
+   para mostrar o que apareceu, sem esconder o que foi clicado (ele fica logo abaixo da barra do topo) */
+var SEGUIR={el:null,antes:0};
+function abaixoDe(el){var r=el.getBoundingClientRect();return document.documentElement.scrollHeight-(r.bottom+window.scrollY);}
+function seguirAbertura(ev){
+  var el=ev.target&&ev.target.closest&&ev.target.closest("summary,button,label,input,select,.cartao-origem,[role=button]");
+  if(!el||!el.closest("main")||el.closest(".fundo-janela,#janela-questao,.apr,#chat-ia,.calendario"))return;
+  var alvo=el.tagName==="LABEL"||el.tagName==="INPUT"?(el.closest("label")||el):el;
+  SEGUIR={el:alvo,antes:abaixoDe(alvo)};
+  var meu=SEGUIR;
+  setTimeout(function(){
+    if(SEGUIR!==meu||!document.body.contains(alvo))return;
+    var cresceu=abaixoDe(alvo)-meu.antes;if(cresceu<40)return;
+    var r=alvo.getBoundingClientRect(), topo=(parseInt(getComputedStyle(document.documentElement).getPropertyValue("--altura-topo"))||72)+12;
+    var fimNovo=r.bottom+cresceu, sobra=fimNovo-(window.innerHeight-16);
+    if(sobra<=0||r.height===0)return;
+    var desce=Math.min(sobra,r.top-topo);
+    if(desce>8)window.scrollBy({top:desce,behavior:"smooth"});
+  },160);
+}
+// na fase de captura: mede antes de o próprio botão ou select mudar a página
+document.addEventListener("click",seguirAbertura,true);
+document.addEventListener("change",function(ev){if(ev.target&&ev.target.tagName==="SELECT")seguirAbertura(ev);},true);
 // abrir pelo resumo (summary) guarda a rolagem; fechar pelo próprio resumo também volta para ela
 document.addEventListener("click",function(ev){
   var sm=ev.target.closest&&ev.target.closest("summary");if(!sm)return;
@@ -4543,10 +4569,14 @@ function gruposHabCapitulos(capitulos,lista){
   return {grupos:grupos,usadas:usadas,outras:lista.filter(function(h){return !usadas[h.c];})};
 }
 /* bloco verde: "Capítulo 2 — título" e, embaixo, as habilidades dele com caixa de marcar */
-function htmlHabCapitulos(g,item,titulo){
+/* o bloco é recolhível (começa fechado); o aberto/fechado de cada lugar sobrevive às re-renderizações */
+var HAB_CAPS_ABERTO={};
+function htmlHabCapitulos(g,item,titulo,lugar){
   if(!g.grupos.length)return "";
   var com=g.grupos.filter(function(x){return x.habs.length;}).length;
-  return '<div class="hab-caps"><p class="hab-caps-titulo">'+titulo+"</p>"+
+  var total=g.grupos.reduce(function(n,x){return n+x.habs.length;},0);
+  return '<details class="hab-caps" data-lugar="'+esc(lugar||"")+'"'+(HAB_CAPS_ABERTO[lugar]?" open":"")+'><summary><span><span class="hab-caps-titulo">'+titulo+"</span>"+
+    ' <span class="hab-caps-n" data-total="'+total+'"></span></span></summary>'+
     '<p class="hab-caps-ajuda">'+(com?"Cada habilidade aparece debaixo do capítulo que a cita. As demais habilidades da série ficam logo abaixo.":
       "Os capítulos escolhidos não citam habilidades desta matriz.")+"</p>"+
     g.grupos.map(function(x,k){
@@ -4554,8 +4584,17 @@ function htmlHabCapitulos(g,item,titulo){
         (x.livro?' <span class="livro">· '+esc(x.livro)+"</span>":"")+"</span></p>"+
         (x.carregando?'<p class="hab-cap-vazio">carregando o capítulo…</p>':
          x.habs.length?x.habs.map(item).join(""):'<p class="hab-cap-vazio">nenhuma habilidade da matriz citada neste capítulo</p>');
-    }).join("")+"</div>";
+    }).join("")+"</details>";
 }
+function contarHabCaps(raiz){
+  (raiz||document).querySelectorAll("details.hab-caps").forEach(function(d){
+    var n=d.querySelectorAll('input[type=checkbox]:checked').length, s=d.querySelector(".hab-caps-n");if(!s)return;
+    var t=+s.dataset.total||0;
+    s.textContent=t?"— "+n+" de "+t+" marcada"+(t>1?"s":""):"";
+  });
+}
+document.addEventListener("toggle",function(ev){var d=ev.target;if(d&&d.classList&&d.classList.contains("hab-caps"))HAB_CAPS_ABERTO[d.dataset.lugar]=d.open;},true);
+document.addEventListener("change",function(ev){var d=ev.target.closest&&ev.target.closest("details.hab-caps");if(d)contarHabCaps(d.parentNode);});
 /* quando a matriz aberta não tem nenhuma das citadas: diz em que componentes elas estão */
 function componenteDasCitadas(capitulos,etapa,serie,chaveAtual){
   var texto=capitulos.map(function(c){return c.texto||"";}).join("\n");
@@ -4643,9 +4682,9 @@ function renderHabilidades(){
   }
   var outro=lista.length&&capitulos.length&&!Object.keys(g.usadas).length?componenteDasCitadas(capitulos,$("etapa").value,$("serie").value,chave):"";
   caps.innerHTML=capitulos.length&&lista.length
-    ? htmlHabCapitulos(g,itemCap,'Habilidades dos capítulos marcados <span class="opcional">opcional</span>')+
+    ? htmlHabCapitulos(g,itemCap,'Habilidades dos capítulos marcados <span class="opcional">opcional</span>',"gerar")+
       (outro?'<p class="ajuda" style="margin-top:-4px">Os capítulos marcados citam habilidades de outra matriz. Para vê-las aqui, troque o componente curricular acima para <strong>'+esc(outro)+"</strong>.</p>":"")
-    : "";
+    : "";contarHabCaps(caps);
   if(capitulos.length)lista=g.outras;
   if(!lista.length&&capitulos.length&&(HABILIDADES[chave]||[]).length){
     alvo.innerHTML='<p class="ajuda" style="margin:10px 0">Todas as habilidades desta matriz já aparecem nos capítulos marcados.</p>';
@@ -8551,9 +8590,9 @@ function renderHabPlano(){
   }
   var outro=matriz.length&&capitulos.length&&!Object.keys(g.usadas).length?componenteDasCitadas(capitulos,$("pl-etapa").value,$("pl-serie").value,chaveDaMatriz($("pl-etapa").value,$("pl-componente").value,$("pl-serie").value)):"";
   $("hab-cap-plano").innerHTML=capitulos.length&&matriz.length
-    ? htmlHabCapitulos(g,item,"Habilidades dos capítulos escolhidos")+
+    ? htmlHabCapitulos(g,item,"Habilidades dos capítulos escolhidos","plano")+
       (outro?'<p class="ajuda" style="margin-top:-4px">Os capítulos escolhidos citam habilidades de outra matriz. Para vê-las aqui, troque a disciplina acima para <strong>'+esc(outro)+"</strong>.</p>":"")
-    : "";
+    : "";contarHabCaps($("hab-cap-plano"));
   var lista=capitulos.length?g.outras:matriz;
   var filtro=semAcento($("busca-hab-plano").value);
   if(filtro)lista=lista.filter(function(h){return semAcento(h.c+" "+h.t).indexOf(filtro)>=0;});
