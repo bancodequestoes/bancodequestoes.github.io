@@ -263,6 +263,14 @@ input[type=file]{font-size:13px}
 .passo span{display:inline-flex;width:26px;height:26px;border-radius:50%;background:var(--laranja-escola);font-weight:900;color:#fff;font-size:13px;align-items:center;justify-content:center}
 .origens{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
 .origens-5{grid-template-columns:repeat(5,1fr)}
+.livre-titulo{margin:0 0 12px;font-size:15.5px;color:var(--tinta)}
+.livre-caminhos{display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:stretch}
+.livre-caminho{display:flex;flex-direction:column;gap:6px;background:#fff;border:1.5px solid var(--primaria-borda);border-radius:14px;padding:14px 16px}
+.livre-caminho strong{font-size:16px}
+.livre-caminho span{font-size:14px;color:var(--cinza);line-height:1.5;flex:1}
+.livre-caminho .botao{align-self:flex-start;margin-top:4px}
+.livre-ou{align-self:center;font-weight:800;font-size:20px;color:var(--primaria);padding:0 4px}
+@media(max-width:640px){.livre-caminhos{grid-template-columns:1fr}.livre-ou{justify-self:center}}
 .origem{position:relative;display:flex;flex-direction:column;gap:2px;border:1.5px solid var(--regua);border-radius:16px;padding:12px 12px 10px;cursor:pointer;margin:0;background:#fff;color:var(--tinta);transition:border-color .12s,background .12s}
 .origem:hover{border-color:var(--primaria)}
 .origem input{position:absolute;opacity:0;pointer-events:none}
@@ -1087,12 +1095,21 @@ input[type=range]{width:100%;accent-color:var(--primaria)}
         </select>
       </div>
     <div class="painel-origem" id="painel-livre" hidden>
-      <p class="ajuda" style="margin-top:0"><strong>Sem livro nem prova como base.</strong> Para gerar, preencha pelo menos uma destas duas coisas:</p>
-      <ol class="ajuda" style="margin:6px 0 8px;padding-left:20px;line-height:1.7">
-        <li><strong>Assunto ou recorte</strong>, no passo 2 logo abaixo (ex.: "Revolução Pernambucana de 1817 — causas e desdobramentos"). <button type="button" class="botao secundario" id="btn-livre-assunto" style="padding:3px 10px;font-size:12.5px">Escrever o assunto</button></li>
-        <li><strong>Material extra</strong>, depois do passo 3: clique em "Material extra" para abrir, anexe um PDF ou cole um texto. A IA cria as questões a partir dele. <button type="button" class="botao secundario" id="btn-livre-material" style="padding:3px 10px;font-size:12.5px">Abrir Material extra</button></li>
-      </ol>
-      <p class="ajuda" style="margin:0">Pode usar os dois juntos. A estrutura das objetivas você escolhe acima.</p>
+      <p class="livre-titulo">Sem livro nem prova como base. Escolha <strong>um</strong> dos dois caminhos:</p>
+      <div class="livre-caminhos">
+        <div class="livre-caminho">
+          <strong>Só um tema ou assunto</strong>
+          <span>Escreva no passo 2, em "Assunto ou recorte". Ex.: Revolução Pernambucana de 1817.</span>
+          <button type="button" class="botao secundario" id="btn-livre-assunto">Escrever o assunto</button>
+        </div>
+        <div class="livre-ou">OU</div>
+        <div class="livre-caminho">
+          <strong>Um material seu</strong>
+          <span>Anexe um PDF ou cole um texto em "Material extra", logo depois do passo 3.</span>
+          <button type="button" class="botao secundario" id="btn-livre-material">Abrir Material extra</button>
+        </div>
+      </div>
+      <p class="ajuda" style="margin:10px 0 0">Se quiser, pode usar os dois juntos. A estrutura das objetivas você escolhe acima.</p>
     </div>
     <div class="painel-origem livros-sesi" id="painel-livro">
       <p class="ajuda" style="margin-top:0"><strong>Livros SESI</strong> <span id="resumo-biblioteca" class="sumario"></span></p>
