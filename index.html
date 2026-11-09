@@ -1839,9 +1839,24 @@ body.ap-arrastando,body.ap-arrastando *{cursor:grabbing !important}
     </div>
   </div>
 
+  <div class="bloco" id="bloco-ia-escola">
+    <h2>IA da escola</h2>
+    <div id="ia-escola-estado"></div>
+    <div class="so-admin" id="ia-escola-admin" style="margin-top:10px">
+      <p class="ajuda" style="margin:0 0 6px"><strong>Só você (administrador) vê esta parte.</strong> Cole aqui uma chave do Gemini da escola. Ela vai para a nuvem e todos os professores liberados passam a usar a IA só com o login do Google, sem criar chave. É a mesma chave gratuita do Google AI Studio, sem faturamento: nada é cobrado. O limite diário gratuito passa a ser um só para a escola inteira (o site troca sozinho entre vários modelos do Gemini, cada um com a sua cota).</p>
+      <label for="chave-escola">Chave do Gemini da escola</label>
+      <input type="password" id="chave-escola" placeholder="Cole a chave da escola aqui" autocomplete="off">
+      <div class="botoes">
+        <button class="botao" type="button" id="btn-salvar-escola">Testar e liberar para todos</button>
+        <button class="botao secundario" type="button" id="btn-remover-escola">Desligar a IA da escola</button>
+      </div>
+      <div id="retorno-escola"></div>
+    </div>
+  </div>
+
   <div class="bloco">
     <h2>Chave de acesso à IA</h2>
-    <p class="ajuda">A chave fica salva apenas neste aparelho e é usada direto do navegador para o provedor. Não passa por nenhum servidor intermediário.</p>
+    <p class="ajuda" id="ajuda-chave-pessoal">A chave fica salva apenas neste aparelho e é usada direto do navegador para o provedor. Não passa por nenhum servidor intermediário.</p>
     <label for="provedor">Provedor</label>
     <select id="provedor">
       <option value="gemini">Google Gemini — possui camada gratuita</option>
@@ -2053,6 +2068,32 @@ var selecionadas={};
 
 try{questoes=JSON.parse(ler(CHAVE_BANCO)||"[]");}catch(e){questoes=[];}
 try{var c=JSON.parse(ler(CHAVE_CONF)||"null"); if(c){conf.provedor=c.provedor||conf.provedor;conf.modelo=c.modelo||conf.modelo;conf.reserva=c.reserva||"";conf.chave=c.chave||"";conf.raciocinio=!!c.raciocinio;}}catch(e){}
+/* CHAVE DA ESCOLA: o administrador cadastra UMA chave do Gemini (Ajustes › IA da escola) e ela fica na nuvem,
+   em livros/config-ia (só professores liberados leem; só o administrador grava, pelas regras que já existem).
+   Quem entra com o Google e está liberado usa a IA sem cadastrar nada. A chave pessoal continua opcional:
+   se existir, vem primeiro (poupa a conta da escola) e, quando a cota dela acaba ou ela é recusada, o site
+   passa sozinho para a da escola. As ilustrações usam a da escola direto: chave gratuita quase nunca tem cota de imagem. */
+var CHAVE_IA_ESCOLA="bancoQuestoes.iaEscola.v1";
+var IA_ESCOLA={chave:"",carregando:false};
+try{var ie=JSON.parse(localStorage.getItem(CHAVE_IA_ESCOLA)||"null");if(ie&&ie.chave)IA_ESCOLA.chave=String(ie.chave);}catch(e){}
+var IA_USO={escola:false};
+function usaEscola(){return !!IA_ESCOLA.chave&&(!conf.chave||IA_USO.escola);}
+function chaveIA(){return usaEscola()?IA_ESCOLA.chave:conf.chave;}
+function provedorIA(){return usaEscola()?"gemini":conf.provedor;}
+function modeloIA(){var m=conf.modelo||"";return (usaEscola()&&(!m||/^claude/i.test(m)))?"gemini-3.6-flash":m;}
+function reservaIA(){var r=conf.reserva||"";return (usaEscola()&&/^claude/i.test(r))?"":r;}
+function chaveImagem(){return IA_ESCOLA.chave||(conf.provedor==="gemini"?conf.chave:"");}
+// a chave pessoal esgotou ou foi recusada: o resto da sessão segue com a da escola
+function passarParaEscola(e){
+  if(IA_USO.escola||IA_USO.semTroca||!conf.chave||!IA_ESCOLA.chave||!e)return false;
+  if(!(e.cota||e.recusada||e.status===429))return false;
+  IA_USO.escola=true;modelosEsgotados={};return true;
+}
+function definirIAEscola(chave){
+  IA_ESCOLA.chave=chave||"";
+  if(!chave)IA_USO.escola=false;
+  try{if(chave)localStorage.setItem(CHAVE_IA_ESCOLA,JSON.stringify({chave:chave}));else localStorage.removeItem(CHAVE_IA_ESCOLA);}catch(e){}
+}
 
 function salvarBanco(){gravar(CHAVE_BANCO,JSON.stringify(questoes));atualizarResumo();nuvemMudou();}
 
@@ -3945,8 +3986,12 @@ base?("MATERIAL DE ORIGEM (trecho selecionado do acervo; explore-o em profundida
 
 /* ---------------- chamadas às IAs ---------------- */
 function chamarIA(prompt,modelo,leve){
-  if(!conf.chave)return Promise.reject(new Error("Nenhuma chave de API foi salva. Vá em Ajustes e cadastre uma."));
-  return conf.provedor==="anthropic"?chamarAnthropic(prompt,modelo,leve):chamarGemini(prompt,modelo,leve);
+  if(!chaveIA())return Promise.reject(new Error("A IA ainda não está ativa para você. Peça ao administrador para ativar a IA da escola, ou cadastre uma chave sua em Ajustes."));
+  var pedido=provedorIA()==="anthropic"?chamarAnthropic(prompt,modelo,leve):chamarGemini(prompt,modelo,leve);
+  return pedido.catch(function(e){
+    if(passarParaEscola(e))return chamarIA(prompt,/^claude/i.test(modelo||"")?undefined:modelo,leve);
+    throw e;
+  });
 }
 
 // congestionamento é passageiro, mas insistir no mesmo modelo custa caro:
@@ -4015,6 +4060,8 @@ function textoDaFalha(falhas){
   if(paradaGeral==="cota"||/exceeded your current quota|free_tier_requests/i.test(tudo)){
     var h=/retry in (\d+)h/i.exec(tudo), m=/retry in (?:\d+h)?(\d+)m/i.exec(tudo);
     var volta=h?("cerca de "+h[1]+"h"+(m&&+m[1]?(m[1].length<2?"0":"")+m[1]:"")):(m?("cerca de "+m[1]+" minutos"):"algumas horas");
+    if(usaEscola())return "A cota da IA da escola acabou por agora em todos os modelos que o site tentou. "+
+      "Ela volta sozinha em "+volta+", segundo o Google. Se acontecer sempre, avise o administrador: ele pode aumentar o limite no Google AI Studio.";
     return "A cota gratuita do dia da sua chave do Gemini acabou em todos os modelos que o site tentou. "+
       "Ela volta sozinha em "+volta+", segundo o Google. Cada chave tem a sua cota: outro professor pode gerar com a dele enquanto isso.";
   }
@@ -4026,8 +4073,8 @@ function textoDaFalha(falhas){
 function repetivel(e){if(cancelado||(e&&e.name==="AbortError"))return false;return !!(e&&(e.repetivel||e.name==="TypeError"));}
 function comFolga(ms){return Math.round(ms*(0.8+Math.random()*0.5));} // evita que tentativas coincidam
 function chamarIAComInsistencia(prompt,avisar){
-  var principal=conf.modelo||"";
-  var reserva=(conf.reserva&&conf.reserva!==principal)?conf.reserva:"";
+  var principal=modeloIA()||"";
+  var reserva=(reservaIA()&&reservaIA()!==principal)?reservaIA():"";
   // um modelo que já respondeu "cota esgotada" nesta sessão não é tentado de novo:
   // era uma requisição perdida antes de cada lote
   if(modelosEsgotados[principal]&&reserva&&!modelosEsgotados[reserva]){
@@ -4038,7 +4085,7 @@ function chamarIAComInsistencia(prompt,avisar){
   // modelo, espera antes da tentativa
   var plano=[[principal,0],[principal,4000]];
   if(reserva)plano.push([reserva,0],[reserva,6000]);
-  var extras=conf.provedor==="gemini"?MODELOS_EXTRAS_GEMINI.filter(function(m){
+  var extras=provedorIA()==="gemini"?MODELOS_EXTRAS_GEMINI.filter(function(m){
     return m!==principal&&m!==reserva&&!modelosAusentes[m]&&!modelosEsgotados[m];
   }):[];
   extras.forEach(function(m){plano.push([m,0]);});
@@ -4077,7 +4124,7 @@ function chamarIAComInsistencia(prompt,avisar){
         return quandoVisivel().then(function(){if(cancelado)throw e;return tentar(i,ultimo);});
       }
       // um modelo extra que não existe na conta é só pulado; o principal sem existir é erro de verdade
-      if(e&&e.semModelo&&modelo!==conf.modelo&&!cancelado){
+      if(e&&e.semModelo&&modelo!==modeloIA()&&!cancelado){
         modelosAusentes[modelo]=1;delete distintos[modelo];
         var seguinte=i+1;
         while(seguinte<plano.length&&plano[seguinte][0]===modelo)seguinte++;
@@ -4142,7 +4189,7 @@ function conteudoAnthropic(prompt){
   }).concat([{type:"text",text:prompt.texto}]);
 }
 function chamarGemini(prompt,modeloEscolhido,semRaciocinio){
-  var modelo=modeloEscolhido||conf.modelo||"gemini-3.6-flash";
+  var modelo=modeloEscolhido||modeloIA()||"gemini-3.6-flash";
   var url="https://generativelanguage.googleapis.com/v1beta/models/"+encodeURIComponent(modelo)+":generateContent";
   var config={maxOutputTokens:32768,responseMimeType:"application/json"};
   // raciocínio profundo: nos modelos 3.x o campo é thinkingLevel; nos 2.5, thinkingBudget. Nunca os dois juntos.
@@ -4153,7 +4200,7 @@ function chamarGemini(prompt,modeloEscolhido,semRaciocinio){
   var espera=abrirEspera();
   return fetch(url,{
     // a chave vai no cabeçalho, como manda a documentação: serve para o formato antigo (AIza) e o novo (AQ.)
-    method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":conf.chave},signal:espera.sinal,
+    method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":chaveIA()},signal:espera.sinal,
     body:JSON.stringify({contents:[{role:"user",parts:partesGemini(prompt)}],generationConfig:config})
   }).then(function(r){espera.encerrar();return r;},function(e){espera.encerrar();throw traduzirEspera(e);}).then(tratarResposta).then(function(d){
     var c=d.candidates&&d.candidates[0];
@@ -4174,7 +4221,7 @@ function chamarAnthropic(prompt,modeloEscolhido,semRaciocinio){
   var espera=abrirEspera();
   return fetch("https://api.anthropic.com/v1/messages",{
     method:"POST",signal:espera.sinal,
-    headers:{"Content-Type":"application/json","x-api-key":conf.chave,
+    headers:{"Content-Type":"application/json","x-api-key":chaveIA(),
       "anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
     body:JSON.stringify(corpo)
   }).then(tratarResposta).then(function(d){
@@ -4190,7 +4237,7 @@ function tratarResposta(r){
     var d; try{d=JSON.parse(t);}catch(e){d=null;}
     if(!r.ok){
       var det=(d&&d.error&&(d.error.message||d.error.type))||t.slice(0,200);
-      if(r.status===401||r.status===403)throw new Error("Chave recusada pelo provedor. Confira em Ajustes. ("+det+")");
+      if(r.status===401||r.status===403){var er=new Error((usaEscola()?"A chave da IA da escola foi recusada pelo Google. Avise o administrador. (":"Chave recusada pelo provedor. Confira em Ajustes. (")+det+")");er.recusada=true;er.status=r.status;throw er;}
       var passageiro=[429,500,502,503,504].indexOf(r.status)>-1;
       if(r.status===503){var e503=new Error("O modelo está sobrecarregado no provedor. ("+det+")");e503.repetivel=true;e503.sobrecarga=true;throw e503;}
       if(r.status===429){
@@ -4748,7 +4795,7 @@ $("btn-gerar").addEventListener("click",function(){
   var quantidades=quantidadesDoFormato("q-",origem,p.estiloObjetiva), total=quantidades._total;
   var nImg=qtdPedidaImagens();
 
-  if(!conf.chave){msg("retorno-geracao","Falta cadastrar a sua chave de acesso à IA.","erro");abrirAssistenteChave();return;}
+  if(!chaveIA()){msg("retorno-geracao","Falta cadastrar a sua chave de acesso à IA.","erro");abrirAssistenteChave();return;}
   if(!p.assunto&&!ativosDaOrigem().length&&!p.textoExtra&&!(origem==="enem"&&$("en-hab").value)){
     msg("retorno-geracao",origem==="livre"?"Na opção Outra fonte, escreva um tema ou assunto, ou cole um texto ou anexe um PDF, nas caixas do passo 1, antes de gerar.":origem==="livro"?"Marque um capítulo do livro ou informe o assunto antes de gerar.":"Informe o assunto antes de gerar"+(origem==="enem"?", ou escolha uma habilidade do ENEM":"")+".","erro");return;}
   if(total===0&&!nImg){msg("retorno-geracao","Escolha a quantidade de pelo menos um formato no passo 3.","erro");return;}
@@ -4762,7 +4809,7 @@ $("btn-gerar").addEventListener("click",function(){
   if(/preview|exp/.test(conf.modelo||""))
     msg("retorno-geracao","Atenção: <strong>"+esc(conf.modelo)+"</strong> é um modelo de pré-lançamento — são os mais congestionados e com menor cota. Em Ajustes, clique em buscar modelos disponíveis para trocar por um estável.","");
   if(!navigator.onLine){msg("retorno-geracao","Seu computador está <strong>sem conexão com a internet</strong>. A geração depende do provedor de IA. Reconecte e tente de novo — nada foi perdido.","erro");return;}
-  if(!conf.chave){msg("retorno-geracao","Nenhuma chave de API salva. Abra <strong>Ajustes</strong>, cole a chave e clique em testar conexão antes de gerar.","erro");abrirAssistenteChave();return;}
+  if(!chaveIA()){msg("retorno-geracao","Nenhuma chave de API salva. Abra <strong>Ajustes</strong>, cole a chave e clique em testar conexão antes de gerar.","erro");abrirAssistenteChave();return;}
   if(total+nImg>20){msg("retorno-geracao","O limite é de 20 questões por geração — acima disso o provedor costuma recusar os lotes. Gere em rodadas de até 20; o banco vai acumulando.","erro");return;}
 
   prepararModelos(p).catch(function(){return [];}).then(function(modelos){
@@ -5503,7 +5550,7 @@ $("btn-completar").addEventListener("click",function(){
   }
   var quantidades=quantidadesDoFormato("c-",origemDoPedido(ultimoPedido),ultimoPedido.estiloObjetiva);
   if(!quantidades._total){msg("retorno-completar","Defina quantas questões novas você quer.","erro");return;}
-  if(!conf.chave){msg("retorno-completar","Nenhuma chave de API salva. Cadastre-a em Ajustes.","erro");abrirAssistenteChave();return;}
+  if(!chaveIA()){msg("retorno-completar","Nenhuma chave de API salva. Cadastre-a em Ajustes.","erro");abrirAssistenteChave();return;}
   if(quantidades._total>20){msg("retorno-completar","O limite é de 20 questões por geração. Complete a prova em rodadas.","erro");return;}
 
   var p={},k;
@@ -5573,6 +5620,7 @@ $("btn-salvar-chave").addEventListener("click",function(){
   conf.modelo=$("modelo").value.trim()||PADRAO[conf.provedor];
   conf.reserva=$("reserva").value.trim();
   conf.chave=$("chave").value.trim();
+  IA_USO.escola=false;
   $("modelo").value=conf.modelo;
   salvarConf();
   atualizarAvisoChave();
@@ -5584,11 +5632,12 @@ $("btn-testar").addEventListener("click",function(){
   conf.reserva=$("reserva").value.trim();
   conf.chave=$("chave").value.trim();
   salvarConf();
+  IA_USO.escola=false;IA_USO.semTroca=true;
   msg("retorno-chave","Testando…","");
   chamarIAComInsistencia("Responda apenas com a palavra ok.",function(a){msg("retorno-chave",esc(a),"");}).then(function(){
     atualizarAvisoChave();
-    msg("retorno-chave","Conexão funcionando. Já pode gerar questões.","ok");
-  }).catch(function(e){msg("retorno-chave",esc(e.message),"erro");});
+    msg("retorno-chave",conf.chave?"Conexão funcionando. Já pode gerar questões.":"Conexão funcionando com a IA da escola. Já pode gerar questões.","ok");
+  }).catch(function(e){msg("retorno-chave",esc(e.message),"erro");}).then(function(){IA_USO.semTroca=false;});
 });
 
 $("chave").addEventListener("input",ajustarBotoesChave);
@@ -5596,7 +5645,8 @@ $("chave").addEventListener("input",ajustarBotoesChave);
 /* ---- assistente da chave: leva quem não tem chave ao site do Google e de volta ---- */
 function atualizarAvisoChave(){
   var aviso=$("aviso-sem-chave");
-  if(aviso)aviso.style.display=conf.chave?"none":"";
+  if(aviso)aviso.style.display=(chaveIA()||IA_ESCOLA.carregando)?"none":"";
+  mostrarIAEscola();
   // se a chave foi apagada em Ajustes, a tela da chave volta
   if(precisaPortaoChave())atualizarPortaoChave();
 }
@@ -5610,7 +5660,7 @@ function fecharAssistenteChave(){if(!precisaPortaoChave())$("assistente-chave").
    vê só a tela da chave; o site abre por inteiro quando a chave é salva e testada.
    Aberto como arquivo, sem nuvem, vale o mesmo. */
 function precisaPortaoChave(){
-  if(conf.chave||typeof NV==="undefined"||!NV)return false;
+  if(chaveIA()||IA_ESCOLA.carregando||typeof NV==="undefined"||!NV)return false;
   return NV.estado==="arquivo"||(!!NV.usuario&&NV.membro&&NV.estado!=="semacesso");
 }
 function atualizarPortaoChave(){
@@ -5638,6 +5688,7 @@ $("btn-salvar-assistente").addEventListener("click",function(){
   conf.provedor="gemini";
   if(!conf.modelo||/^claude/.test(conf.modelo))conf.modelo=PADRAO.gemini;
   conf.chave=chave;
+  IA_USO.escola=false;IA_USO.semTroca=true;
   var botao=this;botao.disabled=true;
   msg("retorno-assistente","Testando a chave…","");
   chamarIAComInsistencia("Responda apenas com a palavra ok.",function(){}).then(function(){
@@ -5650,9 +5701,76 @@ $("btn-salvar-assistente").addEventListener("click",function(){
   }).catch(function(e){
     conf.provedor=antes.provedor;conf.modelo=antes.modelo;conf.chave=antes.chave;
     msg("retorno-assistente","A chave não funcionou: "+esc(e.message)+" Confira se copiou a chave inteira.","erro");
-  }).then(function(){botao.disabled=false;});
+  }).then(function(){botao.disabled=false;IA_USO.semTroca=false;});
 });
 atualizarAvisoChave();
+/* ---- IA da escola: uma chave para todos, guardada na nuvem pelo administrador ---- */
+function carregarIAEscola(){
+  if(typeof NV==="undefined"||!NV||!NV.membro||!NV.sdk)return;
+  var S=NV.sdk;IA_ESCOLA.carregando=true;
+  S.getDoc(S.doc(NV.db,"livros","config-ia")).then(function(d){
+    definirIAEscola(d.exists()?String(d.data().chave||""):"");
+  }).catch(function(){/* sem internet: vale a última chave guardada neste aparelho */}).then(function(){
+    IA_ESCOLA.carregando=false;
+    atualizarAvisoChave();atualizarPortaoChave();
+  });
+}
+function mostrarIAEscola(){
+  var alvo=$("ia-escola-estado");if(!alvo)return;
+  var admin=typeof NV!=="undefined"&&NV&&NV.admin;
+  var t;
+  if(IA_ESCOLA.chave){
+    t="<strong>A IA da escola está ligada.</strong> Todos os professores liberados usam a IA (gerar questões, planejamento, apresentações e o chat de ajuda) só com o login do Google, sem criar chave."+
+      (conf.chave?" Você também tem uma chave sua neste aparelho: ela é usada primeiro, e a da escola entra sozinha quando a sua acabar. Se preferir, apague a sua chave abaixo.":" Você não precisa cadastrar chave nenhuma.")+
+      (admin?" Chave em uso termina em <strong>…"+esc(IA_ESCOLA.chave.slice(-4))+"</strong>.":"");
+    msg("ia-escola-estado",t,"ok");
+  }else if(admin){
+    msg("ia-escola-estado","A IA da escola ainda está desligada: cada professor precisa da própria chave. Cole a chave da escola abaixo para ligar para todos.","");
+  }else{
+    msg("ia-escola-estado","A IA da escola ainda não foi ligada pelo administrador. Enquanto isso, use uma chave sua (abaixo).","");
+  }
+  var ajuda=$("ajuda-chave-pessoal");
+  if(ajuda)ajuda.innerHTML=IA_ESCOLA.chave?"<strong>Opcional.</strong> Com a IA da escola ligada, ninguém precisa de chave própria. Se você tiver uma, ela fica só neste aparelho e é usada antes da da escola.":"A chave fica salva apenas neste aparelho e é usada direto do navegador para o provedor. Não passa por nenhum servidor intermediário.";
+}
+function testarChaveGemini(chave){
+  return fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent",{method:"POST",
+    headers:{"Content-Type":"application/json","x-goog-api-key":chave},
+    body:JSON.stringify({contents:[{role:"user",parts:[{text:"Responda apenas com a palavra ok."}]}],generationConfig:{maxOutputTokens:20}})
+  }).then(function(r){
+    // modelo ausente nesta conta ainda prova que a chave vale: confere pela lista de modelos
+    if(r.status===404)return fetch("https://generativelanguage.googleapis.com/v1beta/models?pageSize=5",{headers:{"x-goog-api-key":chave}}).then(tratarResposta);
+    return tratarResposta(r);
+  });
+}
+$("btn-salvar-escola").addEventListener("click",function(){
+  var chave=$("chave-escola").value.trim().replace(/\s+/g,"");
+  if(!(NV&&NV.admin&&NV.membro)){msg("retorno-escola","Entre na nuvem com a conta do administrador para ligar a IA da escola.","erro");return;}
+  if(chave.length<20){msg("retorno-escola","Cole a chave inteira no campo acima.","erro");return;}
+  var botao=this;botao.disabled=true;
+  msg("retorno-escola","Testando a chave…","");
+  testarChaveGemini(chave).then(function(){
+    var S=NV.sdk;
+    return S.setDoc(S.doc(NV.db,"livros","config-ia"),{chave:chave,por:NV.usuario.email,em:S.serverTimestamp()});
+  }).then(function(){
+    definirIAEscola(chave);AP.modeloImg=null;
+    $("chave-escola").value="";
+    atualizarAvisoChave();atualizarPortaoChave();
+    msg("retorno-escola","Pronto! A IA da escola está ligada para todos os professores liberados. Eles só precisam recarregar o site.","ok");
+  }).catch(function(e){
+    msg("retorno-escola","Não liguei: "+esc((e&&e.message)||String(e)),"erro");
+  }).then(function(){botao.disabled=false;});
+});
+$("btn-remover-escola").addEventListener("click",function(){
+  if(!(NV&&NV.admin&&NV.membro)){msg("retorno-escola","Entre na nuvem com a conta do administrador.","erro");return;}
+  if(!IA_ESCOLA.chave){msg("retorno-escola","A IA da escola já está desligada.","");return;}
+  if(!confirm("Desligar a IA da escola? Os professores sem chave própria ficam sem IA até você ligar de novo."))return;
+  var S=NV.sdk;
+  S.setDoc(S.doc(NV.db,"livros","config-ia"),{chave:"",por:NV.usuario.email,em:S.serverTimestamp()}).then(function(){
+    definirIAEscola("");atualizarAvisoChave();atualizarPortaoChave();
+    msg("retorno-escola","IA da escola desligada.","ok");
+  }).catch(function(e){msg("retorno-escola","Não consegui desligar: "+esc((e&&e.message)||String(e)),"erro");});
+});
+mostrarIAEscola();
 $("btn-modelos").addEventListener("click",function(){
   var chave=$("chave").value.trim();
   if(!chave){msg("retorno-chave","Cole a chave de API antes de buscar os modelos.","erro");return;}
@@ -8399,7 +8517,7 @@ $("btn-processar-prova").addEventListener("click",function(){
       var questoes=saida.questoes;
       if(!questoes.length)throw new Error("Nenhuma questão foi encontrada. O caderno precisa ter texto selecionável; PDFs digitalizados como imagem não funcionam.");
       questoes.forEach(function(q){q.gabarito=respostaPara(chave,q);});
-      var classificar=$("of-classificar").checked&&conf.chave;
+      var classificar=$("of-classificar").checked&&!!chaveIA();
       var etapa=classificar
         ? classificarQuestoes(questoes,anunciar).catch(function(e){
             // cota esgotada ou rede fora: a prova é guardada assim mesmo, sem matéria e assunto
@@ -8584,7 +8702,7 @@ $("btn-limpar-oficiais").addEventListener("click",function(){oficiaisSelecionada
 $("btn-folha-oficiais").addEventListener("click",montarFolhaOficiais);
 $("btn-classificar-prova").addEventListener("click",function(){
   if(!provaAtual){msg("retorno-classificar","Escolha uma prova primeiro.","erro");return;}
-  if(!conf.chave){msg("retorno-classificar","Cadastre a chave de acesso à IA em Ajustes para classificar.","erro");abrirAssistenteChave();return;}
+  if(!chaveIA()){msg("retorno-classificar","Cadastre a chave de acesso à IA em Ajustes para classificar.","erro");abrirAssistenteChave();return;}
   var pendentes=provaAtual.questoes.filter(function(q){return !q.assunto;});
   if(!pendentes.length){msg("retorno-classificar","Todas as questões desta prova já têm matéria e assunto.","ok");return;}
   var botao=this;
@@ -8611,7 +8729,7 @@ $("btn-classificar-prova").addEventListener("click",function(){
 });
 $("btn-matriz-prova").addEventListener("click",function(){
   if(!provaAtual){msg("retorno-classificar","Escolha uma prova primeiro.","erro");return;}
-  if(!conf.chave){msg("retorno-classificar","Cadastre a chave de acesso à IA em Ajustes para classificar.","erro");abrirAssistenteChave();return;}
+  if(!chaveIA()){msg("retorno-classificar","Cadastre a chave de acesso à IA em Ajustes para classificar.","erro");abrirAssistenteChave();return;}
   var corrigidas=corrigirAreasEnem(provaAtual);
   var pendentes=provaAtual.questoes.filter(function(q){return q.texto&&!HAB_ENEM[q.matriz];});
   if(!pendentes.length){msg("retorno-classificar","Todas as questões desta prova já têm a habilidade da matriz do ENEM.","ok");return;}
@@ -9430,7 +9548,7 @@ function montarPedidoPlano(material){
 }
 
 $("btn-gerar-plano").addEventListener("click",function(){
-  if(!conf.chave){msg("retorno-plano","Cadastre a chave de acesso à IA em Ajustes.","erro");abrirAssistenteChave();return;}
+  if(!chaveIA()){msg("retorno-plano","Cadastre a chave de acesso à IA em Ajustes.","erro");abrirAssistenteChave();return;}
   var aulas=aulasDoFormulario();
   if(!aulas.length){msg("retorno-plano","Descreva a divisão entre as aulas, uma por linha, começando por \"Aula 01:\".","erro");return;}
   if(!$("pl-periodo").value.trim()){msg("retorno-plano","Informe a data das aulas.","erro");return;}
@@ -9859,7 +9977,7 @@ function nuvemIniciar(){
       NV.authPronto=true;
       NV.usuario=u&&u.email?{email:u.email.toLowerCase()}:null;
       nuvemParar();
-      if(!NV.usuario){nuvemEstado("desligada");return;}
+      if(!NV.usuario){definirIAEscola("");nuvemEstado("desligada");return;}
       nuvemVerificarAcesso();
     });
   }).catch(function(e){
@@ -9874,7 +9992,8 @@ function nuvemVerificarAcesso(){
     :S.getDoc(S.doc(NV.db,"membros",NV.usuario.email)).then(function(d){return d.exists();});
   conferir.then(function(ok){
     NV.membro=ok;
-    if(!ok){nuvemEstado("semacesso");return;}
+    if(!ok){definirIAEscola("");nuvemEstado("semacesso");return;}
+    carregarIAEscola();
     if(NV.admin)nuvemListarMembros();
     conferirVinculoImagens();
     figurasProntas.then(nuvemOuvir);
@@ -10433,7 +10552,7 @@ window.addEventListener("online",function(){if(NV.pronto)nuvemMudou();});
 var GUIA_SITE=[
 "O SITE: Banco de Questões (https://bancodequestoes.github.io), feito pelo professor Matheus Ernandes para os professores do SESI Ibura (Recife, PE), do 6º ano à 3ª série do Ensino Médio. Funciona no navegador, sem instalar nada. Menu lateral com seis páginas: Gerar, Banco, Montar prova, Provas oficiais, Planejamento e Ajustes. No celular, o menu abre pelo botão do topo.",
 "",
-"ENTRADA E CHAVE: o site pede login com Google; o administrador (Matheus) libera o e-mail de cada colega em Ajustes › Nuvem compartilhada. Depois do login, quem não tem chave de IA vê uma tela para cadastrá-la. A chave é gratuita: aistudio.google.com/apikey, entrar com uma conta Google (se a da escola estiver bloqueada, use a pessoal), Criar chave de API, copiar (começa com AQ. ou AIza) e colar em Ajustes › Chave de acesso à IA › Salvar chave › Testar conexão. A chave fica só naquele aparelho e navegador: em outro computador ou navegador é preciso colar de novo. Botão 'Buscar modelos disponíveis na minha conta' escolhe um modelo estável e um reserva.",
+"ENTRADA E CHAVE: o site pede login com Google; o administrador (Matheus) libera o e-mail de cada colega em Ajustes › Nuvem compartilhada. Se a IA da escola estiver ligada (Ajustes › IA da escola), ninguém precisa de chave: basta o login. Só sem ela, quem não tem chave de IA vê uma tela para cadastrá-la. A chave é gratuita: aistudio.google.com/apikey, entrar com uma conta Google (se a da escola estiver bloqueada, use a pessoal), Criar chave de API, copiar (começa com AQ. ou AIza) e colar em Ajustes › Chave de acesso à IA › Salvar chave › Testar conexão. A chave fica só naquele aparelho e navegador: em outro computador ou navegador é preciso colar de novo. Botão 'Buscar modelos disponíveis na minha conta' escolhe um modelo estável e um reserva.",
 "",
 "GERAR (criar questões novas com a IA). Passo 1, 'Criar a partir de': Livro SESI (escolhe a série, abre o livro e marca os capítulos; os capítulos marcados alimentam a geração; clicar fora do livro fecha a lista; o botão vermelho 'Desmarcar tudo' limpa), ENEM (área, competência, habilidade e dificuldade da matriz do ENEM), SSA (etapa 1, 2 ou 3) ou PASSE. No Livro SESI dá para escolher a 'Estrutura das questões objetivas': Simples, ENEM, SSA ou PASSE. Passo 2, 'Sobre o quê': nível, série, componente e assunto (o assunto é opcional quando há capítulo marcado). Quando há capítulos marcados, aparece um bloco verde 'Habilidades dos capítulos marcados', com as habilidades que cada capítulo cita, separadas por capítulo. Passo 3: quantidade de Objetivas, Dissertativas e Adaptadas (para estudantes atípicos, TEA e TDAH), até 20 por geração; para mais, gere em rodadas, o banco acumula. Também no passo 3, só com Livro SESI: 'Com imagem do livro' (até 10). A questão parte de uma foto, mapa, gravura, charge ou gráfico do capítulo marcado, e a IA recebe a imagem junto com o texto do capítulo, relacionando-a ao contexto que o capítulo trabalha. Abre um quadro com as miniaturas das imagens dos capítulos marcados: em 'Eu escolho as imagens', o professor clica nas imagens (a lupa amplia; aparece 'já usada' quando a imagem já virou questão); em 'O sistema escolhe', o site sorteia entre elas, evitando as já usadas. Dá para escolher se a questão com imagem é Objetiva (no molde escolhido no passo 1) ou Dissertativa. A imagem sai no banco, na prova e no Word, com a legenda logo abaixo (editável no editor da questão, campo 'Legenda da imagem'). Se o capítulo não tiver imagens guardadas, aparece 'sem imagens guardadas'. 'Mais opções' (opcional): habilidades da matriz, nível de exigência, elaboração cuidadosa (mais lenta), orientações adicionais. 'Material complementar' (opcional): para quem tem outro material próprio, anexar PDFs ou colar um texto que apoia as questões. Botões Gerar questões, Cancelar geração e Limpar campos. Ensino Fundamental sai com 4 alternativas (A a D) e Médio com 5 (A a E); adaptadas têm 3.",
 "",
@@ -10488,7 +10607,7 @@ function sistemaDoChat(){
     "[[ERRO_DO_SITE: página onde aconteceu | o que a pessoa fez | o que deu errado, com o texto exato da mensagem de erro, se houver]]",
     "Use essa marca no máximo uma vez por defeito e nunca fale dela para a pessoa.",
     "",
-    "SITUAÇÃO AGORA: página aberta: "+(abaAtualNome()||"desconhecida")+"; chave de IA: "+(conf.chave?"cadastrada":"não cadastrada")+"; nuvem: "+(NV&&NV.membro?"conectada":"desconectada")+
+    "SITUAÇÃO AGORA: página aberta: "+(abaAtualNome()||"desconhecida")+"; chave de IA: "+(conf.chave?"cadastrada (pessoal)":(IA_ESCOLA.chave?"IA da escola ativa (não precisa de chave)":"não cadastrada"))+"; nuvem: "+(NV&&NV.membro?"conectada":"desconectada")+
       (errosRecentes.length?"; erros mostrados na faixa vermelha nesta visita: "+errosRecentes.slice(-3).map(function(e){return "\""+e.texto+"\""+(e.onde?" ("+e.onde+")":"");}).join("; "):"; nenhum erro na faixa vermelha nesta visita")+".",
     "",
     "GUIA DO SITE:",
@@ -10574,18 +10693,18 @@ function chatRenderAnexos(){
 }
 /* conversa com a IA: histórico com imagens, texto livre na resposta, troca de modelo quando ocupado */
 function chamarChatIA(sistema,historico){
-  if(!conf.chave)return Promise.reject(new Error("sem chave"));
-  var modelos=[conf.modelo||(conf.provedor==="anthropic"?"claude-sonnet-5":"gemini-3.6-flash")];
-  if(conf.reserva&&conf.reserva!==modelos[0])modelos.push(conf.reserva);
-  if(conf.provedor==="gemini")MODELOS_EXTRAS_GEMINI.forEach(function(m){if(modelos.indexOf(m)<0&&!modelosAusentes[m])modelos.push(m);});
+  if(!chaveIA())return Promise.reject(new Error("sem chave"));
+  var modelos=[modeloIA()||(provedorIA()==="anthropic"?"claude-sonnet-5":"gemini-3.6-flash")];
+  if(reservaIA()&&reservaIA()!==modelos[0])modelos.push(reservaIA());
+  if(provedorIA()==="gemini")MODELOS_EXTRAS_GEMINI.forEach(function(m){if(modelos.indexOf(m)<0&&!modelosAusentes[m])modelos.push(m);});
   modelos=modelos.filter(function(m){return !modelosEsgotados[m];}).concat(modelos.filter(function(m){return modelosEsgotados[m];}));
   function base64(d){return String(d).replace(/^data:[^,]+,/,"");}
   function pedir(modelo){
     var ctl=new AbortController(), relogio=setTimeout(function(){try{ctl.abort();}catch(e){}},60000);
     var req;
-    if(conf.provedor==="anthropic"){
+    if(provedorIA()==="anthropic"){
       req=fetch("https://api.anthropic.com/v1/messages",{method:"POST",signal:ctl.signal,
-        headers:{"Content-Type":"application/json","x-api-key":conf.chave,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+        headers:{"Content-Type":"application/json","x-api-key":chaveIA(),"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
         body:JSON.stringify({model:modelo,max_tokens:1500,system:sistema,messages:historico.map(function(m){
           var c=(m.imagens||[]).map(function(d){return {type:"image",source:{type:"base64",media_type:"image/jpeg",data:base64(d)}};});
           c.push({type:"text",text:m.texto||"(print)"});
@@ -10596,7 +10715,7 @@ function chamarChatIA(sistema,historico){
       });
     }else{
       req=fetch("https://generativelanguage.googleapis.com/v1beta/models/"+encodeURIComponent(modelo)+":generateContent",{
-        method:"POST",signal:ctl.signal,headers:{"Content-Type":"application/json","x-goog-api-key":conf.chave},
+        method:"POST",signal:ctl.signal,headers:{"Content-Type":"application/json","x-goog-api-key":chaveIA()},
         body:JSON.stringify({systemInstruction:{parts:[{text:sistema}]},
           contents:historico.map(function(m){
             var partes=(m.imagens||[]).map(function(d){return {inline_data:{mime_type:"image/jpeg",data:base64(d)}};});
@@ -10617,6 +10736,7 @@ function chamarChatIA(sistema,historico){
   function tentar(i,ultimo){
     if(i>=modelos.length)throw ultimo||new Error("Nenhum modelo respondeu.");
     return pedir(modelos[i]).catch(function(e){
+      if(passarParaEscola(e))return chamarChatIA(sistema,historico);
       if(e&&e.cota)modelosEsgotados[modelos[i]]=1;
       if(e&&e.semModelo&&modelos[i]!==conf.modelo)modelosAusentes[modelos[i]]=1;
       if(e&&e.rede)throw e;
@@ -10629,6 +10749,7 @@ function chamarChatIA(sistema,historico){
 function chatFalha(e){
   var t=(e&&e.message)||"";
   if(e&&e.rede)return "Não consegui falar com a IA agora: "+esc(t);
+  if((e&&e.cota||/quota|cota/i.test(t))&&usaEscola())return "A cota da IA da escola acabou por agora. Ela volta sozinha daqui a pouco. Enquanto isso, o resto do site funciona normalmente.";
   if(e&&e.cota||/quota|cota/i.test(t))return "A cota gratuita do dia da sua chave do Gemini acabou. Ela volta sozinha em algumas horas. 😉 Enquanto isso, o resto do site funciona normalmente.";
   if(/recusada/i.test(t))return "A IA recusou a chave cadastrada. Confira em <strong>Ajustes › Chave de acesso à IA</strong> e clique em <strong>Testar conexão</strong>.";
   return "A IA está ocupada neste momento e não respondeu. Tente de novo daqui a pouquinho. ("+esc(t.slice(0,140))+")";
@@ -10636,7 +10757,7 @@ function chatFalha(e){
 function chatEnviar(texto){
   texto=String(texto||"").trim();
   if(CHAT.enviando||(!texto&&!CHAT.anexos.length))return;
-  if(!conf.chave){
+  if(!chaveIA()){
     CHAT.msgs.push({papel:"user",texto:texto||"(print)",imagens:CHAT.anexos.slice()});
     CHAT.msgs.push({papel:"model",tipo:"aviso",texto:'Para eu conversar com você, preciso da chave da IA, a mesma que o site usa para gerar questões. É gratuita e leva dois minutos. <br><button type="button" class="botao" data-abrir-assistente="1">Cadastrar minha chave</button>'});
     CHAT.anexos=[];chatRenderAnexos();$("chat-texto").value="";chatGuardar();chatRender();return;
@@ -11837,7 +11958,7 @@ function apProgresso(etapas,atual,aviso){
 }
 async function apGerar(){
   var n=AP.novo;
-  if(!conf.chave){alert("Cadastre a chave da IA em Ajustes antes de criar.");if(typeof abrirAssistenteChave==="function")abrirAssistenteChave();return;}
+  if(!chaveIA()){alert("Cadastre a chave da IA em Ajustes antes de criar.");if(typeof abrirAssistenteChave==="function")abrirAssistenteChave();return;}
   AP.gerando=true;cancelado=false;paradaGeral="";
   $("ap-criar").disabled=true;$("ap-cancelar").style.display="";
   document.querySelectorAll(".ap-passo").forEach(function(b){b.disabled=true;});
@@ -12502,7 +12623,7 @@ function apCtx(){
       h+=apBotaoIco("img-trocar","trocar",temImg?"Trocar a imagem":"Pôr uma imagem")+apBotaoIco("colar","colar","Colar imagem copiada (Ctrl+V)")+
         (temImg?apBotaoIco("enquadrar","enquadrar","Enquadrar: ver a imagem toda, mudar a parte que aparece ou caber inteira")+apBotaoIco("cortar","cortar","Cortar a imagem")+
           apBotaoIco("pop-virar","virar","Virar (espelhar)")+apBotaoIco("pop-transp","transp","Transparência")+apBotaoIco("comofundo","comofundo","Usar como imagem de fundo do slide")+
-          apBotaoIco("img-tirar","lixo","Tirar a imagem (o espaço fica vazio)"):apBotaoIco("ilustrar","ilustrar","Criar uma ilustração para este slide"));
+          apBotaoIco("img-tirar","lixo","Tirar a imagem (o espaço fica vazio)"):"");
     }
     if(tipo==="foto")h+=apBotaoIco("img-trocar","trocar","Trocar a foto")+apBotaoIco("colar","colar","Colar imagem copiada (Ctrl+V)")+apBotaoIco("cortar","cortar","Cortar a foto")+
       apBotaoIco("pop-virar","virar","Virar (espelhar)")+apBotaoIco("pop-transp","transp","Transparência")+apBotaoIco("comofundo","comofundo","Usar como imagem de fundo do slide");
@@ -12562,7 +12683,6 @@ function apAcao(a,bt){
       break;}
     case "img-trocar":apTrocarImagem(k==="m"?"m":k);break;
     case "colar":apColarBotao(k==="m"?"m":k);break;
-    case "ilustrar":apEscolherImagem(function(img){apPorImagem("m",img);},"ilustrar");break;
     case "enquadrar":apEnqIniciar("m");break;
     case "cortar":apCortar(k==="m"?"m":k);break;
     case "pop-virar":apPopVirar(bt,k==="m"?"m":k);break;
@@ -12826,7 +12946,7 @@ function apPopTexto(bt){
 }
 function apPopImagemTrilho(bt){
   apPop(bt,'<h4>Pôr uma imagem</h4><div class="ap-pop-lista"><button type="button" data-o="livro">'+apIco("imagem")+'Do livro</button><button type="button" data-o="pc">'+apIco("comofundo")+"Do computador</button>"+
-    '<button type="button" data-o="colar">'+apIco("colar")+'Colar imagem copiada</button><button type="button" data-o="ilustrar">'+apIco("ilustrar")+"Criar uma ilustração</button></div>"+
+    '<button type="button" data-o="colar">'+apIco("colar")+'Colar imagem copiada</button></div>'+
     '<p class="ap-pop-ajuda">Se o slide tem o espaço da imagem vazio, ela vai para lá. Senão, entra como foto solta, que você arrasta para onde quiser.</p>',function(p){
     p.querySelectorAll("[data-o]").forEach(function(b){b.addEventListener("click",function(){
       var o=this.dataset.o;apFecharPop();
@@ -13133,7 +13253,7 @@ function apTrocarTipo(s,tipo){
 }
 async function apRefazerSlide(s,instrucao){
   var d=AP.deck, ret=$("ap-refazer-ret");
-  if(!conf.chave){msg("ap-refazer-ret","Cadastre a chave da IA em Ajustes.","erro");return;}
+  if(!chaveIA()){msg("ap-refazer-ret","Cadastre a chave da IA em Ajustes.","erro");return;}
   var bt=$("ap-refazer-ia");bt.disabled=true;bt.textContent="Refazendo…";
   cancelado=false;paradaGeral="";
   try{
@@ -13163,7 +13283,7 @@ function apEscolherImagem(fim,abaInicial){
   var fundo=document.createElement("div");fundo.className="fundo-janela ap-janela-img";
   fundo.innerHTML='<div class="janela" role="dialog" aria-label="Escolher imagem"><h2>Escolher imagem</h2>'+
     '<div class="ap-abas"><button type="button" class="ap-aba" data-aba="livro">Do livro</button><button type="button" class="ap-aba" data-aba="pc">Do computador</button>'+
-    '<button type="button" class="ap-aba" data-aba="colar">Colar copiada</button><button type="button" class="ap-aba" data-aba="ilustrar">Criar ilustração</button></div>'+
+    '<button type="button" class="ap-aba" data-aba="colar">Colar copiada</button></div>'+
     '<div class="ap-aba-corpo" id="ap-img-corpo"></div><div class="botoes"><button type="button" class="botao secundario" id="ap-img-fechar">Fechar</button></div></div>';
   document.body.appendChild(fundo);
   function fechar(){fundo.remove();document.removeEventListener("keydown",tecla);document.removeEventListener("paste",colou,true);}
@@ -13193,7 +13313,7 @@ function apEscolherImagem(fim,abaInicial){
       if(!id){c.innerHTML='<div class="aviso">Esta apresentação não veio de um capítulo do livro.</div>';return;}
       c.innerHTML='<div class="aviso">Carregando as imagens do capítulo…</div>';
       apImagensCapitulo(id).then(function(l){
-        if(!l.length){c.innerHTML='<div class="aviso">As imagens deste capítulo ainda não estão na nuvem. Use "Do computador", "Colar copiada" ou "Criar ilustração".</div>';return;}
+        if(!l.length){c.innerHTML='<div class="aviso">As imagens deste capítulo ainda não estão na nuvem. Use "Do computador" ou "Colar copiada".</div>';return;}
         c.innerHTML='<div class="ap-galeria">'+l.map(function(im,i){return '<button type="button" class="ap-gal" data-i="'+i+'" title="'+esc(im.l||"")+'"><img src="'+im.d+'" alt=""><span>p. '+esc(im.p||"?")+"</span></button>";}).join("")+"</div>";
         c.querySelectorAll(".ap-gal").forEach(function(b){b.addEventListener("click",function(){var im=l[+this.dataset.i];
           escolher({src:im.d,livro:im.id||"",legenda:s.img&&s.img.legenda||apTxt(String(im.l||"").split(/\n/)[0].slice(0,140))});});});
@@ -13220,7 +13340,7 @@ function apEscolherImagem(fim,abaInicial){
       });
     }else{
       var desc=s.ilustrar||s.busca||APM.limpo(s.titulo||"").replace(/<[^>]+>/g,"");
-      c.innerHTML='<p class="ajuda">O Gemini desenha uma imagem nova sobre o tema do slide, com a sua chave. Leva uns segundos.</p>'+
+      c.innerHTML='<p class="ajuda">O Gemini desenha uma imagem nova sobre o tema do slide. Leva uns segundos.</p>'+
         '<label>Que tipo?</label><div class="ap-abas ap-estilos">'+AP_ESTILOS_ILU.map(function(e,i){return '<button type="button" class="ap-aba'+(i===0?" marcado":"")+'" data-est="'+e[0]+'">'+e[1]+"</button>";}).join("")+"</div>"+
         '<label for="ap-ilu-desc">O que a imagem deve mostrar</label><textarea id="ap-ilu-desc" rows="3">'+esc(desc)+"</textarea>"+
         '<div class="botoes" style="justify-content:flex-start"><button type="button" class="botao" id="ap-ilu-criar">Criar ilustração</button></div><div id="ap-img-msg"></div><div id="ap-ilu-res"></div>';
@@ -13239,14 +13359,14 @@ function apEscolherImagem(fim,abaInicial){
     }
   }
   fundo.querySelectorAll(".ap-aba[data-aba]").forEach(function(b){b.addEventListener("click",function(){aba(this.dataset.aba);});});
-  aba(abaInicial&&/^(livro|pc|colar|ilustrar)$/.test(abaInicial)?abaInicial:(d.fonte&&d.fonte.capId?"livro":"pc"));
+  aba(abaInicial&&/^(livro|pc|colar)$/.test(abaInicial)?abaInicial:(d.fonte&&d.fonte.capId?"livro":"pc"));
 }
 
 /* ---- ilustrações criadas pelo Gemini (quando o livro não tem imagem para o slide) ---- */
 var AP_ESTILOS_ILU=[["ilustracao","Ilustração"],["charge","Charge"],["tirinha","Tirinha"]];
 function apModeloImagem(){
   if(AP.modeloImg)return Promise.resolve(AP.modeloImg);
-  return fetch("https://generativelanguage.googleapis.com/v1beta/models?pageSize=200",{headers:{"x-goog-api-key":conf.chave}}).then(function(r){return r.json();}).then(function(d){
+  return fetch("https://generativelanguage.googleapis.com/v1beta/models?pageSize=200",{headers:{"x-goog-api-key":chaveImagem()}}).then(function(r){return r.json();}).then(function(d){
     var nomes=(d.models||[]).filter(function(m){return (m.supportedGenerationMethods||[]).indexOf("generateContent")>-1;}).map(function(m){return String(m.name).replace(/^models\//,"");})
       .filter(function(n){return /image/.test(n)&&!/imagen|tts|embedding/.test(n);});
     function nota(n){var v=/(\d+(?:\.\d+)?)/.exec(n);return (/flash/.test(n)?100:0)+(/preview|exp/.test(n)?0:50)+(v?+v[1]:0);}
@@ -13257,8 +13377,10 @@ function apModeloImagem(){
 }
 function apErroIlustracao(status,txt){
   var e;
-  if(status===429||/quota|RESOURCE_EXHAUSTED/i.test(txt))e=new Error("A sua chave do Gemini está sem cota para criar imagens agora (no plano gratuito o Google às vezes não libera imagens, ou a cota do dia acabou). O espaço da imagem ficou livre: você pode colar uma imagem copiada ou escolher do livro.");
-  else if(status===403||status===401)e=new Error("A chave do Gemini não foi aceita para criar imagens. Confira a chave em Ajustes.");
+  var escola=!!IA_ESCOLA.chave;
+  if((status===429||/quota|RESOURCE_EXHAUSTED/i.test(txt))&&escola)e=new Error("O Google não liberou a criação de imagens agora para a IA da escola (sem cota de imagens"+(NV&&NV.admin?": confira se o faturamento está ativo no Google AI Studio":"")+"). O espaço da imagem ficou livre: você pode colar uma imagem copiada ou escolher do livro.");
+  else if(status===429||/quota|RESOURCE_EXHAUSTED/i.test(txt))e=new Error("A sua chave do Gemini está sem cota para criar imagens agora (no plano gratuito o Google às vezes não libera imagens, ou a cota do dia acabou). O espaço da imagem ficou livre: você pode colar uma imagem copiada ou escolher do livro.");
+  else if(status===403||status===401)e=new Error(escola?"A chave da IA da escola não foi aceita para criar imagens. Avise o administrador.":"A chave do Gemini não foi aceita para criar imagens. Confira a chave em Ajustes.");
   else if(status===404)e=new Error("O modelo de imagens do Gemini não está disponível para a sua chave.");
   else if(/SAFETY|blocked|PROHIBITED/i.test(txt))e=new Error("O Gemini recusou desenhar esse tema. Tente descrever de outro jeito (sem violência explícita, por exemplo).");
   else e=new Error("O Gemini não conseguiu criar a imagem agora. Tente de novo daqui a pouco.");
@@ -13277,8 +13399,7 @@ function apPedidoIlustracao(desc,estilo,s){
     "Se houver qualquer texto na imagem, escreva em português do Brasil, com poucas palavras e sem erros. Sem marca d'água, sem moldura, formato horizontal.";
 }
 function apCriarIlustracao(desc,estilo,s){
-  if(!conf.chave)return Promise.reject(new Error("Cadastre a chave do Gemini em Ajustes para criar ilustrações."));
-  if(conf.provedor==="anthropic")return Promise.reject(new Error("Criar ilustrações precisa de uma chave do Gemini (em Ajustes)."));
+  if(!chaveImagem())return Promise.reject(new Error("Criar ilustrações precisa da IA da escola (o administrador ativa em Ajustes) ou de uma chave sua do Gemini."));
   if(navigator.onLine===false)return Promise.reject(new Error("Sem internet agora."));
   var texto=apPedidoIlustracao(desc,estilo,s);
   return apModeloImagem().then(function(modelo){
@@ -13286,7 +13407,7 @@ function apCriarIlustracao(desc,estilo,s){
     function pedir(comFormato){
       var cfg={responseModalities:["TEXT","IMAGE"]};
       if(comFormato)cfg.imageConfig={aspectRatio:"4:3"};
-      return fetch(url,{method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":conf.chave},
+      return fetch(url,{method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":chaveImagem()},
         body:JSON.stringify({contents:[{role:"user",parts:[{text:texto}]}],generationConfig:cfg})});
     }
     return pedir(true).then(function(r){return r.status===400?pedir(false):r;}).then(function(r){
@@ -13302,8 +13423,13 @@ function apCriarIlustracao(desc,estilo,s){
   });
 }
 // depois de criar a apresentação: os slides que ficaram sem imagem do livro ganham uma ilustração
+/* DESLIGADO (pedido do Matheus, 2026-11-09): criar imagens pelo Gemini só funciona com faturamento
+   ativo, e o site fica 100% gratuito. Os slides sem imagem do livro ficam com o espaço livre para colar
+   ou escolher uma imagem. Para religar, apague a linha "return" abaixo e devolva os botões "Criar ilustração". */
+var AP_ILUSTRAR_LIGADO=false;
 async function apIlustrarFaltando(deck){
-  if(navigator.onLine===false||!conf.chave||conf.provedor==="anthropic")return;
+  if(!AP_ILUSTRAR_LIGADO)return;
+  if(navigator.onLine===false||!chaveImagem())return;
   if(AP.ilustrando===deck)return;AP.ilustrando=deck;
   var feitos=0;
   try{
@@ -13564,6 +13690,7 @@ async function apBaixarPptx(){
   window.addEventListener("beforeunload",function(){if(AP.deck)apLocalGravar(AP.deck).catch(function(){});});
   // nos testes locais (localhost) a aba fica acessível para conferência automática
   if(/^(localhost|127\.0\.0\.1)$/.test(location.hostname))window.apTeste={AP:AP,APM:APM,trocarIA:function(f){chamarIAComInsistencia=f;},ir:function(k){apIr(k);},ilustrar:function(f){apCriarIlustracao=f;}};
+  if(/^(localhost|127\.0\.0\.1)$/.test(location.hostname))window.iaTeste={IA_ESCOLA:IA_ESCOLA,IA_USO:IA_USO,conf:conf,NV:NV,chaveIA:chaveIA,insistir:chamarIAComInsistencia,ilustrar:apCriarIlustracao,chat:chamarChatIA};
   // offline: guarda o site e as fontes para abrir sem internet depois da primeira visita
   if("serviceWorker" in navigator&&location.protocol==="https:")navigator.serviceWorker.register("sw.js").catch(function(){});
 })();
