@@ -1843,12 +1843,11 @@ body.ap-arrastando,body.ap-arrastando *{cursor:grabbing !important}
     <h2>IA da escola</h2>
     <div id="ia-escola-estado"></div>
     <div class="so-admin" id="ia-escola-admin" style="margin-top:10px">
-      <p class="ajuda" style="margin:0 0 6px"><strong>Só você (administrador) vê esta parte.</strong> Cole aqui uma chave do Gemini da escola. Ela vai para a nuvem e todos os professores liberados passam a usar a IA só com o login do Google, sem criar chave. Para criar ilustrações e não esbarrar no limite gratuito, a conta dessa chave precisa estar com o faturamento ativo no Google AI Studio.</p>
+      <p class="ajuda" style="margin:0 0 6px"><strong>Só você (administrador) vê esta parte.</strong> Cole aqui uma chave do Gemini da escola. Ela vai para a nuvem e todos os professores liberados passam a usar a IA só com o login do Google, sem criar chave. É a mesma chave gratuita do Google AI Studio, sem faturamento: nada é cobrado. O limite diário gratuito passa a ser um só para a escola inteira (o site troca sozinho entre vários modelos do Gemini, cada um com a sua cota).</p>
       <label for="chave-escola">Chave do Gemini da escola</label>
       <input type="password" id="chave-escola" placeholder="Cole a chave da escola aqui" autocomplete="off">
       <div class="botoes">
         <button class="botao" type="button" id="btn-salvar-escola">Testar e liberar para todos</button>
-        <button class="botao secundario" type="button" id="btn-testar-imagem-escola">Testar criação de imagem</button>
         <button class="botao secundario" type="button" id="btn-remover-escola">Desligar a IA da escola</button>
       </div>
       <div id="retorno-escola"></div>
@@ -5721,7 +5720,7 @@ function mostrarIAEscola(){
   var admin=typeof NV!=="undefined"&&NV&&NV.admin;
   var t;
   if(IA_ESCOLA.chave){
-    t="<strong>A IA da escola está ligada.</strong> Todos os professores liberados usam a IA (gerar questões, planejamento, apresentações, ilustrações e o chat de ajuda) só com o login do Google, sem criar chave."+
+    t="<strong>A IA da escola está ligada.</strong> Todos os professores liberados usam a IA (gerar questões, planejamento, apresentações e o chat de ajuda) só com o login do Google, sem criar chave."+
       (conf.chave?" Você também tem uma chave sua neste aparelho: ela é usada primeiro, e a da escola entra sozinha quando a sua acabar. Se preferir, apague a sua chave abaixo.":" Você não precisa cadastrar chave nenhuma.")+
       (admin?" Chave em uso termina em <strong>…"+esc(IA_ESCOLA.chave.slice(-4))+"</strong>.":"");
     msg("ia-escola-estado",t,"ok");
@@ -5770,14 +5769,6 @@ $("btn-remover-escola").addEventListener("click",function(){
     definirIAEscola("");atualizarAvisoChave();atualizarPortaoChave();
     msg("retorno-escola","IA da escola desligada.","ok");
   }).catch(function(e){msg("retorno-escola","Não consegui desligar: "+esc((e&&e.message)||String(e)),"erro");});
-});
-$("btn-testar-imagem-escola").addEventListener("click",function(){
-  if(!IA_ESCOLA.chave){msg("retorno-escola","Ligue a IA da escola primeiro.","erro");return;}
-  var botao=this;botao.disabled=true;
-  msg("retorno-escola","Pedindo uma imagem de teste ao Gemini…","");
-  apCriarIlustracao("um globo terrestre simples sobre uma mesa de sala de aula","ilustracao",null).then(function(src){
-    msg("retorno-escola","Criação de imagens funcionando para todos.<br><img src=\""+src+"\" alt=\"Imagem de teste\" style=\"max-width:220px;border-radius:8px;margin-top:8px\">","ok");
-  }).catch(function(e){msg("retorno-escola",esc((e&&e.message)||String(e)),"erro");}).then(function(){botao.disabled=false;});
 });
 mostrarIAEscola();
 $("btn-modelos").addEventListener("click",function(){
@@ -12632,7 +12623,7 @@ function apCtx(){
       h+=apBotaoIco("img-trocar","trocar",temImg?"Trocar a imagem":"Pôr uma imagem")+apBotaoIco("colar","colar","Colar imagem copiada (Ctrl+V)")+
         (temImg?apBotaoIco("enquadrar","enquadrar","Enquadrar: ver a imagem toda, mudar a parte que aparece ou caber inteira")+apBotaoIco("cortar","cortar","Cortar a imagem")+
           apBotaoIco("pop-virar","virar","Virar (espelhar)")+apBotaoIco("pop-transp","transp","Transparência")+apBotaoIco("comofundo","comofundo","Usar como imagem de fundo do slide")+
-          apBotaoIco("img-tirar","lixo","Tirar a imagem (o espaço fica vazio)"):apBotaoIco("ilustrar","ilustrar","Criar uma ilustração para este slide"));
+          apBotaoIco("img-tirar","lixo","Tirar a imagem (o espaço fica vazio)"):"");
     }
     if(tipo==="foto")h+=apBotaoIco("img-trocar","trocar","Trocar a foto")+apBotaoIco("colar","colar","Colar imagem copiada (Ctrl+V)")+apBotaoIco("cortar","cortar","Cortar a foto")+
       apBotaoIco("pop-virar","virar","Virar (espelhar)")+apBotaoIco("pop-transp","transp","Transparência")+apBotaoIco("comofundo","comofundo","Usar como imagem de fundo do slide");
@@ -12692,7 +12683,6 @@ function apAcao(a,bt){
       break;}
     case "img-trocar":apTrocarImagem(k==="m"?"m":k);break;
     case "colar":apColarBotao(k==="m"?"m":k);break;
-    case "ilustrar":apEscolherImagem(function(img){apPorImagem("m",img);},"ilustrar");break;
     case "enquadrar":apEnqIniciar("m");break;
     case "cortar":apCortar(k==="m"?"m":k);break;
     case "pop-virar":apPopVirar(bt,k==="m"?"m":k);break;
@@ -12956,7 +12946,7 @@ function apPopTexto(bt){
 }
 function apPopImagemTrilho(bt){
   apPop(bt,'<h4>Pôr uma imagem</h4><div class="ap-pop-lista"><button type="button" data-o="livro">'+apIco("imagem")+'Do livro</button><button type="button" data-o="pc">'+apIco("comofundo")+"Do computador</button>"+
-    '<button type="button" data-o="colar">'+apIco("colar")+'Colar imagem copiada</button><button type="button" data-o="ilustrar">'+apIco("ilustrar")+"Criar uma ilustração</button></div>"+
+    '<button type="button" data-o="colar">'+apIco("colar")+'Colar imagem copiada</button></div>'+
     '<p class="ap-pop-ajuda">Se o slide tem o espaço da imagem vazio, ela vai para lá. Senão, entra como foto solta, que você arrasta para onde quiser.</p>',function(p){
     p.querySelectorAll("[data-o]").forEach(function(b){b.addEventListener("click",function(){
       var o=this.dataset.o;apFecharPop();
@@ -13293,7 +13283,7 @@ function apEscolherImagem(fim,abaInicial){
   var fundo=document.createElement("div");fundo.className="fundo-janela ap-janela-img";
   fundo.innerHTML='<div class="janela" role="dialog" aria-label="Escolher imagem"><h2>Escolher imagem</h2>'+
     '<div class="ap-abas"><button type="button" class="ap-aba" data-aba="livro">Do livro</button><button type="button" class="ap-aba" data-aba="pc">Do computador</button>'+
-    '<button type="button" class="ap-aba" data-aba="colar">Colar copiada</button><button type="button" class="ap-aba" data-aba="ilustrar">Criar ilustração</button></div>'+
+    '<button type="button" class="ap-aba" data-aba="colar">Colar copiada</button></div>'+
     '<div class="ap-aba-corpo" id="ap-img-corpo"></div><div class="botoes"><button type="button" class="botao secundario" id="ap-img-fechar">Fechar</button></div></div>';
   document.body.appendChild(fundo);
   function fechar(){fundo.remove();document.removeEventListener("keydown",tecla);document.removeEventListener("paste",colou,true);}
@@ -13323,7 +13313,7 @@ function apEscolherImagem(fim,abaInicial){
       if(!id){c.innerHTML='<div class="aviso">Esta apresentação não veio de um capítulo do livro.</div>';return;}
       c.innerHTML='<div class="aviso">Carregando as imagens do capítulo…</div>';
       apImagensCapitulo(id).then(function(l){
-        if(!l.length){c.innerHTML='<div class="aviso">As imagens deste capítulo ainda não estão na nuvem. Use "Do computador", "Colar copiada" ou "Criar ilustração".</div>';return;}
+        if(!l.length){c.innerHTML='<div class="aviso">As imagens deste capítulo ainda não estão na nuvem. Use "Do computador" ou "Colar copiada".</div>';return;}
         c.innerHTML='<div class="ap-galeria">'+l.map(function(im,i){return '<button type="button" class="ap-gal" data-i="'+i+'" title="'+esc(im.l||"")+'"><img src="'+im.d+'" alt=""><span>p. '+esc(im.p||"?")+"</span></button>";}).join("")+"</div>";
         c.querySelectorAll(".ap-gal").forEach(function(b){b.addEventListener("click",function(){var im=l[+this.dataset.i];
           escolher({src:im.d,livro:im.id||"",legenda:s.img&&s.img.legenda||apTxt(String(im.l||"").split(/\n/)[0].slice(0,140))});});});
@@ -13369,7 +13359,7 @@ function apEscolherImagem(fim,abaInicial){
     }
   }
   fundo.querySelectorAll(".ap-aba[data-aba]").forEach(function(b){b.addEventListener("click",function(){aba(this.dataset.aba);});});
-  aba(abaInicial&&/^(livro|pc|colar|ilustrar)$/.test(abaInicial)?abaInicial:(d.fonte&&d.fonte.capId?"livro":"pc"));
+  aba(abaInicial&&/^(livro|pc|colar)$/.test(abaInicial)?abaInicial:(d.fonte&&d.fonte.capId?"livro":"pc"));
 }
 
 /* ---- ilustrações criadas pelo Gemini (quando o livro não tem imagem para o slide) ---- */
@@ -13433,7 +13423,12 @@ function apCriarIlustracao(desc,estilo,s){
   });
 }
 // depois de criar a apresentação: os slides que ficaram sem imagem do livro ganham uma ilustração
+/* DESLIGADO (pedido do Matheus, 2026-11-09): criar imagens pelo Gemini só funciona com faturamento
+   ativo, e o site fica 100% gratuito. Os slides sem imagem do livro ficam com o espaço livre para colar
+   ou escolher uma imagem. Para religar, apague a linha "return" abaixo e devolva os botões "Criar ilustração". */
+var AP_ILUSTRAR_LIGADO=false;
 async function apIlustrarFaltando(deck){
+  if(!AP_ILUSTRAR_LIGADO)return;
   if(navigator.onLine===false||!chaveImagem())return;
   if(AP.ilustrando===deck)return;AP.ilustrando=deck;
   var feitos=0;
