@@ -9973,6 +9973,7 @@ function nuvemIniciar(){
         }
       };
     }
+    nuvemVoltaRedirecionamento();
     S.onAuthStateChanged(NV.auth,function(u){
       NV.authPronto=true;
       NV.usuario=u&&u.email?{email:u.email.toLowerCase()}:null;
@@ -10481,11 +10482,16 @@ function vincularImagens(r){
 function imagensVinculadas(){
   return !!(NV.img.usuario&&NV.usuario&&NV.img.usuario.email===NV.usuario.email);
 }
+/* Quem acabou de clicar em Entrar nunca é mandado entrar de novo: o vínculo das imagens
+   (vincularImagens) ainda está em andamento e chegava depois desta conferência, o que fazia
+   o site pedir um segundo login a quem entrava pela primeira vez. Agora a conferência espera
+   o vínculo terminar e, se for um login de agora, só marca e segue (sem segundo login). */
 function conferirVinculoImagens(){
   if(!nuvemImagensSeparada()||!NV.img.quandoPronto||!NV.usuario)return;
   var S=NV.sdk, email=NV.usuario.email;
-  NV.img.quandoPronto.then(function(){
+  Promise.all([NV.img.quandoPronto,NV.img.vinculando||null]).then(function(){
     if(imagensVinculadas()||ler(CHAVE_VINCULO_IMG)===email)return;
+    if(NV.entrouAgora===email){gravar(CHAVE_VINCULO_IMG,email);return;}
     // o administrador testa o vínculo primeiro; os demais só depois que deu certo com ele
     var pode=NV.admin?Promise.resolve(true)
       :S.getDoc(S.doc(NV.db,"livros","vinculo-imagens")).then(function(d){return d.exists();},function(){return false;});
@@ -10514,10 +10520,24 @@ function nuvemEntrar(){
   var S=NV.sdk, prov=new S.GoogleAuthProvider();
   prov.setCustomParameters({prompt:"select_account"});
   $("portao-msg").innerHTML="";
-  S.signInWithPopup(NV.auth,prov).then(vincularImagens,function(e){
+  NV.img.vinculando=S.signInWithPopup(NV.auth,prov).then(function(r){
+    NV.entrouAgora=(r&&r.user&&r.user.email||"").toLowerCase();
+    return vincularImagens(r);
+  },function(e){
     if(e&&e.code==="auth/popup-blocked")return S.signInWithRedirect(NV.auth,prov);
     if(e&&(e.code==="auth/popup-closed-by-user"||e.code==="auth/cancelled-popup-request"))return;
     msg("portao-msg","Não foi possível entrar ("+esc(e&&e.code||"erro")+"). Tente de novo.","erro");
+  }).catch(function(){});
+}
+/* volta do login por redirecionamento (quando o navegador bloqueia a janela do Google):
+   o mesmo login também entra nas imagens, como na janela */
+function nuvemVoltaRedirecionamento(){
+  var S=NV.sdk;
+  if(!S.getRedirectResult||!nuvemImagensSeparada())return;
+  NV.img.vinculando=S.getRedirectResult(NV.auth).then(function(r){
+    if(!r)return;
+    NV.entrouAgora=(r.user&&r.user.email||"").toLowerCase();
+    return vincularImagens(r);
   }).catch(function(){});
 }
 $("btn-nuvem-entrar").addEventListener("click",nuvemEntrar);
