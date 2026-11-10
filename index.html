@@ -963,6 +963,13 @@ body.ap-arrastando,body.ap-arrastando *{cursor:grabbing !important}
   .ap-trilho{position:static;flex-direction:row;justify-content:space-around;order:-1}
   .ap-ed-barra{position:static}
 }
+/* convite para criar a própria chave (aparece uma vez para quem usa só a IA da escola) */
+.convite-chave{position:fixed;right:18px;bottom:18px;z-index:900;max-width:380px;background:var(--carta);color:var(--tinta);
+  border:1px solid var(--primaria-borda);border-left:5px solid var(--primaria);border-radius:14px;box-shadow:0 10px 30px rgba(20,30,60,.18);
+  padding:16px 18px;font-size:14.5px;line-height:1.45}
+.convite-chave strong{display:block;font-family:var(--titulo);font-size:15.5px;margin-bottom:4px}
+.convite-chave .convite-botoes{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+@media (max-width:600px){.convite-chave{left:16px;right:16px;bottom:16px;max-width:none}}
 </style>
 <style id="ap-estilo-slides">
 /* ===== slides das apresentações (1920×1080). Também vai dentro do HTML baixado. ===== */
@@ -2109,7 +2116,8 @@ function chaveImagem(){return IA_ESCOLA.chave||(conf.provedor==="gemini"?conf.ch
 // a chave pessoal esgotou ou foi recusada: o resto da sessão segue com a da escola
 function passarParaEscola(e){
   if(IA_USO.escola||IA_USO.semTroca||!conf.chave||!IA_ESCOLA.chave||!e)return false;
-  if(!(e.cota||e.recusada||e.status===429))return false;
+  // o limite por minuto passa em segundos: não é motivo para gastar a cota da escola
+  if(!(e.cota||e.recusada))return false;
   IA_USO.escola=true;modelosEsgotados={};return true;
 }
 function definirIAEscola(chave){
@@ -4145,11 +4153,92 @@ base?("MATERIAL DE ORIGEM (trecho selecionado do acervo; explore-o em profundida
 ].filter(Boolean).join("\n");
 }
 
+/* ---------------- limites do plano gratuito do Gemini ----------------
+   O Google tem dois limites diferentes, e o site confundia os dois:
+   - por MINUTO (poucos pedidos ou poucos tokens por minuto): passa sozinho em segundos. O certo é esperar
+     o tempo que o próprio Google informa e repetir no MESMO modelo, sem gastar os outros;
+   - por DIA (pedidos por dia, contados por modelo): só volta no dia seguinte (meia-noite do Pacífico).
+   Antes, os dois eram tratados como "cota esgotada": o site descartava cada modelo no primeiro aviso de
+   "espere um pouco" e anunciava que a cota tinha acabado, quando bastava esperar meio minuto.     */
+function lerLimite429(d,det){
+  var detalhes=(d&&d.error&&d.error.details)||[], ids=[], esperaMs=0, zero=false;
+  detalhes.forEach(function(x){
+    if(!x)return;
+    (x.violations||[]).forEach(function(v){
+      if(v&&v.quotaId)ids.push(String(v.quotaId));
+      if(v&&String(v.quotaValue)==="0")zero=true;
+    });
+    if(x.retryDelay){var m=/([\d.]+)s/.exec(String(x.retryDelay));if(m)esperaMs=Math.round(parseFloat(m[1])*1000);}
+  });
+  var txt=String(det||"");
+  if(!esperaMs){
+    var h=/retry in (?:(\d+)h)?(?:(\d+)m(?!s))?(?:([\d.]+)s)?/i.exec(txt);
+    if(h&&(h[1]||h[2]||h[3]))esperaMs=Math.round(((+h[1]||0)*3600+(+h[2]||0)*60+(parseFloat(h[3])||0))*1000);
+  }
+  var dia=ids.some(function(i){return /PerDay/i.test(i);})||/per day|daily|limit:\s*0\b/i.test(txt)||zero||esperaMs>15*60000;
+  // aviso de cota sem detalhe nenhum: na dúvida é por minuto (o mais comum), e o site espera antes de desistir
+  if(ids.length&&!ids.some(function(i){return /PerDay/i.test(i);})&&ids.some(function(i){return /PerMinute/i.test(i);})&&!zero&&esperaMs<=15*60000)dia=false;
+  return {dia:dia,esperaMs:esperaMs};
+}
+/* cota do dia esgotada fica anotada NESTE aparelho, por chave e por modelo, até a hora em que volta:
+   no dia seguinte ou na próxima apresentação, o site já começa por um modelo que ainda tem cota,
+   sem perder tempo batendo nos esgotados. A chave não é gravada, só os últimos caracteres dela.   */
+var CHAVE_COTA_DIA="bancoQuestoes.cotaDia.v1";
+function marcaDaChave(){var c=chaveIA()||"";return provedorIA()+":"+c.slice(-6);}
+function lerCotaDia(){var t={};try{t=JSON.parse(localStorage.getItem(CHAVE_COTA_DIA)||"{}")||{};}catch(e){t={};}return t;}
+function proximaVoltaDaCota(){
+  // a cota diária do Gemini renova à meia-noite do horário do Pacífico (8h UTC no inverno de lá, 7h no verão)
+  var agora=new Date(), alvo=new Date(Date.UTC(agora.getUTCFullYear(),agora.getUTCMonth(),agora.getUTCDate(),8,5));
+  if(alvo.getTime()<=agora.getTime())alvo=new Date(alvo.getTime()+86400000);
+  return alvo.getTime();
+}
+function anotarCotaDia(modelo,esperaMs){
+  var t=lerCotaDia(), k=marcaDaChave(), ate=esperaMs>15*60000?Date.now()+esperaMs:proximaVoltaDaCota();
+  t[k]=t[k]||{};t[k][modelo]=ate;
+  try{localStorage.setItem(CHAVE_COTA_DIA,JSON.stringify(t));}catch(e){}
+}
+function esgotadoHoje(modelo){
+  var t=lerCotaDia(), k=marcaDaChave(), ate=t[k]&&t[k][modelo];
+  return !!ate&&ate>Date.now();
+}
+// hora (no relógio de quem está usando) em que o primeiro modelo esgotado desta chave volta a funcionar
+function horaDeVolta(){
+  var t=lerCotaDia()[marcaDaChave()]||{}, agora=Date.now(), menor=0;
+  Object.keys(t).forEach(function(m){if(t[m]>agora&&(!menor||t[m]<menor))menor=t[m];});
+  if(!menor)return "";
+  var d=new Date(menor), hoje=new Date();
+  var hora=d.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
+  return (d.getDate()!==hoje.getDate()?"amanhã ":"hoje ")+"por volta das "+hora;
+}
+/* FILA DE PEDIDOS: no máximo 2 pedidos ao Gemini ao mesmo tempo, e quando o Google pede para esperar
+   (limite por minuto), TODOS os pedidos esperam juntos, em vez de cada um insistir e ser recusado.    */
+var FILA_IA={ativos:0,max:2,espera:[],pausaAte:0};
+function pegarVez(){
+  return new Promise(function(ok){
+    function tentar(){
+      var falta=FILA_IA.pausaAte-Date.now();
+      if(falta>0){setTimeout(tentar,Math.min(falta,1000)+50);return;}
+      if(FILA_IA.ativos<FILA_IA.max){FILA_IA.ativos++;ok();return;}
+      FILA_IA.espera.push(tentar);
+    }
+    tentar();
+  });
+}
+function soltarVez(){
+  FILA_IA.ativos=Math.max(0,FILA_IA.ativos-1);
+  var prox=FILA_IA.espera.shift();if(prox)setTimeout(prox,0);
+}
+function pausarFila(ms){FILA_IA.pausaAte=Math.max(FILA_IA.pausaAte,Date.now()+ms);}
+
 /* ---------------- chamadas às IAs ---------------- */
 function chamarIA(prompt,modelo,leve,rapido){
   if(!chaveIA())return Promise.reject(new Error("A IA ainda não está ativa para você. Peça ao administrador para ativar a IA da escola, ou cadastre uma chave sua em Ajustes."));
-  var pedido=provedorIA()==="anthropic"?chamarAnthropic(prompt,modelo,leve):chamarGemini(prompt,modelo,leve,rapido);
+  var pedido=pegarVez().then(function(){
+    if(cancelado)throw new DOMException("cancelado","AbortError");
+    return provedorIA()==="anthropic"?chamarAnthropic(prompt,modelo,leve):chamarGemini(prompt,modelo,leve,rapido);
+  }).then(function(v){soltarVez();return v;},function(e){soltarVez();throw e;});
   return pedido.catch(function(e){
+    if(e&&e.cota&&provedorIA()==="gemini")anotarCotaDia(modelo||modeloIA()||"",e.esperaMs);
     if(passarParaEscola(e))return chamarIA(prompt,/^claude/i.test(modelo||"")?undefined:modelo,leve,rapido);
     throw e;
   });
@@ -4225,14 +4314,17 @@ function cancelarGeracao(){
 // quando a cota grátis acabou em todos os modelos, o texto em inglês do provedor não ajuda o professor
 function textoDaFalha(falhas){
   var tudo=falhas.join(" · ")+" "+ultimoErroIA;
-  if(paradaGeral==="cota"||/exceeded your current quota|free_tier_requests/i.test(tudo)){
-    var h=/retry in (\d+)h/i.exec(tudo), m=/retry in (?:\d+h)?(\d+)m/i.exec(tudo);
-    var volta=h?("cerca de "+h[1]+"h"+(m&&+m[1]?(m[1].length<2?"0":"")+m[1]:"")):(m?("cerca de "+m[1]+" minutos"):"algumas horas");
-    if(usaEscola())return "A cota da IA da escola acabou por agora em todos os modelos que o site tentou. "+
-      "Ela volta sozinha em "+volta+", segundo o Google. Se acontecer sempre, avise o administrador: ele pode aumentar o limite no Google AI Studio.";
-    return "A cota gratuita do dia da sua chave do Gemini acabou em todos os modelos que o site tentou. "+
-      "Ela volta sozinha em "+volta+", segundo o Google. Cada chave tem a sua cota: outro professor pode gerar com a dele enquanto isso.";
+  if(paradaGeral==="cota"){
+    var volta=horaDeVolta()||"amanhã cedo (a cota renova todo dia de madrugada)";
+    if(usaEscola())return "A cota gratuita do dia da IA da escola acabou em todos os modelos. Ela volta sozinha "+volta+". "+
+      "Para não depender dela, crie a sua chave gratuita do Gemini: leva um minuto, não custa nada e a cota fica só para você."+
+      "<br><button type=\"button\" class=\"botao\" data-criar-chave=\"1\" style=\"margin-top:10px\">Criar minha chave grátis</button>";
+    return "A cota gratuita do dia da sua chave do Gemini acabou em todos os modelos. Ela volta sozinha "+volta+". "+
+      "Cada chave tem a sua cota: outro professor pode gerar com a dele enquanto isso.";
   }
+  if(/pedidos por minuto/i.test(tudo))
+    return "O Gemini gratuito aceita poucos pedidos por minuto e continuou recusando depois de várias esperas. "+
+      "A cota do dia não acabou: espere um minuto e tente de novo.";
   if(paradaGeral==="sobrecarga"||paradaGeral==="sem resposta")
     return "O Gemini está sobrecarregado no Google agora: todos os modelos que o site tentou responderam \"ocupado\". "+
       "Não é problema do site nem da sua chave, e nada foi perdido. Costuma passar em alguns minutos; tente gerar de novo daqui a pouco.";
@@ -4245,28 +4337,33 @@ function comFolga(ms){return Math.round(ms*(0.8+Math.random()*0.5));} // evita q
 var modelosOcupados={}, ultimoModeloOk={m:"",t:0};
 function chamarIAComInsistencia(prompt,avisar,op){
   op=op||{};
+  // a chave pessoal já sem cota do dia no modelo principal (anotado neste aparelho): vai direto para a da escola
+  if(conf.chave&&IA_ESCOLA.chave&&!IA_USO.escola&&!IA_USO.semTroca&&provedorIA()==="gemini"&&esgotadoHoje(modeloIA()||""))IA_USO.escola=true;
   var principal=modeloIA()||"";
   var reserva=(reservaIA()&&reservaIA()!==principal)?reservaIA():"";
-  // um modelo que já respondeu "cota esgotada" nesta sessão não é tentado de novo:
-  // era uma requisição perdida antes de cada lote
-  if(modelosEsgotados[principal]&&reserva&&!modelosEsgotados[reserva]){
-    principal=reserva;reserva="";
-  }else if(modelosEsgotados[principal]&&modelosEsgotados[reserva]){
-    modelosEsgotados={};   // a cota pode ter voltado; recomeça a contar
-  }
+  // um modelo cuja cota do DIA já acabou (anotado neste aparelho até a hora em que volta) nem é tentado:
+  // o site começa direto por um que ainda tem cota
+  if(esgotadoHoje(principal)&&reserva&&!esgotadoHoje(reserva)){principal=reserva;reserva="";}
   // modelo, espera antes da tentativa
-  var plano=[[principal,0],[principal,4000]];
-  if(reserva)plano.push([reserva,0],[reserva,6000]);
+  var plano=[];
+  if(!esgotadoHoje(principal))plano.push([principal,0],[principal,4000]);
+  if(reserva&&!esgotadoHoje(reserva))plano.push([reserva,0],[reserva,6000]);
   var extras=provedorIA()==="gemini"?MODELOS_EXTRAS_GEMINI.filter(function(m){
-    return m!==principal&&m!==reserva&&!modelosAusentes[m]&&!modelosEsgotados[m];
+    return m!==principal&&m!==reserva&&!modelosAusentes[m]&&!esgotadoHoje(m);
   }):[];
+  if(!plano.length&&!extras.length){
+    // todos os modelos desta chave estão sem a cota do dia: não adianta mandar pedido nenhum
+    paradaGeral="cota";
+    var semNada=new Error("A cota do dia acabou em todos os modelos.");semNada.cota=true;
+    return Promise.reject(semNada);
+  }
   extras.forEach(function(m){plano.push([m,0]);});
-  plano.push([principal,30000]);
+  if(!esgotadoHoje(principal))plano.push([principal,30000]);
   var agora=Date.now(), livre=ultimoModeloOk.m;
   if(livre&&livre!==principal&&agora-ultimoModeloOk.t<5*60000&&agora-(modelosOcupados[principal]||0)<3*60000&&
-     !modelosEsgotados[livre]&&!modelosAusentes[livre])plano.unshift([livre,0]);
+     !esgotadoHoje(livre)&&!modelosAusentes[livre])plano.unshift([livre,0]);
 
-  var falhasDeRede=0, semResposta=0, modelosSemCota={}, modelosSobrecarregados={}, rodadaSobrecarga=0;
+  var falhasDeRede=0, semResposta=0, modelosSemCota={}, modelosSobrecarregados={}, rodadaSobrecarga=0, esperasMinuto=0;
   // quando todos os modelos estão ocupados, o Google costuma voltar em um ou dois minutos:
   // novas rodadas com pausas crescentes antes de desistir (com o aviso na tela)
   var PAUSAS_SOBRECARGA=[15000,30000,60000];
@@ -4277,12 +4374,14 @@ function chamarIAComInsistencia(prompt,avisar,op){
     var passo=espera?esperar(comFolga(espera)):Promise.resolve();
     if(avisar&&i>0){
       var trocou=modelo!==plano[i-1][0];
-      var causa=ultimo&&ultimo.semResposta
+      var causa=ultimo&&ultimo.minuto
+        ? "O limite de pedidos por minuto do plano gratuito foi atingido. "
+        : ultimo&&ultimo.semResposta
         ? "O provedor não respondeu no prazo. "
         : ultimo&&ultimo.rede
         ? "Falha de conexão — não é problema da IA. "
         : (ultimo&&ultimo.cota
-           ? "A cota do modelo anterior está esgotada. "
+           ? "A cota do dia do modelo anterior acabou. "
            : "O provedor está congestionado. ");
       avisar(causa+(trocou
         ? ("Passando para outro modelo: "+modelo+".")
@@ -4293,6 +4392,7 @@ function chamarIAComInsistencia(prompt,avisar,op){
       return chamarIA(prompt,modelo,false,!!op.rapido);
     }).then(function(v){
       ultimoModeloOk={m:modelo,t:Date.now()};
+      if(usaEscola()&&!conf.chave)setTimeout(convidarChavePropria,1500);
       return v;
     }).catch(function(e){
       ultimoErroIA=(e&&e.message)||"";
@@ -4310,6 +4410,24 @@ function chamarIAComInsistencia(prompt,avisar,op){
         return tentar(seguinte,ultimo);
       }
       if(!repetivel(e))throw e;
+      // limite POR MINUTO: não é cota esgotada. Espera o tempo que o Google pede (todos os pedidos juntos)
+      // e repete no MESMO modelo. Só depois de várias esperas seguidas tenta outro modelo, sem descartar este.
+      if(e&&e.minuto){
+        esperasMinuto++;
+        if(esperasMinuto<=4){
+          var pausaMin=Math.min(70000,Math.max(e.esperaMs||0,10000)+1500+Math.round(Math.random()*2500));
+          pausarFila(pausaMin);
+          if(avisar)avisar("O plano gratuito do Gemini aceita poucos pedidos por minuto. Continuando sozinho em "+
+            Math.round(pausaMin/1000)+" segundos, no mesmo modelo. Nada foi perdido.");
+          return esperar(pausaMin).then(function(){
+            if(cancelado)throw e;
+            return tentar(i,e);
+          });
+        }
+        var outro=i+1;
+        while(outro<plano.length&&plano[outro][0]===modelo)outro++;
+        return tentar(outro,e);
+      }
       // sem internet, esperar não adianta: a solução está com o professor, não com o provedor
       if(e&&e.rede){
         falhasDeRede++;
@@ -4340,7 +4458,8 @@ function chamarIAComInsistencia(prompt,avisar,op){
       // cota esgotada não passa com o tempo: pula para outro modelo e, se todos
       // estiverem esgotados, desiste na hora em vez de esperar minutos
       if(e&&e.cota){
-        modelosSemCota[modelo]=1;modelosEsgotados[modelo]=1;
+        modelosSemCota[modelo]=1;
+        if(provedorIA()==="gemini")anotarCotaDia(modelo,e.esperaMs);
         if(Object.keys(modelosSemCota).length>=Object.keys(distintos).length){paradaGeral="cota";throw e;}
         while(proxima<plano.length&&modelosSemCota[plano[proxima][0]])proxima++;
       }
@@ -4425,11 +4544,14 @@ function tratarResposta(r){
       var passageiro=[429,500,502,503,504].indexOf(r.status)>-1;
       if(r.status===503){var e503=new Error("O modelo está sobrecarregado no provedor. ("+det+")");e503.repetivel=true;e503.sobrecarga=true;throw e503;}
       if(r.status===429){
-        var cota=/quota|exceeded|per day|daily/i.test(det);
-        var e429=new Error(cota
-          ? "Cota do modelo esgotada por enquanto. ("+det+")"
-          : "Muitas requisições em sequência. ("+det+")");
-        e429.repetivel=true;e429.cota=cota;e429.status=429;throw e429;
+        var lim=lerLimite429(d,det);
+        var e429=new Error(lim.dia
+          ? "A cota do dia deste modelo acabou. ("+det+")"
+          : "O plano gratuito aceita poucos pedidos por minuto. ("+det+")");
+        e429.repetivel=true;e429.status=429;
+        // só a cota do DIA é "esgotada"; o limite por minuto passa sozinho em segundos
+        e429.cota=lim.dia;e429.minuto=!lim.dia;e429.esperaMs=lim.esperaMs;
+        throw e429;
       }
       if(r.status===404){var e404=new Error("Este modelo não existe mais ou não está liberado para a sua conta. Abra Ajustes e clique em buscar modelos disponíveis. ("+det+")");e404.semModelo=true;throw e404;}
       var generico=new Error("Erro "+r.status+": "+det);
@@ -5859,6 +5981,32 @@ function atualizarPortaoChave(){
   }else if(era)tela.style.display="none";
 }
 document.querySelectorAll("[data-abrir-assistente]").forEach(function(b){b.addEventListener("click",abrirAssistenteChave);});
+// botões criados depois (mensagens de cota esgotada, convite): um ouvinte só para todos
+document.addEventListener("click",function(ev){
+  var b=ev.target&&ev.target.closest&&ev.target.closest("[data-criar-chave]");
+  if(!b)return;
+  ev.preventDefault();
+  var c=$("convite-chave");if(c)c.remove();
+  abrirAssistenteChave();
+});
+/* CONVITE PARA A CHAVE PRÓPRIA: a cota gratuita do Google é por chave. Com a chave da escola, todos os
+   professores dividem uma cota só; com a chave de cada um, cada um tem a cota inteira para si.
+   Quem usa só a da escola vê este convite UMA vez, depois de um pedido que deu certo, sem insistir. */
+var CHAVE_CONVITE="bancoQuestoes.conviteChave.v1";
+function convidarChavePropria(){
+  try{if(localStorage.getItem(CHAVE_CONVITE))return;}catch(e){return;}
+  if(conf.chave||!IA_ESCOLA.chave||$("convite-chave"))return;
+  try{localStorage.setItem(CHAVE_CONVITE,String(Date.now()));}catch(e){}
+  var d=document.createElement("div");
+  d.id="convite-chave";d.className="convite-chave";d.setAttribute("role","status");
+  d.innerHTML="<strong>Tenha a sua própria cota da IA</strong>"+
+    "Você está usando a IA da escola, que é dividida entre todos os professores e pode acabar no meio do dia. "+
+    "Com a sua chave gratuita do Gemini (leva um minuto, não custa nada), a cota fica só para você."+
+    '<div class="convite-botoes"><button type="button" class="botao" data-criar-chave="1">Criar minha chave grátis</button>'+
+    '<button type="button" class="botao secundario" id="convite-depois">Agora não</button></div>';
+  document.body.appendChild(d);
+  $("convite-depois").addEventListener("click",function(){d.remove();});
+}
 $("btn-abrir-aistudio").addEventListener("click",function(){
   window.open("https://aistudio.google.com/apikey","_blank","noopener");
 });
@@ -10901,7 +11049,9 @@ function chamarChatIA(sistema,historico){
   var modelos=[modeloIA()||(provedorIA()==="anthropic"?"claude-sonnet-5":"gemini-3.6-flash")];
   if(reservaIA()&&reservaIA()!==modelos[0])modelos.push(reservaIA());
   if(provedorIA()==="gemini")MODELOS_EXTRAS_GEMINI.forEach(function(m){if(modelos.indexOf(m)<0&&!modelosAusentes[m])modelos.push(m);});
-  modelos=modelos.filter(function(m){return !modelosEsgotados[m];}).concat(modelos.filter(function(m){return modelosEsgotados[m];}));
+  modelos=modelos.filter(function(m){return !esgotadoHoje(m);});
+  if(!modelos.length){var nada=new Error("A cota do dia acabou em todos os modelos.");nada.cota=true;return Promise.reject(nada);}
+  var esperouMinuto=false;
   function base64(d){return String(d).replace(/^data:[^,]+,/,"");}
   function pedir(modelo){
     var ctl=new AbortController(), relogio=setTimeout(function(){try{ctl.abort();}catch(e){}},60000);
@@ -10939,9 +11089,13 @@ function chamarChatIA(sistema,historico){
   }
   function tentar(i,ultimo){
     if(i>=modelos.length)throw ultimo||new Error("Nenhum modelo respondeu.");
-    return pedir(modelos[i]).catch(function(e){
+    return pegarVez().then(function(){return pedir(modelos[i]);}).then(function(v){soltarVez();return v;},function(e){soltarVez();throw e;}).catch(function(e){
+      if(e&&e.cota&&provedorIA()==="gemini")anotarCotaDia(modelos[i],e.esperaMs);
       if(passarParaEscola(e))return chamarChatIA(sistema,historico);
-      if(e&&e.cota)modelosEsgotados[modelos[i]]=1;
+      if(e&&e.minuto&&!esperouMinuto){
+        esperouMinuto=true;var ms=Math.min(30000,Math.max(e.esperaMs||0,8000));pausarFila(ms);
+        return esperar(ms).then(function(){return tentar(i,e);});
+      }
       if(e&&e.semModelo&&modelos[i]!==conf.modelo)modelosAusentes[modelos[i]]=1;
       if(e&&e.rede)throw e;
       if(e&&(e.repetivel||e.semModelo||e.cota||e.sobrecarga))return tentar(i+1,e);
@@ -10953,8 +11107,9 @@ function chamarChatIA(sistema,historico){
 function chatFalha(e){
   var t=(e&&e.message)||"";
   if(e&&e.rede)return "Não consegui falar com a IA agora: "+esc(t);
-  if((e&&e.cota||/quota|cota/i.test(t))&&usaEscola())return "A cota da IA da escola acabou por agora. Ela volta sozinha daqui a pouco. Enquanto isso, o resto do site funciona normalmente.";
-  if(e&&e.cota||/quota|cota/i.test(t))return "A cota gratuita do dia da sua chave do Gemini acabou. Ela volta sozinha em algumas horas. 😉 Enquanto isso, o resto do site funciona normalmente.";
+  if(e&&e.minuto)return "Muita gente usando a IA neste minuto (o plano gratuito aceita poucos pedidos por minuto). Tente de novo daqui a um minutinho.";
+  if((e&&e.cota)&&usaEscola())return "A cota gratuita do dia da IA da escola acabou. Ela volta sozinha "+(horaDeVolta()||"amanhã cedo")+". Com a sua própria chave gratuita, a cota fica só para você."+"<br><button type=\"button\" class=\"botao\" data-criar-chave=\"1\" style=\"margin-top:10px\">Criar minha chave grátis</button>";
+  if(e&&e.cota)return "A cota gratuita do dia da sua chave do Gemini acabou. Ela volta sozinha "+(horaDeVolta()||"amanhã cedo")+". 😉 Enquanto isso, o resto do site funciona normalmente.";
   if(/recusada/i.test(t))return "A IA recusou a chave cadastrada. Confira em <strong>Ajustes › Chave de acesso à IA</strong> e clique em <strong>Testar conexão</strong>.";
   return "A IA está ocupada neste momento e não respondeu. Tente de novo daqui a pouquinho. ("+esc(t.slice(0,140))+")";
 }
@@ -12049,8 +12204,20 @@ function apPedidoPlano(n,capitulo,paginas,habs){
     "Cada aula terá cerca de "+Math.round(n.slides/n.aulas)+" slides (capa, conteúdo e síntese).\n"+
     "No texto, a marca [fim da página N] indica que o que vem antes dela está na página N do livro"+(paginas?" (o capítulo vai mais ou menos das páginas "+paginas+")":"")+".\n"+
     (habs.length?"Habilidades do capítulo: "+habs.map(function(h){return h.c;}).join("; ")+".\n":"")+
-    "Responda SOMENTE com JSON, sem comentários: {\"numeroCapitulo\":\"2\",\"tituloCapitulo\":\"título curto do capítulo\",\"aulas\":[{\"tema\":\"tema curto da aula\",\"titulo\":\"título da capa\",\"subtitulo\":\"do que trata a aula, em uma frase\",\"paginas\":\"41–46\",\"blocos\":[{\"bloco\":\"nome curto do bloco\",\"pagina\":\"42\",\"foco\":\"o que explicar\"}]}]}\n\n"+
+    ((n.questoes||n.mapa)?apInstrucoesFinal(n,habs,paginas)+"\n":"")+
+    "Responda SOMENTE com JSON, sem comentários: {\"numeroCapitulo\":\"2\",\"tituloCapitulo\":\"título curto do capítulo\",\"aulas\":[{\"tema\":\"tema curto da aula\",\"titulo\":\"título da capa\",\"subtitulo\":\"do que trata a aula, em uma frase\",\"paginas\":\"41–46\",\"blocos\":[{\"bloco\":\"nome curto do bloco\",\"pagina\":\"42\",\"foco\":\"o que explicar\"}]}]"+
+    ((n.questoes||n.mapa)?",\"fim\":{\"slides\":[ ... ]}":"")+"}\n\n"+
     "=== TEXTO DO CAPÍTULO ===\n"+capitulo;
+}
+/* os slides finais (questões de revisão e mapa mental) saem no MESMO pedido do plano: o capítulo inteiro
+   já está ali, e antes ele era mandado de novo só para isso. Um pedido a menos por apresentação na cota. */
+function apInstrucoesFinal(n,habs,paginas){
+  var lista=habs.length?habs.map(function(h){return h.c+(h.t?" — "+h.t:"");}).join("\n"):"(o capítulo não lista habilidades: use os grandes temas do capítulo)";
+  return "ALÉM DO PLANO, escreva em \"fim\" os slides finais da apresentação (até 2), usando as habilidades do capítulo:\n"+lista+"\n"+
+    (n.questoes?"1) Slide {\"tipo\":\"questoes\",\"etiqueta\":\"Revisão · Habilidades do capítulo · p. "+(paginas||"")+"\",\"titulo\":\"Questões de revisão\",\"perguntas\":[{\"hab\":\"EM13CHS602\",\"texto\":\"pergunta\",\"pagina\":\"42\"}]} "+
+      "com "+Math.max(5,habs.length)+" perguntas (pelo menos 5 e uma por habilidade), estruturadas a partir das habilidades, cada uma com a página do livro onde está a resposta. Em \"hab\" use o código curto (ex.: EM13CHS602), sem o prefixo SESI e sem o sufixo.\n":"")+
+    (n.mapa?"2) Slide {\"tipo\":\"mapa\",\"etiqueta\":\"Mapa mental · Capítulo <número>\",\"titulo\":\"\",\"centro\":\"Capítulo <número>: título curto\",\"ramos\":[{\"titulo\":\"eixo\",\"hab\":\"CHS602\",\"itens\":[\"tópico curto\",\"...\"]}]} "+
+      "com 4 ramos (no máximo 6), cada um ligado às habilidades, com 3 a 5 itens curtos: o resumo completo do capítulo.\n":"");
 }
 /* cada aula recebe só as páginas dela (com uma página de folga de cada lado), não o capítulo inteiro:
    o pedido fica várias vezes menor, a IA responde mais rápido e cabem várias aulas ao mesmo tempo
@@ -12085,6 +12252,46 @@ function apPedidoAula(n,capitulo,plano,i,qtd,imgs,habs){
     "No texto, a marca [fim da página N] indica que o que vem antes dela está na página N do livro.\n"+
     "Responda SOMENTE com JSON: {\"slides\":[ ... ]}\n\n"+
     (tr.parcial?"=== TRECHO DO CAPÍTULO COM AS PÁGINAS DESTA AULA (p. "+tr.de+" a "+tr.ate+") ===\n":"=== TEXTO DO CAPÍTULO ===\n")+tr.texto;
+}
+/* DUAS AULAS NUM PEDIDO SÓ: o plano gratuito conta pedidos por dia, e cada pedido levava o trecho do livro,
+   as regras e a lista de imagens de novo. Juntando as aulas de duas em duas, uma apresentação de 2 aulas
+   passa de 4 pedidos para 2 (plano com questões + as duas aulas), e uma de 4 aulas, de 6 para 3.       */
+function apPedidoAulas(n,capitulo,plano,lista,por,imgs,habs){
+  if(lista.length===1)return apPedidoAula(n,capitulo,plano,lista[0],por[lista[0]],imgs,habs);
+  var juntas={paginas:lista.map(function(i){return plano.aulas[i].paginas||"";}).join(" "),
+    blocos:[].concat.apply([],lista.map(function(i){return plano.aulas[i].blocos||[];}))};
+  var tr=apTrechoAula(capitulo,juntas), total=plano.aulas.length;
+  return "Você é um professor especialista e vai escrever os slides das AULAS "+lista.map(function(i){return i+1;}).join(" e ")+" de "+total+" de uma apresentação de revisão do capítulo \""+n.capNome+"\" ("+n.livroNome+", "+nomeSerieSesi(n.serie)+").\n\n"+
+    "REGRAS DA ESCOLA (obrigatórias):\n- "+AP_REGRAS.join("\n- ")+"\n- "+apLinguagemTxt(n)+(n.obs?"\n- Orientações do professor: "+n.obs:"")+"\n\n"+
+    lista.map(function(i){
+      var a=plano.aulas[i];
+      return "AULA "+(i+1)+": tema \""+a.tema+"\", capa \""+(a.titulo||a.tema)+"\", páginas "+(a.paginas||"?")+".\nBlocos: "+(a.blocos||[]).map(function(b){return b.bloco+" (p. "+b.pagina+"): "+b.foco;}).join(" | ")+"\n"+
+        "Escreva EXATAMENTE "+por[i]+" slides para esta aula: o 1º é a capa (kicker \"Capítulo "+(plano.numeroCapitulo||"")+" · Aula "+(i+1)+" de "+total+"\", duracao \"50 minutos\"), o último é a síntese"+
+        (i<total-1?" (com \"proxima\" apontando a Aula "+(i+2)+": "+plano.aulas[i+1].tema+")":" (última aula: \"proxima\" vazio)")+", e os do meio são de conteúdo, um por bloco, com layouts alternados. A etiqueta usa \"Aula "+(i+1)+" · <bloco> · p. <página>\".";
+    }).join("\n\n")+"\n\n"+
+    "Plano das outras aulas (não repita o conteúdo delas): "+plano.aulas.map(function(x,k){return lista.indexOf(k)>-1?"":"Aula "+(k+1)+": "+x.tema;}).filter(Boolean).join("; ")+"\n\n"+
+    AP_ESQUEMA+"\n\n"+apListaImagens(imgs)+"\n\n"+
+    "No texto, a marca [fim da página N] indica que o que vem antes dela está na página N do livro.\n"+
+    "Responda SOMENTE com JSON, uma entrada por aula, na ordem: {\"aulas\":["+lista.map(function(i){return "{\"aula\":"+(i+1)+",\"slides\":[ ... ]}";}).join(",")+"]}\n\n"+
+    (tr.parcial?"=== TRECHO DO CAPÍTULO COM AS PÁGINAS DESTAS AULAS (p. "+tr.de+" a "+tr.ate+") ===\n":"=== TEXTO DO CAPÍTULO ===\n")+tr.texto;
+}
+// separa a resposta do pedido de várias aulas; se a IA devolver tudo numa lista só, corta nas capas
+function apSlidesDasAulas(resposta,imgs,qtd){
+  var d=extrairObjeto(resposta);
+  if(qtd===1)return [apSlidesDe(resposta,imgs)];
+  var aulas=d&&Array.isArray(d.aulas)?d.aulas:null;
+  if(aulas&&aulas.length>=qtd)return aulas.slice(0,qtd).map(function(a){
+    var l=a&&(a.slides||(Array.isArray(a)?a:null));
+    if(!l||!l.length)throw new Error("A resposta da IA veio sem os slides de uma das aulas. Tente de novo.");
+    return l.map(function(x){return apNormalizar(x,imgs);});
+  });
+  var plano=d&&(d.slides||(Array.isArray(d)?d:null));
+  if(plano&&plano.length){
+    var grupos=[];
+    plano.forEach(function(x){if(x&&x.tipo==="capa"||!grupos.length)grupos.push([]);grupos[grupos.length-1].push(apNormalizar(x,imgs));});
+    if(grupos.length===qtd)return grupos;
+  }
+  throw new Error("A resposta da IA não veio no formato esperado. Tente de novo.");
 }
 function apPedidoFinal(n,capitulo,plano,habs){
   var lista=habs.length?habs.map(function(h){return h.c+(h.t?" — "+h.t:"");}).join("\n"):"(o capítulo não lista habilidades: use os grandes temas do capítulo)";
@@ -12223,18 +12430,33 @@ async function apGerar(){
     /* As aulas não dependem uma da outra depois do plano: são escritas ao mesmo tempo, algumas por vez
        (o limite respeita a cota por minuto da camada gratuita), e as questões finais entram junto.
        Antes era uma depois da outra, e cada aula levava o capítulo inteiro. */
-    var tarefas=plano.aulas.map(function(_,a){return {etapa:2+a,aula:a};});
-    if(n.questoes||n.mapa)tarefas.push({etapa:2+plano.aulas.length,fim:true});
+    var partes=[], fimSlides=[], temFim=false;
+    // os slides finais já vieram com o plano; se não vieram, viram um pedido à parte (como antes)
+    if((n.questoes||n.mapa)&&plano.fim){
+      try{
+        fimSlides=apSlidesDe(JSON.stringify(plano.fim),imgs).filter(function(s){return (s.tipo==="questoes"&&n.questoes)||(s.tipo==="mapa"&&n.mapa);});
+        temFim=fimSlides.length>0;
+      }catch(e){fimSlides=[];}
+    }
+    // aulas de duas em duas (um pedido para cada dupla), desde que a dupla não passe de 16 slides
+    var tarefas=[];
+    for(var a0=0;a0<plano.aulas.length;){
+      if(a0+1<plano.aulas.length&&por[a0]+por[a0+1]<=16){tarefas.push({aulas:[a0,a0+1]});a0+=2;}
+      else{tarefas.push({aulas:[a0]});a0++;}
+    }
+    if((n.questoes||n.mapa)&&!temFim)tarefas.push({etapa:2+plano.aulas.length,fim:true});
     estado=etapas.map(function(_,i){return i<2?"feito":"";});
-    var partes=[], fimSlides=[], fila=tarefas.slice();
-    var parcial=apTrechoAula(cap,plano.aulas[0]).parcial;
-    var simultaneas=Math.min(tarefas.length,parcial?4:2);
+    if(temFim)estado[2+plano.aulas.length]="feito";
+    var fila=tarefas.slice();
+    // no máximo 2 pedidos ao mesmo tempo: o plano gratuito aceita poucos pedidos por minuto
+    var simultaneas=Math.min(tarefas.length,2);
     pintar();
     async function trabalhador(){
       while(fila.length&&!cancelado){
         var t=fila.shift();
-        estado[t.etapa]="agora";pintar();
-        var aviso=(function(nome){return function(x){avisar(nome+x);};})(t.fim?"Questões finais: ":"Aula "+(t.aula+1)+": ");
+        var etapasDaTarefa=t.fim?[t.etapa]:t.aulas.map(function(a){return 2+a;});
+        etapasDaTarefa.forEach(function(k){estado[k]="agora";});pintar();
+        var aviso=(function(nome){return function(x){avisar(nome+x);};})(t.fim?"Questões finais: ":(t.aulas.length>1?"Aulas "+(t.aulas[0]+1)+" e "+(t.aulas[1]+1)+": ":"Aula "+(t.aulas[0]+1)+": "));
         try{
           if(t.fim){
             try{
@@ -12242,11 +12464,10 @@ async function apGerar(){
                 .filter(function(s){return (s.tipo==="questoes"&&n.questoes)||(s.tipo==="mapa"&&n.mapa);});
             }catch(e){if(cancelado)throw e;}   // sem as questões finais, a apresentação sai assim mesmo
           }else{
-            var sl=apSlidesDe(await chamarIAComInsistencia(apPedidoAula(n,cap,plano,t.aula,por[t.aula],imgs,habs),aviso,{rapido:true}),imgs);
-            apFixarCapitulo(sl,n,plano,t.aula);
-            partes[t.aula]=sl;
+            var grupos=apSlidesDasAulas(await chamarIAComInsistencia(apPedidoAulas(n,cap,plano,t.aulas,por,imgs,habs),aviso,{rapido:true}),imgs,t.aulas.length);
+            t.aulas.forEach(function(a,k){apFixarCapitulo(grupos[k],n,plano,a);partes[a]=grupos[k];});
           }
-          estado[t.etapa]="feito";
+          etapasDaTarefa.forEach(function(k){estado[k]="feito";});
           if(estado.every(function(x,i){return i>=2?x!=="agora":true;}))ultimoAviso="";
           pintar();
         }catch(e){
@@ -12280,7 +12501,7 @@ async function apGerar(){
     AP.gerando=false;
     if(falhaReal){e=falhaReal;cancelado=false;}
     var el=$("ap-progresso");
-    if(el){el.hidden=false;el.innerHTML='<div class="aviso '+(cancelado?"":"erro")+'">'+(cancelado?"Criação interrompida.":(typeof textoDaFalha==="function"&&/cota|sobrecarreg|ocupado/i.test(e&&e.message||"")?textoDaFalha([e.message]).replace("Nenhuma questão foi gerada.","Nenhum slide foi criado."):esc(e&&e.message||e)))+"</div>";}
+    if(el){el.hidden=false;el.innerHTML='<div class="aviso '+(cancelado?"":"erro")+'">'+(cancelado?"Criação interrompida.":(typeof textoDaFalha==="function"&&/cota|sobrecarreg|ocupado|por minuto/i.test(e&&e.message||"")?textoDaFalha([e.message]).replace("Nenhuma questão foi gerada.","Nenhum slide foi criado."):esc(e&&e.message||e)))+"</div>";}
     if($("ap-criar"))$("ap-criar").disabled=false;
     document.querySelectorAll(".ap-passo").forEach(function(b){b.disabled=!apPodeIr(+b.dataset.ir);});
   }finally{
@@ -13958,8 +14179,8 @@ async function apBaixarPptx(){
   });
   window.addEventListener("beforeunload",function(){if(AP.deck)apLocalGravar(AP.deck).catch(function(){});});
   // nos testes locais (localhost) a aba fica acessível para conferência automática
-  if(/^(localhost|127\.0\.0\.1)$/.test(location.hostname))window.apTeste={AP:AP,APM:APM,trocarIA:function(f){chamarIAComInsistencia=f;},ir:function(k){apIr(k);},ilustrar:function(f){apCriarIlustracao=f;}};
-  if(/^(localhost|127\.0\.0\.1)$/.test(location.hostname))window.iaTeste={IA_ESCOLA:IA_ESCOLA,IA_USO:IA_USO,conf:conf,NV:NV,chaveIA:chaveIA,insistir:chamarIAComInsistencia,ilustrar:apCriarIlustracao,chat:chamarChatIA};
+  if(/^(localhost|127\.0\.0\.1)$/.test(location.hostname))window.apTeste={AP:AP,APM:APM,trocarIA:function(f){chamarIAComInsistencia=f;},ir:function(k){apIr(k);},ilustrar:function(f){apCriarIlustracao=f;},gerar:apGerar,livro:function(t,im){apTextoCapitulo=t;apImagensCapitulo=im;}};
+  if(/^(localhost|127\.0\.0\.1)$/.test(location.hostname))window.iaTeste={IA_ESCOLA:IA_ESCOLA,IA_USO:IA_USO,conf:conf,NV:NV,chaveIA:chaveIA,insistir:chamarIAComInsistencia,ilustrar:apCriarIlustracao,chat:chamarChatIA,FILA:FILA_IA,limite:lerLimite429,falha:textoDaFalha,esgotadoHoje:esgotadoHoje,parada:function(){return paradaGeral;},zerar:function(){paradaGeral="";cancelado=false;}};
   // offline: guarda o site e as fontes para abrir sem internet depois da primeira visita
   if("serviceWorker" in navigator&&location.protocol==="https:")navigator.serviceWorker.register("sw.js").catch(function(){});
 })();
