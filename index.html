@@ -763,6 +763,7 @@ input[type=range]{width:100%;accent-color:var(--primaria)}
 .ap-progresso li.feito{color:var(--destaque)}
 .ap-progresso li.agora{color:var(--primaria-escura);font-weight:800}
 .ap-relogio{font-weight:700;color:var(--primaria);margin-left:6px}
+.ap-conta{font-size:.85em;color:var(--cinza);margin-left:8px}
 .ap-aviso-ia{margin-top:10px;font-size:13px;color:var(--ambar)}
 
 /* editor */
@@ -3985,11 +3986,11 @@ base?("MATERIAL DE ORIGEM (trecho selecionado do acervo; explore-o em profundida
 }
 
 /* ---------------- chamadas às IAs ---------------- */
-function chamarIA(prompt,modelo,leve){
+function chamarIA(prompt,modelo,leve,rapido){
   if(!chaveIA())return Promise.reject(new Error("A IA ainda não está ativa para você. Peça ao administrador para ativar a IA da escola, ou cadastre uma chave sua em Ajustes."));
-  var pedido=provedorIA()==="anthropic"?chamarAnthropic(prompt,modelo,leve):chamarGemini(prompt,modelo,leve);
+  var pedido=provedorIA()==="anthropic"?chamarAnthropic(prompt,modelo,leve):chamarGemini(prompt,modelo,leve,rapido);
   return pedido.catch(function(e){
-    if(passarParaEscola(e))return chamarIA(prompt,/^claude/i.test(modelo||"")?undefined:modelo,leve);
+    if(passarParaEscola(e))return chamarIA(prompt,/^claude/i.test(modelo||"")?undefined:modelo,leve,rapido);
     throw e;
   });
 }
@@ -4032,18 +4033,24 @@ var abortoAtual=null, cancelado=false, esperaExpirada=false, paradaGeral="", mod
 var MODELOS_EXTRAS_GEMINI=["gemini-3.5-flash","gemini-3.7-flash","gemini-3.8-flash","gemini-3.5-flash-lite"];
 var LIMITE_RESPOSTA=100000;   // o provedor tem 100 segundos para responder
 // sem prazo, uma requisição que o provedor aceita e não responde deixa o app parado para sempre
+// cada pedido tem o seu prazo e o seu cancelamento: as apresentações escrevem várias aulas ao mesmo tempo
+var abortosAbertos=[];
 function abrirEspera(){
-  esperaExpirada=false;
-  abortoAtual=new AbortController();
-  var alvo=abortoAtual;
+  var alvo=new AbortController(), item={c:alvo,expirou:false};
+  abortoAtual=alvo;abortosAbertos.push(item);
   var relogio=setTimeout(function(){
-    if(alvo===abortoAtual&&!cancelado){esperaExpirada=true;try{alvo.abort();}catch(e){}}
+    if(!cancelado){item.expirou=true;try{alvo.abort();}catch(e){}}
   },LIMITE_RESPOSTA);
-  return {sinal:alvo.signal,encerrar:function(){clearTimeout(relogio);}};
+  return {sinal:alvo.signal,item:item,encerrar:function(){
+    clearTimeout(relogio);
+    var k=abortosAbertos.indexOf(item);if(k>-1)abortosAbertos.splice(k,1);
+    if(abortoAtual===alvo)abortoAtual=null;
+  }};
 }
-function traduzirEspera(e){
-  if(esperaExpirada&&!cancelado){
-    esperaExpirada=false;
+function traduzirEspera(e,espera){
+  var item=espera&&espera.item;
+  if(item&&item.expirou&&!cancelado){
+    item.expirou=false;
     var t=new Error("O provedor aceitou o pedido e não respondeu em "+Math.round(LIMITE_RESPOSTA/1000)+" segundos.");
     t.repetivel=true;t.semResposta=true;
     return t;
@@ -4053,6 +4060,7 @@ function traduzirEspera(e){
 function cancelarGeracao(){
   cancelado=true;
   if(abortoAtual)try{abortoAtual.abort();}catch(e){}
+  abortosAbertos.slice().forEach(function(x){try{x.c.abort();}catch(e){}});
 }
 // quando a cota grátis acabou em todos os modelos, o texto em inglês do provedor não ajuda o professor
 function textoDaFalha(falhas){
@@ -4072,7 +4080,11 @@ function textoDaFalha(falhas){
 }
 function repetivel(e){if(cancelado||(e&&e.name==="AbortError"))return false;return !!(e&&(e.repetivel||e.name==="TypeError"));}
 function comFolga(ms){return Math.round(ms*(0.8+Math.random()*0.5));} // evita que tentativas coincidam
-function chamarIAComInsistencia(prompt,avisar){
+// modelo que respondeu ocupado há pouco e o último que respondeu bem: com vários pedidos ao mesmo tempo
+// (aulas da apresentação), os seguintes já começam pelo modelo que está livre, sem refazer a fila toda
+var modelosOcupados={}, ultimoModeloOk={m:"",t:0};
+function chamarIAComInsistencia(prompt,avisar,op){
+  op=op||{};
   var principal=modeloIA()||"";
   var reserva=(reservaIA()&&reservaIA()!==principal)?reservaIA():"";
   // um modelo que já respondeu "cota esgotada" nesta sessão não é tentado de novo:
@@ -4090,11 +4102,14 @@ function chamarIAComInsistencia(prompt,avisar){
   }):[];
   extras.forEach(function(m){plano.push([m,0]);});
   plano.push([principal,30000]);
+  var agora=Date.now(), livre=ultimoModeloOk.m;
+  if(livre&&livre!==principal&&agora-ultimoModeloOk.t<5*60000&&agora-(modelosOcupados[principal]||0)<3*60000&&
+     !modelosEsgotados[livre]&&!modelosAusentes[livre])plano.unshift([livre,0]);
 
   var falhasDeRede=0, semResposta=0, modelosSemCota={}, modelosSobrecarregados={}, rodadaSobrecarga=0;
   // quando todos os modelos estão ocupados, o Google costuma voltar em um ou dois minutos:
   // novas rodadas com pausas crescentes antes de desistir (com o aviso na tela)
-  var PAUSAS_SOBRECARGA=[20000,40000,60000];
+  var PAUSAS_SOBRECARGA=[15000,30000,60000];
   var distintos={};plano.forEach(function(x){distintos[x[0]]=1;});
   function tentar(i,ultimo){
     if(i>=plano.length)throw ultimo;
@@ -4114,7 +4129,11 @@ function chamarIAComInsistencia(prompt,avisar){
         : ("Nova tentativa em "+Math.round(espera/1000)+" segundos com "+modelo+".")));
     }
     return passo.then(function(){
-      return chamarIA(prompt,modelo);
+      if(cancelado)throw new DOMException("cancelado","AbortError");
+      return chamarIA(prompt,modelo,false,!!op.rapido);
+    }).then(function(v){
+      ultimoModeloOk={m:modelo,t:Date.now()};
+      return v;
     }).catch(function(e){
       ultimoErroIA=(e&&e.message)||"";
       // a página foi para o segundo plano durante o pedido: a conexão cortada é do celular, não do provedor.
@@ -4145,7 +4164,7 @@ function chamarIAComInsistencia(prompt,avisar){
       // todos os modelos sobrecarregados ao mesmo tempo é o Google fora do ar por um tempo:
       // insistir (e refazer o lote) só deixava o professor minutos olhando "0 de 10"
       if(e&&(e.sobrecarga||e.semResposta)){
-        modelosSobrecarregados[modelo]=1;
+        modelosSobrecarregados[modelo]=1;modelosOcupados[modelo]=Date.now();
         if(Object.keys(modelosSobrecarregados).length>=Object.keys(distintos).length){
           if(rodadaSobrecarga>=PAUSAS_SOBRECARGA.length||(e.semResposta&&semResposta>=2)){paradaGeral="sobrecarga";throw e;}
           var pausa=PAUSAS_SOBRECARGA[rodadaSobrecarga++];
@@ -4188,12 +4207,17 @@ function conteudoAnthropic(prompt){
     return {type:"image",source:{type:"base64",media_type:m[1]||"image/jpeg",data:m[2]||""}};
   }).concat([{type:"text",text:prompt.texto}]);
 }
-function chamarGemini(prompt,modeloEscolhido,semRaciocinio){
+function chamarGemini(prompt,modeloEscolhido,semRaciocinio,rapido){
   var modelo=modeloEscolhido||modeloIA()||"gemini-3.6-flash";
   var url="https://generativelanguage.googleapis.com/v1beta/models/"+encodeURIComponent(modelo)+":generateContent";
   var config={maxOutputTokens:32768,responseMimeType:"application/json"};
   // raciocínio profundo: nos modelos 3.x o campo é thinkingLevel; nos 2.5, thinkingBudget. Nunca os dois juntos.
-  if(conf.raciocinio&&!semRaciocinio){
+  // pedido rápido (slides): os modelos 3.x raciocinam no nível máximo quando nada é dito, e isso
+  // levava mais de um minuto por aula. Raciocínio baixo basta para organizar um texto que já está pronto
+  if(rapido&&!semRaciocinio){
+    if(/gemini-2\.5/.test(modelo))config.thinkingConfig={thinkingBudget:/lite/.test(modelo)?0:1024};
+    else config.thinkingConfig={thinkingLevel:"low"};
+  }else if(conf.raciocinio&&!semRaciocinio){
     if(/gemini-2\.5/.test(modelo))config.thinkingConfig={thinkingBudget:8192};
     else config.thinkingConfig={thinkingLevel:"high"};
   }
@@ -4202,7 +4226,7 @@ function chamarGemini(prompt,modeloEscolhido,semRaciocinio){
     // a chave vai no cabeçalho, como manda a documentação: serve para o formato antigo (AIza) e o novo (AQ.)
     method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":chaveIA()},signal:espera.sinal,
     body:JSON.stringify({contents:[{role:"user",parts:partesGemini(prompt)}],generationConfig:config})
-  }).then(function(r){espera.encerrar();return r;},function(e){espera.encerrar();throw traduzirEspera(e);}).then(tratarResposta).then(function(d){
+  }).then(function(r){espera.encerrar();return r;},function(e){espera.encerrar();throw traduzirEspera(e,espera);}).then(tratarResposta).then(function(d){
     var c=d.candidates&&d.candidates[0];
     if(c&&c.finishReason==="MAX_TOKENS")throw new Error("A resposta foi cortada por tamanho. Peça menos questões por vez ou reduza o material de origem.");
     if(c&&c.finishReason==="SAFETY")throw new Error("O provedor bloqueou a resposta por filtro de conteúdo. Reformule o assunto ou troque de provedor.");
@@ -4210,8 +4234,8 @@ function chamarGemini(prompt,modeloEscolhido,semRaciocinio){
     return c.content.parts.map(function(p){return p.text||"";}).join("");
   }).catch(function(e){
     // modelo que não aceita o campo de raciocínio: repete sem ele
-    if(!semRaciocinio&&e&&e.status===400)return chamarGemini(prompt,modeloEscolhido,true);
-    throw marcarRede(traduzirEspera(e));
+    if(!semRaciocinio&&e&&e.status===400)return chamarGemini(prompt,modeloEscolhido,true,rapido);
+    throw marcarRede(traduzirEspera(e,espera));
   });
 }
 function chamarAnthropic(prompt,modeloEscolhido,semRaciocinio){
@@ -4224,12 +4248,12 @@ function chamarAnthropic(prompt,modeloEscolhido,semRaciocinio){
     headers:{"Content-Type":"application/json","x-api-key":chaveIA(),
       "anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
     body:JSON.stringify(corpo)
-  }).then(tratarResposta).then(function(d){
+  }).then(function(r){espera.encerrar();return r;},function(e){espera.encerrar();throw traduzirEspera(e,espera);}).then(tratarResposta).then(function(d){
     if(!d.content)throw new Error("O modelo respondeu vazio.");
     return d.content.map(function(b){return b.type==="text"?b.text:"";}).join("");
   }).catch(function(e){
     if(!semRaciocinio&&e&&e.status===400)return chamarAnthropic(prompt,modeloEscolhido,true);
-    throw marcarRede(traduzirEspera(e));
+    throw marcarRede(traduzirEspera(e,espera));
   });
 }
 function tratarResposta(r){
@@ -11704,11 +11728,12 @@ function apCartoes(nome,lista,valor){
     return '<label class="origem"><input type="radio" name="'+nome+'" value="'+o.id+'"'+(o.id===valor?" checked":"")+"><strong>"+esc(o.nome)+"</strong><span>"+esc(o.desc)+"</span></label>";
   }).join("")+"</div>";
 }
+var AP_MAX_SLIDES=72;   // 12 aulas × 6 slides
 function apTelaAulas(){
   var n=AP.novo, c=$("ap-corpo");
   c.innerHTML='<div class="bloco ap-etapa"><h2>Como vai ser a aula?</h2><p class="ajuda">'+esc(n.livroNome)+" · "+esc(n.capNome)+'</p>'+
-    '<div class="linha"><div><label for="ap-aulas">Quantas aulas de 50 minutos</label><select id="ap-aulas">'+[1,2,3,4,5,6].map(function(k){return "<option"+(k===+n.aulas?" selected":"")+">"+k+"</option>";}).join("")+"</select></div>"+
-    '<div><label for="ap-slides">Quantos slides no total <span class="opcional" id="ap-por-aula"></span></label><input type="range" id="ap-slides" min="4" max="40" value="'+n.slides+'"><div class="ap-valor" id="ap-slides-v"></div></div></div>'+
+    '<div class="linha"><div><label for="ap-aulas">Quantas aulas de 50 minutos</label><select id="ap-aulas">'+[1,2,3,4,5,6,7,8,9,10,11,12].map(function(k){return "<option"+(k===+n.aulas?" selected":"")+">"+k+"</option>";}).join("")+"</select></div>"+
+    '<div><label for="ap-slides">Quantos slides no total <span class="opcional" id="ap-por-aula"></span></label><input type="range" id="ap-slides" min="4" max="'+AP_MAX_SLIDES+'" value="'+n.slides+'"><div class="ap-valor" id="ap-slides-v"></div></div></div>'+
     '<label>Tipo de linguagem</label>'+apCartoes("ap-ling",AP_LINGUAGENS,n.linguagem)+
     '<label>Nível de detalhe</label>'+apCartoes("ap-det",AP_DETALHES,n.detalhe)+
     '<label>No final da apresentação</label><div class="ap-marcas"><label class="ap-marca"><input type="checkbox" id="ap-q"'+(n.questoes?" checked":"")+'> Questões de revisão, uma por habilidade do capítulo, com a página da resposta</label>'+
@@ -11722,7 +11747,7 @@ function apTelaAulas(){
     $("ap-slides-v").textContent=s+" slides"+((n.questoes||n.mapa)?" + "+((n.questoes?1:0)+(n.mapa?1:0))+" no final":"");
     $("ap-por-aula").textContent="cerca de "+Math.round(s/a)+" por aula, já com capa e síntese";
   }
-  $("ap-aulas").addEventListener("change",function(){var a=+this.value;$("ap-slides").value=Math.max(a*3,Math.min(40,a*5));atualizar();});
+  $("ap-aulas").addEventListener("change",function(){var a=+this.value;$("ap-slides").value=Math.max(a*3,Math.min(AP_MAX_SLIDES,a*5));atualizar();});
   $("ap-slides").addEventListener("input",atualizar);
   $("ap-q").addEventListener("change",function(){n.questoes=this.checked;atualizar();});
   $("ap-m").addEventListener("change",function(){n.mapa=this.checked;atualizar();});
@@ -11867,8 +11892,29 @@ function apPedidoPlano(n,capitulo,paginas,habs){
     "Responda SOMENTE com JSON, sem comentários: {\"numeroCapitulo\":\"2\",\"tituloCapitulo\":\"título curto do capítulo\",\"aulas\":[{\"tema\":\"tema curto da aula\",\"titulo\":\"título da capa\",\"subtitulo\":\"do que trata a aula, em uma frase\",\"paginas\":\"41–46\",\"blocos\":[{\"bloco\":\"nome curto do bloco\",\"pagina\":\"42\",\"foco\":\"o que explicar\"}]}]}\n\n"+
     "=== TEXTO DO CAPÍTULO ===\n"+capitulo;
 }
+/* cada aula recebe só as páginas dela (com uma página de folga de cada lado), não o capítulo inteiro:
+   o pedido fica várias vezes menor, a IA responde mais rápido e cabem várias aulas ao mesmo tempo
+   na cota por minuto da camada gratuita. Sem marcas de página confiáveis, vai o capítulo inteiro. */
+function apTrechoAula(capitulo,aula){
+  var nums=[];
+  String(aula&&aula.paginas||"").replace(/\d{1,3}/g,function(x){nums.push(+x);return x;});
+  ((aula&&aula.blocos)||[]).forEach(function(b){var m=/\d{1,3}/.exec(String(b&&b.pagina||""));if(m)nums.push(+m[0]);});
+  if(!nums.length)return {texto:capitulo,parcial:false};
+  var de=Math.min.apply(null,nums), ate=Math.max.apply(null,nums);
+  if(ate-de>60)return {texto:capitulo,parcial:false};
+  function marca(n){return capitulo.indexOf("[fim da página "+n+"]");}
+  var ini=-1;
+  for(var k=de-2;k>=de-4&&ini<0;k--){var m1=marca(k);if(m1>-1)ini=m1+("[fim da página "+k+"]").length;}
+  if(ini<0)ini=0;
+  var fim=-1;
+  for(var j=ate+1;j<=ate+3&&fim<0;j++){var m2=marca(j);if(m2>-1)fim=m2+("[fim da página "+j+"]").length;}
+  if(fim<0||fim<=ini)fim=capitulo.length;
+  var t=capitulo.slice(ini,fim).trim();
+  if(t.length<1500||t.length>capitulo.length*0.9)return {texto:capitulo,parcial:false};
+  return {texto:t,parcial:true,de:Math.max(1,de-1),ate:ate+1};
+}
 function apPedidoAula(n,capitulo,plano,i,qtd,imgs,habs){
-  var a=plano.aulas[i];
+  var a=plano.aulas[i], tr=apTrechoAula(capitulo,a);
   return "Você é um professor especialista e vai escrever os slides da AULA "+(i+1)+" de "+plano.aulas.length+" de uma apresentação de revisão do capítulo \""+n.capNome+"\" ("+n.livroNome+", "+nomeSerieSesi(n.serie)+").\n\n"+
     "REGRAS DA ESCOLA (obrigatórias):\n- "+AP_REGRAS.join("\n- ")+"\n- "+apLinguagemTxt(n)+(n.obs?"\n- Orientações do professor: "+n.obs:"")+"\n\n"+
     "PLANO DESTA AULA: tema \""+a.tema+"\", capa \""+(a.titulo||a.tema)+"\", páginas "+(a.paginas||"?")+".\nBlocos: "+(a.blocos||[]).map(function(b){return b.bloco+" (p. "+b.pagina+"): "+b.foco;}).join(" | ")+"\n"+
@@ -11877,7 +11923,8 @@ function apPedidoAula(n,capitulo,plano,i,qtd,imgs,habs){
     (i<plano.aulas.length-1?" (com \"proxima\" apontando a Aula "+(i+2)+": "+plano.aulas[i+1].tema+")":" (última aula: \"proxima\" vazio)")+", e os do meio são de conteúdo, um por bloco, com layouts alternados.\n"+
     "A etiqueta usa \"Aula "+(i+1)+" · <bloco> · p. <página>\".\n\n"+AP_ESQUEMA+"\n\n"+apListaImagens(imgs)+"\n\n"+
     "No texto, a marca [fim da página N] indica que o que vem antes dela está na página N do livro.\n"+
-    "Responda SOMENTE com JSON: {\"slides\":[ ... ]}\n\n=== TEXTO DO CAPÍTULO ===\n"+capitulo;
+    "Responda SOMENTE com JSON: {\"slides\":[ ... ]}\n\n"+
+    (tr.parcial?"=== TRECHO DO CAPÍTULO COM AS PÁGINAS DESTA AULA (p. "+tr.de+" a "+tr.ate+") ===\n":"=== TEXTO DO CAPÍTULO ===\n")+tr.texto;
 }
 function apPedidoFinal(n,capitulo,plano,habs){
   var lista=habs.length?habs.map(function(h){return h.c+(h.t?" — "+h.t:"");}).join("\n"):"(o capítulo não lista habilidades: use os grandes temas do capítulo)";
@@ -11969,11 +12016,18 @@ function apSlidesDe(resposta,imgs){
   if(!lista||!lista.length)throw new Error("A resposta da IA não veio no formato esperado. Tente de novo.");
   return lista.map(function(x){return apNormalizar(x,imgs);});
 }
+// "atual" é o número da etapa em andamento ou, com várias aulas sendo escritas ao mesmo tempo,
+// a lista do estado de cada etapa ("feito", "agora" ou "")
 function apProgresso(etapas,atual,aviso){
   var el=$("ap-progresso");if(!el)return;
   el.hidden=false;
-  el.innerHTML='<strong>Criando a apresentação…</strong> <span class="ap-relogio" id="ap-relogio"></span><ol>'+etapas.map(function(e,i){
-    return '<li class="'+(i<atual?"feito":i===atual?"agora":"")+'">'+(i<atual?"✓ ":i===atual?"⏳ ":"")+esc(e)+"</li>";
+  var rel=$("ap-relogio"), tempo=rel?rel.textContent:"";
+  var est=Array.isArray(atual)?atual:etapas.map(function(_,i){return i<atual?"feito":i===atual?"agora":"";});
+  var feitas=est.filter(function(x){return x==="feito";}).length;
+  el.innerHTML='<strong>Criando a apresentação…</strong> <span class="ap-relogio" id="ap-relogio">'+esc(tempo)+'</span>'+
+    (Array.isArray(atual)?' <span class="ap-conta">'+feitas+" de "+etapas.length+" etapas prontas</span>":"")+"<ol>"+etapas.map(function(e,i){
+    var x=est[i]||"";
+    return '<li class="'+x+'">'+(x==="feito"?"✓ ":x==="agora"?"⏳ ":"")+esc(e)+"</li>";
   }).join("")+"</ol>"+(aviso?'<div class="ap-aviso-ia">'+esc(aviso)+"</div>":"");
 }
 async function apGerar(){
@@ -11986,35 +12040,69 @@ async function apGerar(){
   for(var i=0;i<n.aulas;i++)etapas.push("Escrever a aula "+(i+1));
   if(n.questoes||n.mapa)etapas.push("Questões e mapa mental");
   var inicio=Date.now(), relogio=setInterval(function(){var r=$("ap-relogio");if(r){var s=Math.round((Date.now()-inicio)/1000);r.textContent=s<60?s+"s":Math.floor(s/60)+"min "+(s%60)+"s";}},1000);
-  var passo=0, avisar=function(t){apProgresso(etapas,passo,t);};
+  var passo=0, estado=null, ultimoAviso="", falhaReal=null;
+  var avisar=function(t){ultimoAviso=t;apProgresso(etapas,estado||passo,t);};
+  var pintar=function(){apProgresso(etapas,estado||passo,ultimoAviso);};
   try{
     apProgresso(etapas,0);
     var bruto=await apTextoCapitulo(n.capId);
     var imgs=await apImagensCapitulo(n.capId);
     var marc=apMarcarPaginas(bruto), cap=marc.texto.slice(0,160000), habs=apHabilidades(bruto);
     passo=1;apProgresso(etapas,1);
-    var plano=extrairObjeto(await chamarIAComInsistencia(apPedidoPlano(n,cap,marc.paginas,habs),avisar));
+    var plano=extrairObjeto(await chamarIAComInsistencia(apPedidoPlano(n,cap,marc.paginas,habs),avisar,{rapido:true}));
     if(!plano||!Array.isArray(plano.aulas)||!plano.aulas.length)throw new Error("A IA não devolveu o plano das aulas. Tente de novo.");
     plano.aulas=plano.aulas.slice(0,n.aulas);
     plano.paginas=marc.paginas;
+    // o capítulo curto pode render menos aulas do que o pedido: a lista da tela acompanha
+    if(plano.aulas.length<n.aulas){
+      etapas=etapas.slice(0,2).concat(plano.aulas.map(function(_,k){return "Escrever a aula "+(k+1);}));
+      if(n.questoes||n.mapa)etapas.push("Questões e mapa mental");
+    }
     var por=[],base=Math.floor(n.slides/plano.aulas.length),resto=n.slides%plano.aulas.length;
     plano.aulas.forEach(function(_,k){por.push(Math.max(3,base+(k<resto?1:0)));});
+    /* As aulas não dependem uma da outra depois do plano: são escritas ao mesmo tempo, algumas por vez
+       (o limite respeita a cota por minuto da camada gratuita), e as questões finais entram junto.
+       Antes era uma depois da outra, e cada aula levava o capítulo inteiro. */
+    var tarefas=plano.aulas.map(function(_,a){return {etapa:2+a,aula:a};});
+    if(n.questoes||n.mapa)tarefas.push({etapa:2+plano.aulas.length,fim:true});
+    estado=etapas.map(function(_,i){return i<2?"feito":"";});
+    var partes=[], fimSlides=[], fila=tarefas.slice();
+    var parcial=apTrechoAula(cap,plano.aulas[0]).parcial;
+    var simultaneas=Math.min(tarefas.length,parcial?4:2);
+    pintar();
+    async function trabalhador(){
+      while(fila.length&&!cancelado){
+        var t=fila.shift();
+        estado[t.etapa]="agora";pintar();
+        var aviso=(function(nome){return function(x){avisar(nome+x);};})(t.fim?"Questões finais: ":"Aula "+(t.aula+1)+": ");
+        try{
+          if(t.fim){
+            try{
+              fimSlides=apSlidesDe(await chamarIAComInsistencia(apPedidoFinal(n,cap,plano,habs),aviso,{rapido:true}),imgs)
+                .filter(function(s){return (s.tipo==="questoes"&&n.questoes)||(s.tipo==="mapa"&&n.mapa);});
+            }catch(e){if(cancelado)throw e;}   // sem as questões finais, a apresentação sai assim mesmo
+          }else{
+            var sl=apSlidesDe(await chamarIAComInsistencia(apPedidoAula(n,cap,plano,t.aula,por[t.aula],imgs,habs),aviso,{rapido:true}),imgs);
+            apFixarCapitulo(sl,n,plano,t.aula);
+            partes[t.aula]=sl;
+          }
+          estado[t.etapa]="feito";
+          if(estado.every(function(x,i){return i>=2?x!=="agora":true;}))ultimoAviso="";
+          pintar();
+        }catch(e){
+          // uma aula que falhou de vez para as outras: os pedidos em andamento são cancelados
+          if(!cancelado&&!falhaReal){falhaReal=e;cancelarGeracao();}
+          throw e;
+        }
+      }
+    }
+    var corredores=[];for(var w=0;w<simultaneas;w++)corredores.push(trabalhador());
+    await Promise.allSettled(corredores);
+    if(falhaReal)throw falhaReal;
+    if(cancelado)throw new Error("cancelado");
     var slides=[];
-    for(var a=0;a<plano.aulas.length;a++){
-      if(cancelado)throw new Error("cancelado");
-      passo=2+a;apProgresso(etapas,passo);
-      var sl=apSlidesDe(await chamarIAComInsistencia(apPedidoAula(n,cap,plano,a,por[a],imgs,habs),avisar),imgs);
-      apFixarCapitulo(sl,n,plano,a);
-      slides=slides.concat(sl);
-    }
-    if(n.questoes||n.mapa){
-      passo=2+plano.aulas.length;apProgresso(etapas,passo);
-      try{
-        var fim=apSlidesDe(await chamarIAComInsistencia(apPedidoFinal(n,cap,plano,habs),avisar),imgs)
-          .filter(function(s){return (s.tipo==="questoes"&&n.questoes)||(s.tipo==="mapa"&&n.mapa);});
-        slides=slides.concat(fim);
-      }catch(e){if(cancelado)throw e;}
-    }
+    partes.forEach(function(sl){slides=slides.concat(sl||[]);});
+    slides=slides.concat(fimSlides);
     var titulo=apTituloCapitulo(n,plano);
     var deck=AP.deck&&n.deDeck===AP.deck.id?AP.deck:{id:apNovoId(),criado:Date.now()};
     if(deck===AP.deck)apHist();
@@ -12030,6 +12118,7 @@ async function apGerar(){
     apIlustrarFaltando(deck);
   }catch(e){
     AP.gerando=false;
+    if(falhaReal){e=falhaReal;cancelado=false;}
     var el=$("ap-progresso");
     if(el){el.hidden=false;el.innerHTML='<div class="aviso '+(cancelado?"":"erro")+'">'+(cancelado?"Criação interrompida.":(typeof textoDaFalha==="function"&&/cota|sobrecarreg|ocupado/i.test(e&&e.message||"")?textoDaFalha([e.message]).replace("Nenhuma questão foi gerada.","Nenhum slide foi criado."):esc(e&&e.message||e)))+"</div>";}
     if($("ap-criar"))$("ap-criar").disabled=false;
