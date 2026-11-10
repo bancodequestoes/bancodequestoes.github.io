@@ -421,6 +421,18 @@ input[type=file]::file-selector-button:hover{background:var(--primaria-hover);bo
 .img-livro .usada{font-size:11px;font-weight:700;color:#9a5b00}
 .img-livro .ampliar{position:absolute;top:8px;right:8px;background:rgba(255,255,255,.92);border:1px solid #ccc;border-radius:6px;font-size:12px;padding:2px 6px;cursor:zoom-in}
 .img-auto .img-livro{cursor:default}
+.img-placar{margin:8px 0 6px;padding:10px 12px;border-radius:10px;background:var(--primaria-fundo);border:1px solid var(--primaria-borda);font-size:14px;line-height:1.45}
+.img-placar:empty{display:none}
+.img-placar .falta{display:block;margin-top:4px;font-weight:700;color:var(--primaria)}
+.img-placar .falta.alerta{color:#9a5b00}
+.img-colar{display:flex;flex-direction:column;gap:6px;padding:14px;border:2px dashed var(--primaria-borda);border-radius:12px;background:#fbfaf6;cursor:pointer;margin-bottom:10px;outline:none}
+.img-colar:focus,.img-colar.sobre{border-color:var(--primaria);background:var(--primaria-fundo)}
+.img-colar .sub{font-size:12.5px;color:#555}
+.img-colar-botoes{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:2px}
+.img-propria{cursor:default}
+.img-propria input{font-size:12px;padding:4px 6px;margin:0}
+.img-propria .remover{position:absolute;top:8px;right:8px;background:rgba(255,255,255,.95);border:1px solid #ccc;border-radius:6px;font-size:12px;padding:2px 7px;cursor:pointer}
+.img-propria .tag{position:absolute;top:8px;left:8px;background:var(--primaria);color:#fff;font-size:11px;font-weight:700;border-radius:999px;padding:2px 8px}
 .leg-fig{font-size:12px;color:#4a4a4a;text-align:center;margin:-6px 0 12px;font-style:italic}
 #img-ampliada .caixa{background:#fff;border-radius:12px;padding:14px;max-width:900px;width:100%}
 #img-ampliada img{max-width:100%;max-height:70vh;display:block;margin:0 auto}
@@ -1347,9 +1359,9 @@ body.ap-arrastando,body.ap-arrastando *{cursor:grabbing !important}
             <p class="ajuda" style="margin:4px 0 0">para estudantes atípicos (TEA, TDAH)</p>
           </div>
           <div id="col-imagem">
-            <label for="q-imagem">Com imagem do livro</label>
+            <label for="q-imagem">Com imagem</label>
             <select id="q-imagem"><option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option></select>
-            <p class="ajuda" style="margin:4px 0 0">partem de uma imagem do capítulo marcado</p>
+            <p class="ajuda" style="margin:4px 0 0" id="img-col-ajuda">imagens do livro ou fotos suas</p>
           </div>
         </div>
         <div id="painel-imagens" class="painel-imagens" hidden>
@@ -1357,15 +1369,25 @@ body.ap-arrastando,body.ap-arrastando *{cursor:grabbing !important}
           <summary><span><strong>Questões com imagem</strong> <span class="sumario" id="img-sumario">— a IA recebe a imagem e o texto do capítulo de onde ela veio</span></span></summary>
           <div class="img-opcoes">
             <div role="radiogroup" aria-label="Quem escolhe as imagens">
-              <label><input type="radio" name="img-modo" value="manual" checked> Eu escolho as imagens</label>
-              <label><input type="radio" name="img-modo" value="auto"> O sistema escolhe</label>
+              <label><input type="radio" name="img-modo" value="manual" checked> Eu escolho algumas e o site completa o resto</label>
+              <label><input type="radio" name="img-modo" value="auto"> O site escolhe todas</label>
             </div>
             <div role="radiogroup" aria-label="Formato da questão com imagem">
               <label><input type="radio" name="img-tipo" value="objetiva" checked> Objetiva <span class="sub" id="img-nota-objetiva"></span></label>
               <label><input type="radio" name="img-tipo" value="dissertativa"> Dissertativa</label>
             </div>
           </div>
-          <p class="ajuda" id="img-resumo"></p>
+          <div id="img-placar" class="img-placar"></div>
+          <div class="img-proprias" id="img-proprias">
+            <p class="img-cap-nome" style="margin-top:4px">Suas imagens <span class="sub">· fotos, prints, mapas, charges: a IA cria a questão em cima delas</span></p>
+            <div class="img-colar" id="img-colar" tabindex="0" role="button" aria-label="Colar ou soltar imagem aqui">
+              <span><strong>📋 Cole aqui a imagem</strong> (Cmd+V no Mac, Ctrl+V no Windows)</span>
+              <span class="sub">Copie a imagem no Google ou em qualquer lugar (botão direito › Copiar imagem) e cole. Também pode arrastar o arquivo para cá.</span>
+              <span class="img-colar-botoes"><input type="file" id="img-arquivo-proprio" accept="image/*" multiple></span>
+            </div>
+            <div class="img-grade" id="img-grade-proprias"></div>
+          </div>
+          <p class="ajuda" id="img-resumo" style="margin-top:14px"></p>
           <div id="img-grade"></div>
           </details>
         </div>
@@ -3321,7 +3343,7 @@ function enviarLivrosSerie(pacote,avisar){
    cabe num documento continua em g-<capítulo>~2, ~3... No índice da série, cada capítulo
    diz quantas imagens tem (g) e, no caderno do professor, de que capítulo do aluno elas
    vêm (gDe). Depois de baixadas, as imagens ficam no IndexedDB deste navegador.        */
-var IMG={cache:{},carregando:{},escolhidas:{},ordem:[]};
+var IMG={cache:{},carregando:{},escolhidas:{},ordem:[],proprias:[]};
 function capituloDoIndice(id){
   var achou=null;
   Object.keys(LS.indices).forEach(function(k){
@@ -3433,31 +3455,102 @@ function imagensJaUsadas(){
 }
 function modoImagens(){var r=document.querySelector('input[name="img-modo"]:checked');return r?r.value:"manual";}
 function tipoImagens(){var r=document.querySelector('input[name="img-tipo"]:checked');return r?r.value:"objetiva";}
-function qtdPedidaImagens(){return origemAtual()==="livro"?(parseInt($("q-imagem").value,10)||0):0;}
+function qtdPedidaImagens(){return parseInt($("q-imagem").value,10)||0;}
+// quantas imagens do livro ainda cabem no pedido, depois das fotos do próprio professor
+function vagasDoLivro(){return origemAtual()==="livro"?Math.max(0,qtdPedidaImagens()-IMG.proprias.length):0;}
+/* ---- imagens do próprio professor: arquivo, colar (Cmd/Ctrl+V) ou arrastar ---- */
+function renderProprias(){
+  var g=$("img-grade-proprias");if(!g)return;
+  g.innerHTML=IMG.proprias.map(function(im,i){
+    return '<div class="img-livro img-propria escolhida" data-propria="'+i+'">'+
+      '<img src="'+im.d+'" alt="">'+
+      '<input type="text" data-legenda-propria="'+i+'" value="'+esc(im.l||"")+'" placeholder="Do que se trata? (opcional)" title="Uma pista para a IA: o que a imagem mostra, de onde veio">'+
+      '<button type="button" class="remover" data-remover-propria="'+i+'" aria-label="Tirar esta imagem">✕</button></div>';
+  }).join("");
+}
+function adicionarProprias(dados){
+  if(!dados.length)return;
+  dados.forEach(function(d){IMG.proprias.push({id:"propria-"+idFigura(),d:d,l:"",p:0});});
+  // escolheu mais imagens do que pediu: o pedido cresce junto (até 10)
+  var n=qtdPedidaImagens(), precisa=Math.min(10,IMG.proprias.length+(origemAtual()==="livro"?IMG.ordem.length:0));
+  if(precisa>n){$("q-imagem").value=String(precisa);atualizarTotalPedido();}
+  if(IMG.proprias.length>10)IMG.proprias=IMG.proprias.slice(0,10);
+  renderImagens();
+}
+function lerImagensProprias(arquivos){
+  var lista=[].slice.call(arquivos||[]).filter(function(f){return /^image\//.test(f.type);});
+  if(!lista.length)return Promise.resolve(0);
+  return Promise.all(lista.map(function(f){return chatLerImagem(f).catch(function(){return null;});})).then(function(d){
+    d=d.filter(Boolean);adicionarProprias(d);return d.length;
+  });
+}
+// colar: aceita a imagem copiada (arquivo) ou, se só vier o endereço dela, tenta baixar
+function colarImagemPropria(ev){
+  var dt=ev.clipboardData;if(!dt)return false;
+  var arqs=[];
+  [].forEach.call(dt.items||[],function(it){if(it.kind==="file"&&/^image\//.test(it.type)){var f=it.getAsFile();if(f)arqs.push(f);}});
+  if(!arqs.length&&dt.files&&dt.files.length)arqs=[].slice.call(dt.files).filter(function(f){return /^image\//.test(f.type);});
+  if(arqs.length){ev.preventDefault();lerImagensProprias(arqs);return true;}
+  var html=dt.getData("text/html")||"", txt=(dt.getData("text/plain")||"").trim(), url=null;
+  var m=/<img[^>]+src=["']([^"']+)["']/i.exec(html);if(m)url=m[1].replace(/&amp;/g,"&");
+  if(!url&&/^(https?:\/\/\S+\.(png|jpe?g|gif|webp|avif)(\?\S*)?|data:image\/[\w+]+;base64,\S+)$/i.test(txt))url=txt;
+  if(!url)return false;
+  ev.preventDefault();
+  apComprimir(url,1400,0.82).then(function(d){adicionarProprias([d]);},function(){
+    msg("img-resumo","Esse site não deixa copiar a imagem pelo endereço. Clique com o botão direito em cima da imagem, escolha <strong>Copiar imagem</strong> e cole de novo.","erro");
+  });
+  return true;
+}
 function renderImagens(){
   var painel=$("painel-imagens");
   // os capítulos podem ser desenhados antes de o resto do script declarar as origens
   if(!painel||typeof ORIGENS==="undefined"||!ORIGENS)return;
   var livro=origemAtual()==="livro";
-  $("col-imagem").hidden=!livro;
+  $("col-imagem").hidden=false;
+  $("img-col-ajuda").textContent=livro?"imagens do livro ou fotos suas":"a partir de fotos ou prints seus";
   var n=qtdPedidaImagens();
-  painel.hidden=!livro||!n;
+  painel.hidden=!n;
   if(painel.hidden)return;
-  $("img-sumario").textContent="— marque os capítulos do livro no passo 1";
+  renderProprias();
   var estilo=estiloDoLivro();
-  $("img-nota-objetiva").textContent=estilo==="objetiva"?"(simples)":"(molde "+ORIGENS[estilo].nome+")";
-  var manual=modoImagens()==="manual", ids=Object.keys(LS.marcados), grade=$("img-grade");
+  $("img-nota-objetiva").textContent=!origemComEstilo(origemAtual())||estilo==="objetiva"?"(simples)":"(molde "+ORIGENS[estilo].nome+")";
+  var opcoes=document.querySelector('#painel-imagens [aria-label="Quem escolhe as imagens"]');
+  if(opcoes)opcoes.hidden=!livro;
+  var nP=IMG.proprias.length, placar=$("img-placar"), grade=$("img-grade");
+  if(!livro){
+    grade.innerHTML="";grade.className="";
+    var faltaP=Math.max(0,n-nP);
+    placar.innerHTML="<strong>"+Math.min(nP,n)+" de "+n+"</strong> "+(n===1?"imagem pronta":"imagens prontas")+"."+
+      (faltaP?'<span class="falta alerta">Cole ou escolha mais '+faltaP+" "+(faltaP===1?"imagem":"imagens")+' abaixo. Para o site escolher sozinho imagens do livro, use a origem "Livro SESI" no passo 1.</span>':'<span class="falta">Tudo certo: cada imagem vira uma questão.</span>');
+    $("img-resumo").innerHTML="";
+    $("img-sumario").textContent="— "+Math.min(nP,n)+" de "+n+" "+(n===1?"imagem":"imagens");
+    return;
+  }
+  var manual=modoImagens()==="manual", ids=Object.keys(LS.marcados), vagas=vagasDoLivro();
   grade.className=manual?"":"img-auto";
-  // escolhas de capítulos desmarcados saem da lista
+  // escolhas de capítulos desmarcados saem da lista, e as que passaram das vagas também
   IMG.ordem=IMG.ordem.filter(function(k){return IMG.escolhidas[k]&&LS.marcados[IMG.escolhidas[k].cap];});
+  while(IMG.ordem.length>vagas)delete IMG.escolhidas[IMG.ordem.shift()];
   Object.keys(IMG.escolhidas).forEach(function(k){if(IMG.ordem.indexOf(k)<0)delete IMG.escolhidas[k];});
-  var nEsc=IMG.ordem.length;
+  var nEsc=manual?IMG.ordem.length:0, completa=Math.max(0,n-nP-nEsc);
+  var totalImgs=ids.reduce(function(s,id){return s+qtdImagens(id);},0);
+  // o placar diz, sem precisar procurar, quantas o professor escolheu e quantas o site completa
+  var partes=[];
+  if(nEsc)partes.push(nEsc+" do livro");
+  if(nP)partes.push(nP+" "+(nP===1?"sua":"suas"));
+  var txtCompleta=completa?(completa+" "+(completa===1?"imagem":"imagens")):"";
+  placar.innerHTML=(manual?"Escolhidas: <strong>"+(partes.length?partes.join(" + ")+" = ":"")+(nEsc+nP)+" de "+n+"</strong>.":"<strong>"+n+" "+(n===1?"questão":"questões")+" com imagem</strong>"+(nP?" ("+nP+" com "+(nP===1?"imagem sua":"imagens suas")+")":"")+".")+
+    (completa
+      ? (totalImgs
+        ? '<span class="falta">✨ '+(completa===1?(nEsc+nP?"A outra imagem":"A imagem"):(nEsc+nP?"As outras ":"As ")+txtCompleta)+" o site escolhe sozinho entre as dos capítulos marcados, de preferência as que ainda não viraram questão.</span>"
+        : '<span class="falta alerta">'+(ids.length?"Os capítulos marcados não têm imagens guardadas":"Marque no passo 1 os capítulos do livro")+": cole ou escolha mais "+txtCompleta+" suas abaixo, ou o pedido sai com menos questões com imagem.</span>")
+      : '<span class="falta">Tudo escolhido: cada imagem vira uma questão.</span>');
+  $("img-sumario").textContent="— "+(nEsc+nP)+" "+((nEsc+nP)===1?"escolhida":"escolhidas")+(completa?", o site completa "+completa:"")+" de "+n;
   if(!ids.length){
     $("img-resumo").innerHTML="";
     grade.innerHTML='<div class="aviso">Marque no passo 1 os capítulos do livro. As imagens deles aparecem aqui.</div>';
     return;
   }
-  var totalImgs=ids.reduce(function(s,id){return s+qtdImagens(id);},0);
   var semCache=ids.some(function(id){return qtdImagens(id)&&!IMG.cache[fonteImagens(id)];});
   if(totalImgs&&semCache&&livrosNaNuvem()&&nuvemImagensSeparada()&&!NV.img.usuario){
     $("img-resumo").innerHTML="";
@@ -3472,10 +3565,8 @@ function renderImagens(){
   $("img-resumo").innerHTML=!totalImgs
     ? "Os capítulos marcados não têm imagens guardadas."
     : manual
-      ? "Clique nas imagens que vão virar questão: <strong>"+nEsc+" de "+n+"</strong> "+(n===1?"escolhida":"escolhidas")+". A lupa amplia a imagem."
-      : "O sistema vai sortear <strong>"+n+"</strong> "+(n===1?"imagem":"imagens")+" entre as "+totalImgs+" dos capítulos marcados, de preferência as que ainda não viraram questão.";
-  $("img-sumario").textContent=!totalImgs?"— os capítulos marcados não têm imagens":
-    manual?"— "+nEsc+" de "+n+" "+(n===1?"imagem escolhida":"imagens escolhidas"):"— o sistema escolhe "+n+" "+(n===1?"imagem":"imagens");
+      ? (vagas?"Imagens do livro: clique nas que você quer (ou em nenhuma). A lupa amplia a imagem.":"Suas imagens já preenchem o pedido. Para usar também imagens do livro, aumente a quantidade \"Com imagem\".")
+      : "Imagens do livro dos capítulos marcados (o site escolhe "+vagas+" entre as "+totalImgs+").";
   var usadas=imagensJaUsadas(), html="";
   ids.forEach(function(id){
     var q=qtdImagens(id), src=fonteImagens(id), lista=IMG.cache[src];
@@ -3483,7 +3574,7 @@ function renderImagens(){
     if(!q)return;
     if(!lista){html+='<p class="ajuda">Carregando as imagens…</p>';return;}
     html+='<div class="img-grade">'+lista.map(function(im){
-      var esc1=IMG.escolhidas[im.id];
+      var esc1=manual&&IMG.escolhidas[im.id];
       return '<div class="img-livro'+(esc1?" escolhida":"")+'" role="button" tabindex="0" data-img="'+esc(im.id)+'" data-cap="'+esc(id)+'" title="'+esc(im.l||"Imagem sem legenda")+'">'+
         '<img src="'+im.d+'" alt="" loading="lazy"><span class="leg">'+esc(im.l||"(sem legenda) · p. "+im.p)+"</span>"+
         (usadas[im.id]?'<span class="usada">já usada em '+usadas[im.id]+" "+(usadas[im.id]===1?"questão":"questões")+"</span>":"")+
@@ -3519,9 +3610,11 @@ $("img-grade").addEventListener("click",function(e){
   var k=c.dataset.img;
   if(IMG.escolhidas[k]){delete IMG.escolhidas[k];IMG.ordem=IMG.ordem.filter(function(x){return x!==k;});}
   else{
-    var n=qtdPedidaImagens();
-    // passou do pedido: a escolha mais antiga dá lugar à nova
+    var n=vagasDoLivro();
+    // o pedido já está cheio: ele cresce para caber a nova (até 10); no limite, a escolha mais antiga dá lugar
+    if(IMG.ordem.length>=n&&qtdPedidaImagens()<10){$("q-imagem").value=String(qtdPedidaImagens()+1);atualizarTotalPedido();n=vagasDoLivro();}
     while(IMG.ordem.length>=n&&IMG.ordem.length){delete IMG.escolhidas[IMG.ordem.shift()];}
+    if(!n){renderImagens();return;}
     IMG.escolhidas[k]={cap:c.dataset.cap};IMG.ordem.push(k);
   }
   renderImagens();
@@ -3530,18 +3623,51 @@ $("img-grade").addEventListener("keydown",function(e){
   if((e.key==="Enter"||e.key===" ")&&e.target.classList.contains("img-livro")){e.preventDefault();e.target.click();}
 });
 $("q-imagem").addEventListener("change",function(){if(qtdPedidaImagens())$("det-imagens").open=true;atualizarTotalPedido();renderImagens();});
+$("img-arquivo-proprio").addEventListener("change",function(){var inp=this;lerImagensProprias(inp.files).then(function(){inp.value="";atualizarNomeArquivo(inp);});});
+$("img-colar").addEventListener("click",function(e){if(e.target.closest("label,input"))return;this.focus();});
+$("img-colar").addEventListener("keydown",function(e){if(e.key==="Enter"||e.key===" "){e.preventDefault();$("img-arquivo-proprio").click();}});
+["dragenter","dragover"].forEach(function(t){$("img-colar").addEventListener(t,function(e){e.preventDefault();this.classList.add("sobre");});});
+["dragleave","drop"].forEach(function(t){$("img-colar").addEventListener(t,function(){this.classList.remove("sobre");});});
+$("img-colar").addEventListener("drop",function(e){e.preventDefault();if(e.dataTransfer)lerImagensProprias(e.dataTransfer.files);});
+// colar funciona em qualquer ponto da aba Gerar com o painel aberto, menos dentro de um campo de texto
+document.addEventListener("paste",function(e){
+  var painel=$("painel-imagens"), vista=$("img-colar").closest(".vista");
+  if(!painel||painel.hidden||(vista&&!vista.classList.contains("ativa"))||document.querySelector(".fundo-janela"))return;
+  var t=e.target;
+  if(t!==$("img-colar")&&t&&(/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)||t.isContentEditable))return;
+  if(colarImagemPropria(e))$("det-imagens").open=true;
+});
+$("img-grade-proprias").addEventListener("click",function(e){
+  var r=e.target.closest("[data-remover-propria]");
+  if(!r)return;
+  e.stopPropagation();
+  IMG.proprias.splice(+r.dataset.removerPropria,1);renderImagens();
+});
+$("img-grade-proprias").addEventListener("input",function(e){
+  var c=e.target.closest("[data-legenda-propria]");
+  if(c&&IMG.proprias[+c.dataset.legendaPropria])IMG.proprias[+c.dataset.legendaPropria].l=c.value;
+});
 document.querySelectorAll('input[name="img-modo"],input[name="img-tipo"]').forEach(function(r){r.addEventListener("change",renderImagens);});
 
 /* as imagens que vão virar questão: as escolhidas, ou um sorteio que evita as já usadas */
 function imagensDoPedido(){
   var n=qtdPedidaImagens();
   if(!n)return Promise.resolve([]);
+  // primeiro as fotos do professor, depois as do livro que ele escolheu; o que faltar o site sorteia
+  var proprias=IMG.proprias.slice(0,n).map(function(im){return {img:im,cap:null,propria:true};});
+  if(origemAtual()!=="livro")return Promise.resolve(proprias);
+  var escolhidas=modoImagens()==="manual"
+    ? IMG.ordem.map(function(k){return {img:acharImagem(k),cap:IMG.escolhidas[k].cap};}).filter(function(x){return x.img;}).slice(0,n-proprias.length)
+    : [];
+  var falta=n-proprias.length-escolhidas.length;
+  if(falta<=0)return Promise.resolve(proprias.concat(escolhidas));
+  return sortearImagensDoLivro(falta,escolhidas.map(function(x){return x.img.id;})).then(function(s){return proprias.concat(escolhidas,s);});
+}
+function sortearImagensDoLivro(n,excluir){
   var ids=Object.keys(LS.marcados).filter(function(id){return qtdImagens(id);});
-  if(modoImagens()==="manual")
-    return Promise.resolve(IMG.ordem.map(function(k){return {img:acharImagem(k),cap:IMG.escolhidas[k].cap};}).filter(function(x){return x.img;}));
   return Promise.all(ids.map(function(id){return imagensCapitulo(id).then(function(l){return l.map(function(im){return {img:im,cap:id};});},function(){return [];});}))
     .then(function(grupos){
-      var usadas=imagensJaUsadas(), todas=[].concat.apply([],grupos);
+      var usadas=imagensJaUsadas(), todas=[].concat.apply([],grupos).filter(function(x){return excluir.indexOf(x.img.id)<0;});
       todas.forEach(function(x){
         // legenda informativa e imagem grande pesam a favor; já usada pesa contra
         x.peso=(x.img.l.length>25?2:0)+(x.img.w*x.img.h>120000?1:0)-(usadas[x.img.id]?5:0)+Math.random()*2;
@@ -3585,6 +3711,30 @@ im.l?("- Legenda e crédito que acompanham a imagem no livro: \""+normTexto(im.l
 tipo==="dissertativa"?"- É uma questão dissertativa: a resposta esperada deve exigir que o estudante explique a relação entre a imagem e o conteúdo do capítulo.":""
   ].filter(Boolean).join("\n");
 }
+// imagem que o próprio professor colou ou anexou: não tem legenda nem capítulo de origem
+function blocoDaImagemPropria(im,tema,tipo){
+  return [
+"QUESTÃO A PARTIR DE UMA IMAGEM ESCOLHIDA PELO PROFESSOR — regra principal deste pedido:",
+"- Junto deste pedido segue uma imagem que o professor escolheu (foto, print, mapa, charge, gráfico, obra de arte ou documento). A questão parte OBRIGATORIAMENTE dessa imagem: olhe a imagem com atenção antes de escrever.",
+normTexto(im.l)?("- O professor descreveu a imagem assim: \""+normTexto(im.l)+"\"."):"- O professor não descreveu a imagem: identifique pelo que se vê nela (textos, legendas e créditos visíveis na própria imagem ajudam).",
+"- A questão deve relacionar o que a imagem mostra ao conteúdo pedido ("+tema+") e ao material de base, se houver, exigindo do estudante articular a leitura da imagem com esse conhecimento. Não pode se limitar a descrever a imagem.",
+"- A imagem precisa ser INDISPENSÁVEL: o comando deve se referir diretamente a ela e a alternativa correta só pode ser escolhida por quem a observa. Se a imagem fosse retirada e ainda desse para acertar, reescreva.",
+"- Use apenas o que se vê na imagem, o que o professor informou e o material de base. Não invente autor, data, local ou acontecimento. Se a imagem não tiver relação clara com o conteúdo pedido, faça a questão sobre o que ela mostra, ligando-a da melhor forma possível ao componente curricular.",
+"- A imagem é impressa na prova logo depois da PRIMEIRA LINHA do enunciado. Escreva no enunciado, nesta ordem: uma primeira linha curta que apresente a imagem (por exemplo: \"Observe a imagem a seguir.\"), uma quebra de linha (\\n) e depois o comando da questão. Nunca descreva no enunciado o que a imagem mostra a ponto de dispensar olhar para ela.",
+"- Acrescente ao objeto o campo \"legendaImagem\": uma legenda curta para ir logo abaixo da imagem, sem entregar a resposta. Só cite autor, obra ou fonte se estiverem visíveis na imagem ou na descrição do professor; senão, escreva uma descrição neutra e curta.",
+tipo==="dissertativa"?"- É uma questão dissertativa: a resposta esperada deve exigir que o estudante explique a relação entre a imagem e o conteúdo.":""
+  ].filter(Boolean).join("\n");
+}
+// texto de base para a foto do professor: os capítulos marcados (Livro SESI) ou o material da origem
+function baseDaImagemPropria(){
+  if(origemAtual()!=="livro")return Promise.resolve(null);
+  var ids=Object.keys(LS.marcados);
+  if(!ids.length)return Promise.resolve(null);
+  var fatia=Math.floor(JANELA/ids.length);
+  return Promise.all(ids.map(function(id){
+    return textoCapitulo(id).then(function(t){return "=== "+((LS.marcados[id]||{}).nome||nomeCurtoCapitulo(id))+" ===\n"+String(t||"").slice(0,fatia);},function(){return "";});
+  })).then(function(l){var t=l.filter(Boolean).join("\n\n");return t||null;});
+}
 /* uma chamada por imagem: cada questão recebe a sua imagem e o texto do capítulo dela */
 function gerarComImagens(p,lista,tipoImg,botao,idProg,aoAvisar){
   var novas=[], falhas=[], usos=[0,0,0,0,0], evitar=jaElaboradas();
@@ -3595,18 +3745,27 @@ function gerarComImagens(p,lista,tipoImg,botao,idProg,aoAvisar){
   $(idProg).className="progresso ativo";
   function passo(k){
     if(cancelado||paradaGeral||k>=lista.length)return Promise.resolve();
-    var it=lista[k], im=it.img, nomeCap=nomeCurtoCapitulo(it.cap), marcado=LS.marcados[it.cap]||{};
+    var it=lista[k], im=it.img, propria=!!it.propria;
+    var nomeCap=propria?"imagem sua":nomeCurtoCapitulo(it.cap), marcado=propria?{}:(LS.marcados[it.cap]||{});
     var avisar=function(t){$(idProg).innerHTML="Questão com imagem "+(k+1)+" de "+lista.length+" ("+esc(nomeCap)+"). "+esc(t||"");};
-    avisar("Enviando a imagem e o capítulo para a IA…");
-    return textoCapitulo(it.cap).catch(function(){return "";}).then(function(texto){
+    avisar(propria?"Enviando a sua imagem para a IA…":"Enviando a imagem e o capítulo para a IA…");
+    var buscaBase=propria?baseDaImagemPropria():textoCapitulo(it.cap).catch(function(){return "";}).then(function(texto){
       var perto=trechoDaImagem(texto,im.l), resto=JANELA-perto.length-2000;
-      var base="=== "+(marcado.nome||nomeCap)+" ===\n"+
+      return "=== "+(marcado.nome||nomeCap)+" ===\n"+
         (perto?"TRECHO DO CAPÍTULO ONDE A IMAGEM APARECE:\n"+perto+"\n\nRESTANTE DO CAPÍTULO (trecho):\n":"")+
         String(texto||"").slice(0,Math.max(8000,resto));
+    });
+    return buscaBase.then(function(base){
       var q1={_total:1};TIPOS_VALIDOS.forEach(function(t){q1[t]=t===tipo?1:0;});
       var pImg={};Object.keys(p).forEach(function(c){pImg[c]=p[c];});
-      pImg.baseFixa=base;pImg.material=marcado.nome||p.material;pImg.blocoImagem=blocoDaImagem(im,nomeCap,tipoImg);
-      if(!pImg.assunto)pImg.assunto=nomeCap;
+      if(propria){
+        if(base!=null)pImg.baseFixa=base;
+        if(!pImg.assunto)pImg.assunto=normTexto(im.l)||(Object.keys(LS.marcados).length&&origemAtual()==="livro"?Object.keys(LS.marcados).map(nomeCurtoCapitulo).join(", "):"o tema mostrado na imagem");
+        pImg.blocoImagem=blocoDaImagemPropria(im,pImg.assunto,tipoImg);
+      }else{
+        pImg.baseFixa=base;pImg.material=marcado.nome||p.material;pImg.blocoImagem=blocoDaImagem(im,nomeCap,tipoImg);
+        if(!pImg.assunto)pImg.assunto=nomeCap;
+      }
       var pedido={texto:montarPrompt(pImg,q1,novas.length,0,evitar).replace(
         '"resolucao":"..."}]','"resolucao":"...","legendaImagem":"..."}]'),imagens:[im.d]};
       return chamarIAComInsistencia(pedido,avisar).then(function(txt){
@@ -3621,8 +3780,9 @@ function gerarComImagens(p,lista,tipoImg,botao,idProg,aoAvisar){
         var k2=idFigura();
         gravarFiguras([{id:k2,dados:im.d}]);
         q.figuras=[k2];
-        q.legendaFig=legendaCurta(b.legendaImagem||im.l||"Imagem reproduzida do livro didático.");
-        q.imagemLivro={id:im.id,cap:it.cap,pagina:im.p,legenda:im.l};
+        q.legendaFig=legendaCurta(b.legendaImagem||im.l||(propria?"":"Imagem reproduzida do livro didático."));
+        if(propria)q.imagemPropria=true;
+        else q.imagemLivro={id:im.id,cap:it.cap,pagina:im.p,legenda:im.l};
         // sem texto-base, a fonte solta no topo confunde: o crédito da imagem já vai na legenda
         if(!String(q.textoBase||"").trim())q.fonte="";
         if(q.alternativas.length)equilibrarGabarito([q],usos);
@@ -3639,7 +3799,7 @@ function gerarComImagens(p,lista,tipoImg,botao,idProg,aoAvisar){
     if(btnCancelar)btnCancelar.style.display="none";
     $(idProg).className="progresso";$(idProg).innerHTML="";
     var interrompido=cancelado;cancelado=false;
-    IMG.escolhidas={};IMG.ordem=[];renderImagens();
+    IMG.escolhidas={};IMG.ordem=[];IMG.proprias=[];renderImagens();
     return {novas:novas,falhas:falhas,cancelado:interrompido};
   });
 }
@@ -4383,7 +4543,7 @@ function rodarGeracao(p,quantidades,botao,idProgresso,idRetorno,rotuloBotao,aoFi
     var seg=Math.round((Date.now()-inicio)/1000);
     var tempo=seg<60?(seg+"s"):(Math.floor(seg/60)+"min "+(seg%60)+"s");
     $(idProgresso).innerHTML=esc(ultimaMsg)+"<br><strong>"+acumuladas.length+" de "+total+
-      " questões já prontas e salvas</strong>"+(p&&p._depoisImg?" · depois vêm mais "+p._depoisImg+" com imagem do livro":"")+" · tempo decorrido: "+tempo;
+      " questões já prontas e salvas</strong>"+(p&&p._depoisImg?" · depois vêm mais "+p._depoisImg+" com imagem":"")+" · tempo decorrido: "+tempo;
   }
   var relogio=setInterval(pintar,1000);
   pintar();
@@ -4685,7 +4845,6 @@ function origemMudou(guardar){
   if(o==="ssa"){$("serie").value=$("ssa-etapa").value+"ª série";$("serie").dispatchEvent(new Event("change"));}
   if(o==="enem")renderFiltroEnem();else infoAcervo();
   if(guardar)gravar(CHAVE_ORIGEM,o);
-  if(o!=="livro")$("q-imagem").value="0";
   atualizarTotalPedido();
   renderImagens();
   renderHabilidades();
@@ -4773,7 +4932,7 @@ function atualizarTotalPedido(){
   var q=quantidadesDoFormato("q-",origemAtual(),estiloDoLivro()), partes=[];
   TIPOS_VALIDOS.forEach(function(t){if(q[t])partes.push(q[t]+" "+PLURAL_TIPO[t][q[t]===1?0:1]);});
   var ni=qtdPedidaImagens(), tot=q._total+ni;
-  if(ni)partes.push(ni+" com imagem do livro");
+  if(ni)partes.push(ni+" com imagem");
   $("total-pedido").textContent=tot
     ? ("Total do pedido: "+tot+" "+(tot===1?"questão":"questões")+" — "+partes.join(", ")+".")
     : "Nenhuma questão pedida ainda. Escolha a quantidade de pelo menos um formato.";
@@ -4820,15 +4979,16 @@ $("btn-gerar").addEventListener("click",function(){
   var nImg=qtdPedidaImagens();
 
   if(!chaveIA()){msg("retorno-geracao","Falta cadastrar a sua chave de acesso à IA.","erro");abrirAssistenteChave();return;}
-  if(!p.assunto&&!ativosDaOrigem().length&&!p.textoExtra&&!(origem==="enem"&&$("en-hab").value)){
+  if(!p.assunto&&!ativosDaOrigem().length&&!p.textoExtra&&!(origem==="enem"&&$("en-hab").value)&&!(IMG.proprias.length&&!total)){
     msg("retorno-geracao",origem==="livre"?"Na opção Outra fonte, escreva um tema ou assunto, ou cole um texto ou anexe um PDF, nas caixas do passo 1, antes de gerar.":origem==="livro"?"Marque um capítulo do livro ou informe o assunto antes de gerar.":"Informe o assunto antes de gerar"+(origem==="enem"?", ou escolha uma habilidade do ENEM":"")+".","erro");return;}
   if(total===0&&!nImg){msg("retorno-geracao","Escolha a quantidade de pelo menos um formato no passo 3.","erro");return;}
   if(nImg){
-    if(!Object.keys(LS.marcados).some(function(id){return qtdImagens(id);})){
-      msg("retorno-geracao","Para as questões com imagem, marque no passo 1 um capítulo que tenha imagens guardadas.","erro");return;}
-    if(modoImagens()==="manual"&&IMG.ordem.length<nImg){
-      var faltaI=nImg-IMG.ordem.length;
-      msg("retorno-geracao","Escolha mais "+faltaI+" "+(faltaI===1?"imagem":"imagens")+" no passo 3, ou marque \"O sistema escolhe\".","erro");return;}
+    // o que o professor não escolheu o site completa com imagens do livro; fora do Livro SESI, só com as dele
+    var faltaI=nImg-IMG.proprias.length-(origem==="livro"&&modoImagens()==="manual"?IMG.ordem.length:0);
+    if(faltaI>0&&(origem!=="livro"||!Object.keys(LS.marcados).some(function(id){return qtdImagens(id);}))){
+      msg("retorno-geracao",origem==="livro"
+        ?"Faltam "+faltaI+" "+(faltaI===1?"imagem":"imagens")+" para as questões com imagem: marque no passo 1 um capítulo que tenha imagens guardadas (o site completa sozinho) ou cole suas imagens no passo 3."
+        :"Faltam "+faltaI+" "+(faltaI===1?"imagem":"imagens")+" para as questões com imagem: cole ou escolha suas imagens no passo 3, ou diminua a quantidade \"Com imagem\".","erro");return;}
   }
   if(/preview|exp/.test(conf.modelo||""))
     msg("retorno-geracao","Atenção: <strong>"+esc(conf.modelo)+"</strong> é um modelo de pré-lançamento — são os mais congestionados e com menor cota. Em Ajustes, clique em buscar modelos disponíveis para trocar por um estável.","");
@@ -4888,7 +5048,7 @@ $("btn-limpar-form").addEventListener("click",function(){
   ["assunto","habilidades","observacoes","texto-extra","busca-hab"].forEach(function(c){$(c).value="";});
   habSelecionadas={};renderHabilidades();
   ["objetiva","dissertativa","adaptada","imagem"].forEach(function(t){var c=$("q-"+t);if(c)c.value="0";});
-  IMG.escolhidas={};IMG.ordem=[];
+  IMG.escolhidas={};IMG.ordem=[];IMG.proprias=[];
   atualizarTotalPedido();renderImagens();
   $("arquivos").value="";atualizarNomeArquivo($("arquivos"));
   $("status-pdf").className="progresso";$("status-pdf").innerHTML="";
