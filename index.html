@@ -2104,8 +2104,13 @@ try{var c=JSON.parse(ler(CHAVE_CONF)||"null"); if(c){conf.provedor=c.provedor||c
    se existir, vem primeiro (poupa a conta da escola) e, quando a cota dela acaba ou ela é recusada, o site
    passa sozinho para a da escola. As ilustrações usam a da escola direto: chave gratuita quase nunca tem cota de imagem. */
 var CHAVE_IA_ESCOLA="bancoQuestoes.iaEscola.v1";
+/* PAUSADA (Matheus, 2026-11-10): cada professor volta a usar a PRÓPRIA chave gratuita, com a cota inteira para si
+   (as apresentações gastam muitos pedidos). Com false, o site ignora a chave da escola guardada na nuvem e apaga
+   a cópia deste aparelho. Para religar no futuro, basta trocar para true: todo o resto continua pronto. */
+var IA_ESCOLA_LIGADA=false;
 var IA_ESCOLA={chave:"",carregando:false};
-try{var ie=JSON.parse(localStorage.getItem(CHAVE_IA_ESCOLA)||"null");if(ie&&ie.chave)IA_ESCOLA.chave=String(ie.chave);}catch(e){}
+if(IA_ESCOLA_LIGADA){try{var ie=JSON.parse(localStorage.getItem(CHAVE_IA_ESCOLA)||"null");if(ie&&ie.chave)IA_ESCOLA.chave=String(ie.chave);}catch(e){}}
+else{try{localStorage.removeItem(CHAVE_IA_ESCOLA);}catch(e){}}
 var IA_USO={escola:false};
 function usaEscola(){return !!IA_ESCOLA.chave&&(!conf.chave||IA_USO.escola);}
 function chaveIA(){return usaEscola()?IA_ESCOLA.chave:conf.chave;}
@@ -2121,6 +2126,7 @@ function passarParaEscola(e){
   IA_USO.escola=true;modelosEsgotados={};return true;
 }
 function definirIAEscola(chave){
+  if(!IA_ESCOLA_LIGADA)chave="";
   IA_ESCOLA.chave=chave||"";
   if(!chave)IA_USO.escola=false;
   try{if(chave)localStorage.setItem(CHAVE_IA_ESCOLA,JSON.stringify({chave:chave}));else localStorage.removeItem(CHAVE_IA_ESCOLA);}catch(e){}
@@ -4294,7 +4300,7 @@ function pausarFila(ms){FILA_IA.pausaAte=Math.max(FILA_IA.pausaAte,Date.now()+ms
 
 /* ---------------- chamadas às IAs ---------------- */
 function chamarIA(prompt,modelo,leve,rapido,prazo){
-  if(!chaveIA())return Promise.reject(new Error("A IA ainda não está ativa para você. Peça ao administrador para ativar a IA da escola, ou cadastre uma chave sua em Ajustes."));
+  if(!chaveIA())return Promise.reject(new Error(IA_ESCOLA_LIGADA?"A IA ainda não está ativa para você. Peça ao administrador para ativar a IA da escola, ou cadastre uma chave sua em Ajustes.":"Falta cadastrar a sua chave gratuita do Gemini em Ajustes › Chave de acesso à IA."));
   var pedido=pegarVez().then(function(){
     if(cancelado)throw new DOMException("cancelado","AbortError");
     return provedorIA()==="anthropic"?chamarAnthropic(prompt,modelo,leve,prazo):chamarGemini(prompt,modelo,leve,rapido,prazo);
@@ -4536,6 +4542,8 @@ function insistirNaIA(prompt,avisar,op){
         while(seguinte<plano.length&&plano[seguinte][0]===modelo)seguinte++;
         return tentar(seguinte,ultimo);
       }
+      // chave recusada: repetir não adianta (e a mesma chave seria recusada em todos os lotes)
+      if(e&&e.recusada){paradaGeral="chave";throw e;}
       if(!repetivel(e))throw e;
       // limite POR MINUTO: não é cota esgotada. Espera o tempo que o Google pede (todos os pedidos juntos)
       // e repete no MESMO modelo. Só depois de várias esperas seguidas tenta outro modelo, sem descartar este.
@@ -6194,6 +6202,7 @@ $("btn-salvar-assistente").addEventListener("click",function(){
 atualizarAvisoChave();
 /* ---- IA da escola: uma chave para todos, guardada na nuvem pelo administrador ---- */
 function carregarIAEscola(){
+  if(!IA_ESCOLA_LIGADA){definirIAEscola("");IA_ESCOLA.carregando=false;atualizarAvisoChave();atualizarPortaoChave();return;}
   if(typeof NV==="undefined"||!NV||!NV.membro||!NV.sdk)return;
   var S=NV.sdk;IA_ESCOLA.carregando=true;
   S.getDoc(S.doc(NV.db,"livros","config-ia")).then(function(d){
@@ -6206,7 +6215,21 @@ function carregarIAEscola(){
 function mostrarIAEscola(){
   var alvo=$("ia-escola-estado");if(!alvo)return;
   var admin=typeof NV!=="undefined"&&NV&&NV.admin;
-  var t;
+  var t, bloco=$("bloco-ia-escola");
+  if(!IA_ESCOLA_LIGADA){
+    // pausada: professor nem vê o bloco; o administrador vê o aviso e o botão para apagar a chave guardada na nuvem
+    if(bloco)bloco.style.display=admin?"":"none";
+    var btnLib=$("btn-salvar-escola"), campo=$("chave-escola");
+    if(btnLib)btnLib.style.display="none";
+    if(campo){campo.style.display="none";if(campo.previousElementSibling&&campo.previousElementSibling.tagName==="LABEL")campo.previousElementSibling.style.display="none";}
+    var ajudaAdm=document.querySelector("#ia-escola-admin > p.ajuda");
+    if(ajudaAdm)ajudaAdm.innerHTML="<strong>Só você (administrador) vê esta parte.</strong> Por segurança, apague também a chave da escola que ficou guardada na nuvem (botão abaixo) e, se quiser, exclua essa chave em aistudio.google.com/apikey.";
+    var btnRem=$("btn-remover-escola");if(btnRem)btnRem.textContent="Apagar a chave da escola da nuvem";
+    msg("ia-escola-estado","<strong>A IA da escola está pausada.</strong> Cada professor usa a própria chave gratuita do Gemini, com a cota inteira só para ele.","");
+    var aj=$("ajuda-chave-pessoal");
+    if(aj)aj.innerHTML="A chave é gratuita e fica salva só neste aparelho. Cada professor tem a sua, com a cota do dia inteira só para ele.";
+    return;
+  }
   if(IA_ESCOLA.chave){
     t="<strong>A IA da escola está ligada.</strong> Todos os professores liberados usam a IA (gerar questões, planejamento, apresentações e o chat de ajuda) só com o login do Google, sem criar chave."+
       (conf.chave?" Você também tem uma chave sua neste aparelho: ela é usada primeiro, e a da escola entra sozinha quando a sua acabar. Se preferir, apague a sua chave abaixo.":" Você não precisa cadastrar chave nenhuma.")+
@@ -6255,12 +6278,12 @@ $("btn-salvar-escola").addEventListener("click",function(){
 });
 $("btn-remover-escola").addEventListener("click",function(){
   if(!(NV&&NV.admin&&NV.membro)){msg("retorno-escola","Entre na nuvem com a conta do administrador.","erro");return;}
-  if(!IA_ESCOLA.chave){msg("retorno-escola","A IA da escola já está desligada.","");return;}
-  if(!confirm("Desligar a IA da escola? Os professores sem chave própria ficam sem IA até você ligar de novo."))return;
+  if(IA_ESCOLA_LIGADA&&!IA_ESCOLA.chave){msg("retorno-escola","A IA da escola já está desligada.","");return;}
+  if(!confirm(IA_ESCOLA_LIGADA?"Desligar a IA da escola? Os professores sem chave própria ficam sem IA até você ligar de novo.":"Apagar a chave da escola guardada na nuvem? Os professores continuam usando as chaves deles."))return;
   var S=NV.sdk;
   S.setDoc(S.doc(NV.db,"livros","config-ia"),{chave:"",por:NV.usuario.email,em:S.serverTimestamp()}).then(function(){
     definirIAEscola("");atualizarAvisoChave();atualizarPortaoChave();
-    msg("retorno-escola","IA da escola desligada.","ok");
+    msg("retorno-escola",IA_ESCOLA_LIGADA?"IA da escola desligada.":"Chave da escola apagada da nuvem.","ok");
   }).catch(function(e){msg("retorno-escola","Não consegui desligar: "+esc((e&&e.message)||String(e)),"erro");});
 });
 mostrarIAEscola();
@@ -11065,7 +11088,7 @@ window.addEventListener("online",function(){if(NV.pronto)nuvemMudou();});
 var GUIA_SITE=[
 "O SITE: Banco de Questões (https://bancodequestoes.github.io), feito pelo professor Matheus Ernandes para os professores do SESI Ibura (Recife, PE), do 6º ano à 3ª série do Ensino Médio. Funciona no navegador, sem instalar nada. Menu lateral com seis páginas: Gerar, Banco, Montar prova, Provas oficiais, Planejamento e Ajustes. No celular, o menu abre pelo botão do topo.",
 "",
-"ENTRADA E CHAVE: o site pede login com Google; o administrador (Matheus) libera o e-mail de cada colega em Ajustes › Nuvem compartilhada. Se a IA da escola estiver ligada (Ajustes › IA da escola), ninguém precisa de chave: basta o login. Só sem ela, quem não tem chave de IA vê uma tela para cadastrá-la. A chave é gratuita: aistudio.google.com/apikey, entrar com uma conta Google (se a da escola estiver bloqueada, use a pessoal), Criar chave de API, copiar (começa com AQ. ou AIza) e colar em Ajustes › Chave de acesso à IA › Salvar chave › Testar conexão. A chave fica só naquele aparelho e navegador: em outro computador ou navegador é preciso colar de novo. Botão 'Buscar modelos disponíveis na minha conta' escolhe um modelo estável e um reserva.",
+"ENTRADA E CHAVE: o site pede login com Google; o administrador (Matheus) libera o e-mail de cada colega em Ajustes › Nuvem compartilhada. "+(IA_ESCOLA_LIGADA?"Se a IA da escola estiver ligada (Ajustes › IA da escola), ninguém precisa de chave: basta o login. Só sem ela, quem não tem chave de IA vê uma tela para cadastrá-la.":"A IA da escola está pausada: cada professor usa a própria chave gratuita, e quem não tem vê uma tela para cadastrá-la.")+" A chave é gratuita: aistudio.google.com/apikey, entrar com uma conta Google (se a da escola estiver bloqueada, use a pessoal), Criar chave de API, copiar (começa com AQ. ou AIza) e colar em Ajustes › Chave de acesso à IA › Salvar chave › Testar conexão. A chave fica só naquele aparelho e navegador: em outro computador ou navegador é preciso colar de novo. Botão 'Buscar modelos disponíveis na minha conta' escolhe um modelo estável e um reserva.",
 "",
 "GERAR (criar questões novas com a IA). Passo 1, 'Criar a partir de': Livro SESI (escolhe a série, abre o livro e marca os capítulos; os capítulos marcados alimentam a geração; clicar fora do livro fecha a lista; o botão vermelho 'Desmarcar tudo' limpa), ENEM (área, competência, habilidade e dificuldade da matriz do ENEM), SSA (etapa 1, 2 ou 3) ou PASSE. No Livro SESI dá para escolher a 'Estrutura das questões objetivas': Simples, ENEM, SSA ou PASSE. Passo 2, 'Sobre o quê': nível, série, componente e assunto (o assunto é opcional quando há capítulo marcado). Quando há capítulos marcados, aparece um bloco verde 'Habilidades dos capítulos marcados', com as habilidades que cada capítulo cita, separadas por capítulo. Passo 3: quantidade de Objetivas, Dissertativas e Adaptadas (para estudantes atípicos, TEA e TDAH), até 20 por geração; para mais, gere em rodadas, o banco acumula. Também no passo 3, só com Livro SESI: 'Com imagem do livro' (até 10). A questão parte de uma foto, mapa, gravura, charge ou gráfico do capítulo marcado, e a IA recebe a imagem junto com o texto do capítulo, relacionando-a ao contexto que o capítulo trabalha. Abre um quadro com as miniaturas das imagens dos capítulos marcados: em 'Eu escolho as imagens', o professor clica nas imagens (a lupa amplia; aparece 'já usada' quando a imagem já virou questão); em 'O sistema escolhe', o site sorteia entre elas, evitando as já usadas. Dá para escolher se a questão com imagem é Objetiva (no molde escolhido no passo 1) ou Dissertativa. A imagem sai no banco, na prova e no Word, com a legenda logo abaixo (editável no editor da questão, campo 'Legenda da imagem'). Se o capítulo não tiver imagens guardadas, aparece 'sem imagens guardadas'. 'Mais opções' (opcional): habilidades da matriz, nível de exigência, elaboração cuidadosa (mais lenta), orientações adicionais. 'Material complementar' (opcional): para quem tem outro material próprio, anexar PDFs ou colar um texto que apoia as questões. Botões Gerar questões, Cancelar geração e Limpar campos. Ensino Fundamental sai com 4 alternativas (A a D) e Médio com 5 (A a E); adaptadas têm 3.",
 "",
@@ -14050,7 +14073,7 @@ function apPedidoIlustracao(desc,estilo,s){
     "Se houver qualquer texto na imagem, escreva em português do Brasil, com poucas palavras e sem erros. Sem marca d'água, sem moldura, formato horizontal.";
 }
 function apCriarIlustracao(desc,estilo,s){
-  if(!chaveImagem())return Promise.reject(new Error("Criar ilustrações precisa da IA da escola (o administrador ativa em Ajustes) ou de uma chave sua do Gemini."));
+  if(!chaveImagem())return Promise.reject(new Error("Criar ilustrações precisa de uma chave sua do Gemini."));
   if(navigator.onLine===false)return Promise.reject(new Error("Sem internet agora."));
   var texto=apPedidoIlustracao(desc,estilo,s);
   return apModeloImagem().then(function(modelo){
