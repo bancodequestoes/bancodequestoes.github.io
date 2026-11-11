@@ -421,14 +421,19 @@ input[type=file]::file-selector-button:hover{background:var(--primaria-hover);bo
 .img-livro .usada{font-size:11px;font-weight:700;color:#9a5b00}
 .img-livro .ampliar{position:absolute;top:8px;right:8px;background:rgba(255,255,255,.92);border:1px solid #ccc;border-radius:6px;font-size:12px;padding:2px 6px;cursor:zoom-in}
 .img-auto .img-livro{cursor:default}
-.img-placar{margin:8px 0 6px;padding:10px 12px;border-radius:10px;background:var(--primaria-fundo);border:1px solid var(--primaria-borda);font-size:14px;line-height:1.45}
+.img-placar{margin:6px 0 2px;font-size:13.5px;color:#444}
 .img-placar:empty{display:none}
-.img-placar .falta{display:block;margin-top:4px;font-weight:700;color:var(--primaria)}
-.img-placar .falta.alerta{color:#9a5b00}
-.img-colar{display:flex;flex-direction:column;gap:6px;padding:14px;border:2px dashed var(--primaria-borda);border-radius:12px;background:#fbfaf6;cursor:pointer;margin-bottom:10px;outline:none}
+#det-imagens[open] #img-sumario{display:none}
+.img-placar .alerta{color:#9a5b00;font-weight:700}
+.img-proprias{margin:6px 0 4px}
+.botao-mini{font:inherit;font-size:13px;font-weight:700;color:var(--primaria);background:#fff;border:1px solid var(--primaria-borda);border-radius:999px;padding:5px 12px;cursor:pointer}
+.botao-mini[aria-expanded="true"]{background:var(--primaria-fundo)}
+.img-colar{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:8px 0;padding:8px 12px;border:1.5px dashed var(--primaria-borda);border-radius:10px;background:#fbfaf6;font-size:13.5px;outline:none}
+.img-colar[hidden]{display:none}
 .img-colar:focus,.img-colar.sobre{border-color:var(--primaria);background:var(--primaria-fundo)}
-.img-colar .sub{font-size:12.5px;color:#555}
-.img-colar-botoes{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:2px}
+.img-colar .botao-arquivo{padding:4px 12px;font-size:13px}
+#img-grade-proprias:empty{display:none}
+#img-grade-proprias{margin-bottom:8px}
 .img-propria{cursor:default}
 .img-propria input{font-size:12px;padding:4px 6px;margin:0}
 .img-propria .remover{position:absolute;top:8px;right:8px;background:rgba(255,255,255,.95);border:1px solid #ccc;border-radius:6px;font-size:12px;padding:2px 7px;cursor:pointer}
@@ -1376,8 +1381,8 @@ body.ap-arrastando,body.ap-arrastando *{cursor:grabbing !important}
           <summary><span><strong>Questões com imagem</strong> <span class="sumario" id="img-sumario">— a IA recebe a imagem e o texto do capítulo de onde ela veio</span></span></summary>
           <div class="img-opcoes">
             <div role="radiogroup" aria-label="Quem escolhe as imagens">
-              <label><input type="radio" name="img-modo" value="manual" checked> Eu escolho algumas e o site completa o resto</label>
-              <label><input type="radio" name="img-modo" value="auto"> O site escolhe todas</label>
+              <label><input type="radio" name="img-modo" value="manual" checked> Eu escolho (o site completa)</label>
+              <label><input type="radio" name="img-modo" value="auto"> O site escolhe</label>
             </div>
             <div role="radiogroup" aria-label="Formato da questão com imagem">
               <label><input type="radio" name="img-tipo" value="objetiva" checked> Objetiva <span class="sub" id="img-nota-objetiva"></span></label>
@@ -1386,15 +1391,14 @@ body.ap-arrastando,body.ap-arrastando *{cursor:grabbing !important}
           </div>
           <div id="img-placar" class="img-placar"></div>
           <div class="img-proprias" id="img-proprias">
-            <p class="img-cap-nome" style="margin-top:4px">Suas imagens <span class="sub">· fotos, prints, mapas, charges: a IA cria a questão em cima delas</span></p>
-            <div class="img-colar" id="img-colar" tabindex="0" role="button" aria-label="Colar ou soltar imagem aqui">
-              <span><strong>📋 Cole aqui a imagem</strong> (Cmd+V no Mac, Ctrl+V no Windows)</span>
-              <span class="sub">Copie a imagem no Google ou em qualquer lugar (botão direito › Copiar imagem) e cole. Também pode arrastar o arquivo para cá.</span>
-              <span class="img-colar-botoes"><input type="file" id="img-arquivo-proprio" accept="image/*" multiple></span>
+            <button type="button" class="botao-mini" id="btn-img-propria" aria-expanded="false">＋ Usar imagem minha</button>
+            <div class="img-colar" id="img-colar" tabindex="0" aria-label="Colar ou soltar imagem aqui" hidden>
+              <span>📋 <strong>Cole aqui</strong> (Cmd+V) ou</span>
+              <input type="file" id="img-arquivo-proprio" accept="image/*" multiple>
             </div>
             <div class="img-grade" id="img-grade-proprias"></div>
           </div>
-          <p class="ajuda" id="img-resumo" style="margin-top:14px"></p>
+          <p class="ajuda" id="img-resumo" style="margin-top:10px"></p>
           <div id="img-grade"></div>
           </details>
         </div>
@@ -3534,8 +3538,8 @@ function renderImagens(){
   if(!livro){
     grade.innerHTML="";grade.className="";
     var faltaP=Math.max(0,n-nP);
-    placar.innerHTML="<strong>"+Math.min(nP,n)+" de "+n+"</strong> "+(n===1?"imagem pronta":"imagens prontas")+"."+
-      (faltaP?'<span class="falta alerta">Cole ou escolha mais '+faltaP+" "+(faltaP===1?"imagem":"imagens")+' abaixo. Para o site escolher sozinho imagens do livro, use a origem "Livro SESI" no passo 1.</span>':'<span class="falta">Tudo certo: cada imagem vira uma questão.</span>');
+    placar.innerHTML=Math.min(nP,n)+" de "+n+" "+(n===1?"imagem":"imagens")+(faltaP?' · <span class="alerta">adicione mais '+faltaP+"</span>":" ✓");
+    if(faltaP&&$("img-colar").hidden)abrirColar(true,true);
     $("img-resumo").innerHTML="";
     $("img-sumario").textContent="— "+Math.min(nP,n)+" de "+n+" "+(n===1?"imagem":"imagens");
     return;
@@ -3553,12 +3557,8 @@ function renderImagens(){
   if(nEsc)partes.push(nEsc+" do livro");
   if(nP)partes.push(nP+" "+(nP===1?"sua":"suas"));
   var txtCompleta=completa?(completa+" "+(completa===1?"imagem":"imagens")):"";
-  placar.innerHTML=(manual?"Escolhidas: <strong>"+(partes.length?partes.join(" + ")+" = ":"")+(nEsc+nP)+" de "+n+"</strong>.":"<strong>"+n+" "+(n===1?"questão":"questões")+" com imagem</strong>"+(nP?" ("+nP+" com "+(nP===1?"imagem sua":"imagens suas")+")":"")+".")+
-    (completa
-      ? (totalImgs
-        ? '<span class="falta">✨ '+(completa===1?(nEsc+nP?"A outra imagem":"A imagem"):(nEsc+nP?"As outras ":"As ")+txtCompleta)+" o site escolhe sozinho entre as dos capítulos marcados, de preferência as que ainda não viraram questão.</span>"
-        : '<span class="falta alerta">'+(ids.length?"Os capítulos marcados não têm imagens guardadas":"Marque no passo 1 os capítulos do livro")+": cole ou escolha mais "+txtCompleta+" suas abaixo, ou o pedido sai com menos questões com imagem.</span>")
-      : '<span class="falta">Tudo escolhido: cada imagem vira uma questão.</span>');
+  placar.innerHTML=(nEsc+nP)+" de "+n+" "+((nEsc+nP)===1?"escolhida":"escolhidas")+
+    (completa?(totalImgs?" · ✨ o site escolhe "+(!(nEsc+nP)?(completa===1?"a imagem":"todas"):completa===1?"a outra":"as outras "+completa):' · <span class="alerta">faltam '+completa+" (marque um capítulo com imagens ou use imagem sua)</span>"):" ✓");
   $("img-sumario").textContent="— "+(nEsc+nP)+" "+((nEsc+nP)===1?"escolhida":"escolhidas")+(completa?", o site completa "+completa:"")+" de "+n;
   if(!ids.length){
     $("img-resumo").innerHTML="";
@@ -3579,8 +3579,8 @@ function renderImagens(){
   $("img-resumo").innerHTML=!totalImgs
     ? "Os capítulos marcados não têm imagens guardadas."
     : manual
-      ? (vagas?"Imagens do livro: clique nas que você quer (ou em nenhuma). A lupa amplia a imagem.":"Suas imagens já preenchem o pedido. Para usar também imagens do livro, aumente a quantidade \"Com imagem\".")
-      : "Imagens do livro dos capítulos marcados (o site escolhe "+vagas+" entre as "+totalImgs+").";
+      ? (vagas?"Clique nas imagens do livro que quiser.":"Suas imagens já completam o pedido.")
+      : "";
   var usadas=imagensJaUsadas(), html="";
   ids.forEach(function(id){
     var q=qtdImagens(id), src=fonteImagens(id), lista=IMG.cache[src];
@@ -3638,6 +3638,13 @@ $("img-grade").addEventListener("keydown",function(e){
 });
 $("q-imagem").addEventListener("change",function(){if(qtdPedidaImagens())$("det-imagens").open=true;atualizarTotalPedido();renderImagens();});
 $("img-arquivo-proprio").addEventListener("change",function(){var inp=this;lerImagensProprias(inp.files).then(function(){inp.value="";atualizarNomeArquivo(inp);});});
+function abrirColar(abrir,semFoco){
+  var b=$("btn-img-propria"), z=$("img-colar");
+  z.hidden=!abrir;b.setAttribute("aria-expanded",abrir?"true":"false");
+  b.textContent=abrir?"✕ Fechar":"＋ Usar imagem minha";
+  if(abrir&&!semFoco)setTimeout(function(){z.focus({preventScroll:true});},30);
+}
+$("btn-img-propria").addEventListener("click",function(){abrirColar($("img-colar").hidden);});
 $("img-colar").addEventListener("click",function(e){if(e.target.closest("label,input"))return;this.focus();});
 $("img-colar").addEventListener("keydown",function(e){if(e.key==="Enter"||e.key===" "){e.preventDefault();$("img-arquivo-proprio").click();}});
 ["dragenter","dragover"].forEach(function(t){$("img-colar").addEventListener(t,function(e){e.preventDefault();this.classList.add("sobre");});});
