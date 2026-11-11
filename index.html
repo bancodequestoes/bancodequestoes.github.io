@@ -6306,13 +6306,16 @@ $("btn-modelos").addEventListener("click",function(){
     $("lista-modelos").innerHTML=nomes.map(function(n){return '<option value="'+esc(n)+'">';}).join("");
     // modelos "preview" e "exp" são os mais disputados e têm cota menor: ficam de fora da sugestão principal
     function estavel(n){return n.indexOf("preview")<0&&n.indexOf("exp")<0&&n.indexOf("image")<0&&n.indexOf("tts")<0&&n.indexOf("embedding")<0;}
+    // pela VERSÃO (gemini-3.8-flash > gemini-3.6-flash), nunca pela ordem alfabética: antes "gemini-omni-…"
+    // e "gemini-flash-lite-latest" ganhavam por virem depois no alfabeto
+    var ordem=ordenarReservas(nomes), principais=ordem.filter(function(n){return !/lite/.test(n);});
     var candidatos=nomes.filter(function(n){return estavel(n)&&n.indexOf("flash")>-1&&n.indexOf("lite")<0;});
-    var sugerido=candidatos.pop()||nomes.filter(estavel).pop()||nomes[0];
+    var sugerido=principais[0]||candidatos.pop()||nomes.filter(estavel).pop()||nomes[0];
     $("modelo").value=sugerido;
     var utilizaveis=nomes.filter(function(n){return n!==sugerido&&estavel(n);});
     // as variantes "lite" e as gerações anteriores costumam estar bem menos congestionadas
     var leves=utilizaveis.filter(function(n){return n.indexOf("lite")>-1;});
-    var reserva=leves.pop()||utilizaveis.filter(function(n){return n.indexOf("flash")>-1;}).shift()||utilizaveis.shift()||"";
+    var reserva=ordem.filter(function(n){return /lite/.test(n);})[0]||principais[1]||leves.pop()||utilizaveis.filter(function(n){return n.indexOf("flash")>-1;}).shift()||utilizaveis.shift()||"";
     $("reserva").value=reserva;
     conf.modelo=sugerido;conf.reserva=reserva;salvarConf();
     msg("retorno-chave",nomes.length+" modelos disponíveis. Selecionado: <strong>"+esc(sugerido)+"</strong>. Clique no campo Modelo para ver os outros e depois teste a conexão.","ok");
