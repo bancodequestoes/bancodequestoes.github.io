@@ -4394,7 +4394,9 @@ var LIMITE_RESPOSTA=100000;   // prazo padrão: o provedor tem 100 segundos para
 /* um lote de 10 questões com texto-base longo (PASSE, ENEM, SSA) pode passar de 100 s com o raciocínio do modelo.
    Cortar antes da hora era o pior dos mundos: o Google termina o trabalho e CONTA o pedido na cota do dia,
    mas o site já tinha desistido e pedia de novo. O prazo agora cresce com o tamanho do lote. */
-function prazoDoLote(n){return Math.min(300000,90000+15000*(n||1));}
+// medido no site (2026-11-10): 10 PASSE em 102 s. Um modelo travado custava quase 3 min de espera em 5 ENEM;
+// agora 5 questões esperam 110 s e 10 esperam 160 s antes de passar para outro modelo
+function prazoDoLote(n){return Math.min(240000,Math.max(90000,60000+10000*(n||1)));}
 // sem prazo, uma requisição que o provedor aceita e não responde deixa o app parado para sempre
 // cada pedido tem o seu prazo e o seu cancelamento: as apresentações escrevem várias aulas ao mesmo tempo
 var abortosAbertos=[];
@@ -12101,13 +12103,22 @@ function apTelaInicio(){
       linguagem:AP.pref.linguagem,detalhe:AP.pref.detalhe,questoes:AP.pref.questoes,mapa:AP.pref.mapa,obs:"",tema:AP.pref.tema,transicao:AP.pref.transicao};
     apIr(1);
   });
-  apCarregarLista().then(apDesenharLista);
+  apCarregarLista(apDesenharLista).then(apDesenharLista,function(){
+    var alvo=$("ap-lista");if(alvo)alvo.innerHTML='<div class="aviso erro">Não consegui carregar a lista agora. Recarregue a página para tentar de novo.</div>';
+  });
 }
-function apCarregarLista(){
-  return apLocalTodos().then(function(locais){
+/* a lista não fica mais presa em "Carregando…": as apresentações deste aparelho aparecem na hora
+   (aoLocal), e as da nuvem entram em seguida; se a nuvem demorar mais de 8 s, segue sem ela */
+function apCarregarLista(aoLocal){
+  var limite=function(p,ms,valor){return Promise.race([p,esperar(ms).then(function(){return valor;})]);};
+  return limite(apLocalTodos(),5000,[]).then(function(locais){
     var mapa={};
     locais.forEach(function(d){mapa[d.id]={id:d.id,titulo:d.titulo,alterado:d.alterado||0,slides:(d.slides||[]).length,tema:d.tema,local:d};});
-    return apNuvemListar().catch(function(){return [];}).then(function(nuvem){
+    if(aoLocal&&(locais.length||!apNuvemOk())){
+      AP.lista=Object.keys(mapa).map(function(k){return mapa[k];}).sort(function(a,b){return b.alterado-a.alterado;});
+      try{aoLocal();}catch(e){}
+    }
+    return limite(apNuvemListar().catch(function(){return [];}),8000,[]).then(function(nuvem){
       nuvem.forEach(function(m){
         var l=mapa[m.id];
         if(!l||(m.alterado||0)>(l.alterado||0)+1000)mapa[m.id]={id:m.id,titulo:m.titulo,alterado:m.alterado||0,slides:m.slides||0,tema:m.tema,local:l&&l.local,naNuvem:true,nuvemMaisNova:true};
@@ -12122,7 +12133,9 @@ function apDesenharLista(){
   var alvo=$("ap-lista");if(!alvo)return;
   if(!AP.lista.length){alvo.innerHTML='<div class="ap-vazio"><strong>Nenhuma apresentação ainda.</strong><span>Clique em "Nova apresentação" para criar a primeira.</span></div>';return;}
   alvo.innerHTML=AP.lista.map(function(m){
-    var mini=m.local&&m.local.slides&&m.local.slides[0]?APM.render(m.local.slides[0],m.local,"mini"):'<div class="ap-mini-nuvem">☁</div>';
+    var mini='<div class="ap-mini-nuvem">☁</div>';
+    // uma apresentação com algum slide estranho não pode travar a lista inteira
+    try{if(m.local&&m.local.slides&&m.local.slides[0])mini=APM.render(m.local.slides[0],m.local,"mini");}catch(e){mini='<div class="ap-mini-nuvem">▦</div>';}
     return '<div class="ap-item" data-id="'+esc(m.id)+'"><button type="button" class="ap-item-abrir" data-abrir="'+esc(m.id)+'"><span class="ap-mini">'+mini+'</span></button>'+
       '<div class="ap-item-info"><strong>'+esc(m.titulo||"Sem título")+'</strong><span>'+m.slides+" slides · "+apTempo(m.alterado)+(m.naNuvem?" · ☁ na nuvem":"")+"</span></div>"+
       '<div class="ap-item-acoes"><button type="button" class="botao" data-abrir="'+esc(m.id)+'">Abrir</button>'+
