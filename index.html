@@ -4501,8 +4501,12 @@ function insistirNaIA(prompt,avisar,op){
   var falhasDeRede=0, semResposta=0, modelosSemCota={}, modelosSobrecarregados={}, rodadaSobrecarga=0, esperasMinuto=0;
   // quando todos os modelos estão ocupados, o Google costuma voltar em um ou dois minutos:
   // novas rodadas com pausas crescentes antes de desistir (com o aviso na tela)
-  var PAUSAS_SOBRECARGA=[15000,30000,60000];
+  var PAUSAS_SOBRECARGA=[15000,30000,60000,90000];
   var distintos={};plano.forEach(function(x){distintos[x[0]]=1;});
+  // rodadas depois de "todos ocupados": um pedido por modelo, os Flash-Lite primeiro (mais capacidade no Google)
+  // e com raciocínio baixo, que é um pedido mais leve e mais rápido de atender
+  var planoLeve=Object.keys(distintos).filter(function(m){return /lite/.test(m);})
+    .concat(Object.keys(distintos).filter(function(m){return !/lite/.test(m);})).map(function(m){return [m,0];});
   function tentar(i,ultimo){
     if(i>=plano.length)throw ultimo;
     var modelo=plano[i][0], espera=plano[i][1], trocasAntes=PAGINA.trocas;
@@ -4524,7 +4528,7 @@ function insistirNaIA(prompt,avisar,op){
     }
     return passo.then(function(){
       if(cancelado)throw new DOMException("cancelado","AbortError");
-      return chamarIA(prompt,modelo,false,!!op.rapido,op.prazo);
+      return chamarIA(prompt,modelo,false,!!op.rapido||rodadaSobrecarga>0,op.prazo);
     }).then(function(v){
       ultimoModeloOk={m:modelo,t:Date.now()};
       if(usaEscola()&&!conf.chave)setTimeout(convidarChavePropria,1500);
@@ -4583,8 +4587,8 @@ function insistirNaIA(prompt,avisar,op){
         if(Object.keys(modelosSobrecarregados).length>=Object.keys(distintos).length){
           if(rodadaSobrecarga>=PAUSAS_SOBRECARGA.length||(e.semResposta&&semResposta>=2)){paradaGeral="sobrecarga";throw e;}
           var pausa=PAUSAS_SOBRECARGA[rodadaSobrecarga++];
-          modelosSobrecarregados={};
-          if(avisar)avisar("O Gemini está sobrecarregado no Google em todos os modelos. Nova rodada de tentativas em "+
+          modelosSobrecarregados={};plano=planoLeve;
+          if(avisar)avisar("O Gemini está sobrecarregado no Google em todos os modelos (não é cota nem a sua chave). Nova rodada, com pedidos mais leves, em "+
             Math.round(pausa/1000)+" segundos ("+rodadaSobrecarga+" de "+PAUSAS_SOBRECARGA.length+"). Você pode cancelar quando quiser.");
           return esperar(pausa).then(function(){
             if(cancelado)throw e;
