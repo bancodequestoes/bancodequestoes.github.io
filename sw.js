@@ -21,7 +21,11 @@ self.addEventListener("fetch",function(ev){
   var mesmo=u.origin===self.location.origin;
   var estatico=/^(fonts\.googleapis\.com|fonts\.gstatic\.com|cdnjs\.cloudflare\.com)$/.test(u.hostname);
   if(req.mode==="navigate"||(mesmo&&/\/(index\.html)?$/.test(u.pathname))){
-    ev.respondWith(fetch(req).then(function(r){return guardar(mesmo?new Request(u.origin+u.pathname):req,r);}).catch(function(){
+    // "no-cache": confere com o GitHub se há versão nova a cada abertura (resposta curta quando não há).
+    // Sem isso o navegador reaproveitava a página guardada por até 10 minutos depois de cada atualização,
+    // e o professor só via a mudança com Cmd+Shift+R.
+    var pedido=mesmo?fetch(u.origin+u.pathname+u.search,{cache:"no-cache",credentials:"same-origin"}):fetch(req);
+    ev.respondWith(pedido.then(function(r){return guardar(mesmo?new Request(u.origin+u.pathname):req,r);}).catch(function(){
       return caches.match(new Request(u.origin+u.pathname)).then(function(r){return r||caches.match("./");});
     }));
     return;
