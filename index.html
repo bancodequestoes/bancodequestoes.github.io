@@ -1349,7 +1349,7 @@ body.ap-arrastando,body.ap-arrastando *{cursor:grabbing !important}
         </div>
         <div id="campo-assunto">
         <label for="assunto" id="rotulo-assunto">Assunto ou recorte <span class="opcional">opcional</span> <span style="font-weight:400;color:var(--cinza)">— se houver capítulo ou material marcado</span></label>
-        <input type="text" id="assunto" autocomplete="off" placeholder="Ex.: Revolução Pernambucana de 1817 — causas e desdobramentos">
+        <input type="text" id="assunto" name="recorte-tema" autocomplete="off" data-lpignore="true" data-form-type="other" placeholder="Ex.: Revolução Pernambucana de 1817 — causas e desdobramentos">
         </div>
         <div id="hab-dos-capitulos"></div>
 
@@ -4537,6 +4537,10 @@ function insistirNaIA(prompt,avisar,op){
     }
     return passo.then(function(){
       if(cancelado)throw new DOMException("cancelado","AbortError");
+      PROGRESSO_FLUXO=avisar?function(n){
+        avisar(n>0?("O Gemini ("+modelo+") está escrevendo: "+n+(n===1?" questão redigida":" questões redigidas")+" até agora. Elas aparecem todas juntas no final.")
+                   :("O Gemini ("+modelo+") recebeu o pedido e está raciocinando sobre o material. Está funcionando; aguarde."));
+      }:null;
       return chamarIA(prompt,modelo,false,!!op.rapido||rodadaSobrecarga>0,op.prazo);
     }).then(function(v){
       ultimoModeloOk={m:modelo,t:Date.now()};
@@ -4670,6 +4674,8 @@ function analisarFluxoGemini(texto){
   }
   return juntarPedacosGemini(pedacos);
 }
+// aviso de andamento durante a resposta em fluxo (o professor vê que o Gemini está trabalhando)
+var PROGRESSO_FLUXO=null;
 function lerFluxoGemini(r,aoChegar){
   if(!r.body||!r.body.getReader||typeof TextDecoder==="undefined")return r.text().then(analisarFluxoGemini);
   var leitor=r.body.getReader(), dec=new TextDecoder(), tudo="";
@@ -4678,6 +4684,11 @@ function lerFluxoGemini(r,aoChegar){
       if(x.done){tudo+=dec.decode();return analisarFluxoGemini(tudo);}
       tudo+=dec.decode(x.value,{stream:true});
       if(aoChegar)aoChegar();
+      if(PROGRESSO_FLUXO&&Date.now()-(lerFluxoGemini.ultimo||0)>1200){
+        lerFluxoGemini.ultimo=Date.now();
+        var n=(tudo.match(/enunciado\\?"\s*:/g)||[]).length;
+        try{PROGRESSO_FLUXO(n);}catch(e){}
+      }
       return passo();
     });
   }
@@ -5273,7 +5284,12 @@ function cliqueCaminhoLivre(qual){
 }
 $("btn-livre-assunto").addEventListener("click",function(){cliqueCaminhoLivre("assunto");});
 // nome de modelo deixado no assunto pelo preenchimento automático do navegador: apaga ao abrir a página
-[0,1500].forEach(function(ms){setTimeout(function(){var a=$("assunto");if(a&&/^(gemini|gemma|claude)-[\w.-]+$/i.test(a.value.trim()))a.value="";},ms);});
+// (o Edge preenche depois do carregamento e ignora autocomplete="off"; por isso confere várias vezes e a cada mudança)
+function limparAssuntoModelo(){var a=$("assunto");if(a&&/^(gemini|gemma|claude)-[\w.-]+$/i.test(a.value.trim()))a.value="";}
+[0,800,1500,3000,5000,8000,12000].forEach(function(ms){setTimeout(limparAssuntoModelo,ms);});
+["input","change","focus","blur"].forEach(function(ev){$("assunto").addEventListener(ev,limparAssuntoModelo);});
+document.addEventListener("visibilitychange",limparAssuntoModelo);
+$("btn-gerar").addEventListener("click",limparAssuntoModelo,true);
 $("btn-livre-material").addEventListener("click",function(){cliqueCaminhoLivre("material");});
 $("en-area").addEventListener("change",function(){$("en-comp").value="";$("en-hab").value="";renderFiltroEnem();});
 $("en-comp").addEventListener("change",function(){$("en-hab").value="";renderFiltroEnem();});
