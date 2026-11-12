@@ -1349,7 +1349,7 @@ body.ap-arrastando,body.ap-arrastando *{cursor:grabbing !important}
         </div>
         <div id="campo-assunto">
         <label for="assunto" id="rotulo-assunto">Assunto ou recorte <span class="opcional">opcional</span> <span style="font-weight:400;color:var(--cinza)">— se houver capítulo ou material marcado</span></label>
-        <input type="text" id="assunto" placeholder="Ex.: Revolução Pernambucana de 1817 — causas e desdobramentos">
+        <input type="text" id="assunto" autocomplete="off" placeholder="Ex.: Revolução Pernambucana de 1817 — causas e desdobramentos">
         </div>
         <div id="hab-dos-capitulos"></div>
 
@@ -1897,12 +1897,12 @@ body.ap-arrastando,body.ap-arrastando *{cursor:grabbing !important}
       <option value="anthropic">Anthropic Claude — cobrança por uso</option>
     </select>
     <label for="modelo">Modelo</label>
-    <input type="text" id="modelo" list="lista-modelos" placeholder="gemini-3.6-flash">
+    <input type="text" id="modelo" autocomplete="off" list="lista-modelos" placeholder="gemini-3.6-flash">
     <datalist id="lista-modelos"></datalist>
     <p class="ajuda" id="aviso-chave" style="margin:8px 0 2px;color:#7a5210">Cadastre a chave para liberar o teste de conexão e a busca de modelos. Ela é gratuita no Google AI Studio e leva dois minutos.</p>
     <button class="botao secundario" id="btn-modelos" style="margin-top:9px">Buscar modelos disponíveis na minha conta</button>
     <label for="reserva">Modelo reserva <span class="opcional">opcional</span></label>
-    <input type="text" id="reserva" list="lista-modelos" placeholder="Ex.: gemini-3.5-flash">
+    <input type="text" id="reserva" autocomplete="off" list="lista-modelos" placeholder="Ex.: gemini-3.5-flash">
     <p class="ajuda" style="margin-top:5px">Usado automaticamente quando o modelo principal está congestionado.</p>
     <label for="chave">Chave de API</label>
     <input type="password" id="chave" placeholder="Cole a chave aqui" autocomplete="off">
@@ -4411,10 +4411,12 @@ function abrirEspera(prazo){
   prazo=prazo||LIMITE_RESPOSTA;
   var alvo=new AbortController(), item={c:alvo,expirou:false,prazo:prazo};
   abortoAtual=alvo;abortosAbertos.push(item);
-  var relogio=setTimeout(function(){
-    if(!cancelado){item.expirou=true;try{alvo.abort();}catch(e){}}
-  },prazo);
-  return {sinal:alvo.signal,item:item,encerrar:function(){
+  function estourar(){if(!cancelado){item.expirou=true;try{alvo.abort();}catch(e){}}}
+  var relogio=setTimeout(estourar,prazo);
+  return {sinal:alvo.signal,item:item,
+  // resposta em fluxo: cada pedaço que chega prova que o modelo está trabalhando, e o prazo recomeça
+  renovar:function(ms){clearTimeout(relogio);item.prazo=ms||prazo;relogio=setTimeout(estourar,item.prazo);},
+  encerrar:function(){
     clearTimeout(relogio);
     var k=abortosAbertos.indexOf(item);if(k>-1)abortosAbertos.splice(k,1);
     if(abortoAtual===alvo)abortoAtual=null;
@@ -4582,11 +4584,13 @@ function insistirNaIA(prompt,avisar,op){
         if(falhasDeRede>=2){paradaGeral="conexão";throw e;}
       }
       // provedor que aceita o pedido e não responde: insistir custa o prazo inteiro de novo
+      var proxima=i+1;
       if(e&&e.semResposta){
         semResposta++;
         if(semResposta>=2){paradaGeral="sem resposta";throw e;}
+        // o mesmo modelo calado de novo custaria o prazo inteiro outra vez: segue para outro modelo
+        while(proxima<plano.length&&plano[proxima][0]===modelo)proxima++;
       }
-      var proxima=i+1;
       // todos os modelos sobrecarregados ao mesmo tempo é o Google fora do ar por um tempo:
       // insistir (e refazer o lote) só deixava o professor minutos olhando "0 de 10"
       if(e&&(e.sobrecarga||e.semResposta)){
@@ -4634,9 +4638,57 @@ function conteudoAnthropic(prompt){
     return {type:"image",source:{type:"base64",media_type:m[1]||"image/jpeg",data:m[2]||""}};
   }).concat([{type:"text",text:prompt.texto}]);
 }
+/* lê a resposta em fluxo (linhas "data: {...}") e junta tudo num objeto igual ao da resposta comum:
+   {candidates:[{content:{parts:[...]},finishReason}]}. A cada pedaço recebido chama aoChegar (renova o prazo).
+   Também aceita uma resposta comum em JSON (objeto ou lista), para servidores que não mandam em fluxo. */
+function juntarPedacosGemini(pedacos){
+  var partes=[], fim="", erro=null;
+  pedacos.forEach(function(d){
+    if(!d)return;
+    if(d.error){erro=d.error;return;}
+    var c=d.candidates&&d.candidates[0];if(!c)return;
+    if(c.finishReason)fim=c.finishReason;
+    ((c.content&&c.content.parts)||[]).forEach(function(p){partes.push(p);});
+  });
+  if(erro){
+    var e=new Error("O modelo parou no meio da resposta ("+(erro.message||erro.status||"erro")+").");
+    e.repetivel=true;if(erro.code===503||/UNAVAILABLE|overload/i.test(erro.status+" "+erro.message))e.sobrecarga=true;
+    if(erro.code===429)e.minuto=true;
+    throw e;
+  }
+  return {candidates:[{content:{parts:partes},finishReason:fim}]};
+}
+function analisarFluxoGemini(texto){
+  var pedacos=[];
+  texto.split(/\r?\n/).forEach(function(l){
+    var m=/^data:\s?(.*)$/.exec(l);if(!m||!m[1].trim())return;
+    try{pedacos.push(JSON.parse(m[1]));}catch(e){}
+  });
+  if(!pedacos.length){
+    var d;try{d=JSON.parse(texto);}catch(e){throw new Error("Resposta em formato inesperado.");}
+    pedacos=Array.isArray(d)?d:[d];
+  }
+  return juntarPedacosGemini(pedacos);
+}
+function lerFluxoGemini(r,aoChegar){
+  if(!r.body||!r.body.getReader||typeof TextDecoder==="undefined")return r.text().then(analisarFluxoGemini);
+  var leitor=r.body.getReader(), dec=new TextDecoder(), tudo="";
+  function passo(){
+    return leitor.read().then(function(x){
+      if(x.done){tudo+=dec.decode();return analisarFluxoGemini(tudo);}
+      tudo+=dec.decode(x.value,{stream:true});
+      if(aoChegar)aoChegar();
+      return passo();
+    });
+  }
+  return passo();
+}
 function chamarGemini(prompt,modeloEscolhido,semRaciocinio,rapido,prazo){
   var modelo=modeloEscolhido||modeloIA()||"gemini-3.6-flash";
-  var url="https://generativelanguage.googleapis.com/v1beta/models/"+encodeURIComponent(modelo)+":generateContent";
+  // resposta em FLUXO (streamGenerateContent): o texto chega aos pedaços enquanto o modelo trabalha.
+  // Antes o site esperava a resposta inteira com um prazo fixo; um modelo lento, mas funcionando, era
+  // cortado no meio ("não respondeu no prazo"), o pedido era contado na cota e jogado fora.
+  var url="https://generativelanguage.googleapis.com/v1beta/models/"+encodeURIComponent(modelo)+":streamGenerateContent?alt=sse";
   // nos Flash 2.5 e 3.x o raciocínio conta dentro do limite de saída: com 32 mil, um lote de 10 questões
   // longas podia ser cortado no meio (pedido gasto e jogado fora). Esses modelos aceitam 65 mil.
   var config={maxOutputTokens:/gemini-(2\.5|[3-9])/.test(modelo)?65536:8192,responseMimeType:"application/json"};
@@ -4650,12 +4702,22 @@ function chamarGemini(prompt,modeloEscolhido,semRaciocinio,rapido,prazo){
     if(/gemini-2\.5/.test(modelo))config.thinkingConfig={thinkingBudget:8192};
     else config.thinkingConfig={thinkingLevel:"high"};
   }
-  var espera=abrirEspera(prazo);
+  // resumos do raciocínio chegam no fluxo enquanto o modelo pensa: mantêm a conexão viva (o site descarta esse texto)
+  if(!semRaciocinio&&/gemini-(2\.5|[3-9])/.test(modelo)&&!(config.thinkingConfig&&config.thinkingConfig.thinkingBudget===0)){
+    config.thinkingConfig=config.thinkingConfig||{};config.thinkingConfig.includeThoughts=true;
+  }
+  // prazo SEM NOVIDADE: o modelo tem até 90 s (ou o prazo do lote, se maior) para mandar o primeiro pedaço
+  // e entre um pedaço e outro. Enquanto chega texto, não há corte; o teto total é de 8 minutos.
+  var semNovidade=Math.max(90000,prazo||LIMITE_RESPOSTA), espera=abrirEspera(semNovidade), inicio=Date.now(), TETO=480000;
   return fetch(url,{
     // a chave vai no cabeçalho, como manda a documentação: serve para o formato antigo (AIza) e o novo (AQ.)
     method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":chaveIA()},signal:espera.sinal,
     body:JSON.stringify({contents:[{role:"user",parts:partesGemini(prompt)}],generationConfig:config})
-  }).then(function(r){espera.encerrar();return r;},function(e){espera.encerrar();throw traduzirEspera(e,espera);}).then(tratarResposta).then(function(d){
+  }).then(function(r){
+    if(!r.ok){espera.encerrar();return tratarResposta(r);}
+    return lerFluxoGemini(r,function(){espera.renovar(Math.min(semNovidade,Math.max(1000,TETO-(Date.now()-inicio))));})
+      .then(function(d){espera.encerrar();return d;},function(e){espera.encerrar();throw e;});
+  },function(e){espera.encerrar();throw traduzirEspera(e,espera);}).then(function(d){
     var c=d.candidates&&d.candidates[0];
     if(c&&c.finishReason==="MAX_TOKENS"){
       var parcial=c.content&&c.content.parts?c.content.parts.map(function(p){return p.thought?"":(p.text||"");}).join(""):"";
@@ -5210,6 +5272,8 @@ function cliqueCaminhoLivre(qual){
   }else{abrirCaminhoLivre(qual,false);voltarRolagem([$("painel-livre")]);}
 }
 $("btn-livre-assunto").addEventListener("click",function(){cliqueCaminhoLivre("assunto");});
+// nome de modelo deixado no assunto pelo preenchimento automático do navegador: apaga ao abrir a página
+[0,1500].forEach(function(ms){setTimeout(function(){var a=$("assunto");if(a&&/^(gemini|gemma|claude)-[\w.-]+$/i.test(a.value.trim()))a.value="";},ms);});
 $("btn-livre-material").addEventListener("click",function(){cliqueCaminhoLivre("material");});
 $("en-area").addEventListener("change",function(){$("en-comp").value="";$("en-hab").value="";renderFiltroEnem();});
 $("en-comp").addEventListener("change",function(){$("en-hab").value="";renderFiltroEnem();});
@@ -5254,7 +5318,8 @@ $("btn-gerar").addEventListener("click",function(){
     origem:origem,
     estiloObjetiva:origemComEstilo(origem)?estiloDoLivro():"",
     dificuldadeAlvo:origem==="enem"&&$("en-dif").value?$("en-dif").options[$("en-dif").selectedIndex].text.toLowerCase():"",
-    assunto:$("assunto").value.trim(),
+    // o navegador às vezes preenchia o assunto com o nome do modelo (gemini-3.6-flash): isso não é assunto
+    assunto:/^(gemini|gemma|claude)-[\w.-]+$/i.test($("assunto").value.trim())?"":$("assunto").value.trim(),
     etapa:etapa,
     componente:comp,
     area:areaDoComponente(etapa,comp),
