@@ -975,6 +975,9 @@ body.ap-arrastando,body.ap-arrastando *{cursor:grabbing !important}
 .convite-chave strong{display:block;font-family:var(--titulo);font-size:15.5px;margin-bottom:4px}
 .convite-chave .convite-botoes{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
 @media (max-width:600px){.convite-chave{left:16px;right:16px;bottom:16px;max-width:none}}
+.botao-embaralhar{background:none;border:1px dashed var(--primaria-borda);color:var(--primaria);border-radius:999px;padding:6px 12px;font-size:.82rem;cursor:pointer;align-self:center}
+.botao-embaralhar:hover{color:var(--primaria);border-color:currentColor}
+.botao-embaralhar[aria-pressed="true"]{border-style:solid;border-color:var(--primaria);background:var(--primaria);color:#fff}
 </style>
 <style id="ap-estilo-slides">
 /* ===== slides das apresentações (1920×1080). Também vai dentro do HTML baixado. ===== */
@@ -1470,7 +1473,7 @@ body.ap-arrastando,body.ap-arrastando *{cursor:grabbing !important}
     <select id="filtro-componente"><option value="">Todos os componentes</option></select>
     <select id="filtro-serie"><option value="">Todas as séries</option></select>
     <select id="filtro-matriz"><option value="">Todas as matrizes</option></select>
-    <select id="filtro-material"><option value="">Todos os materiais</option></select>
+    <select id="filtro-material" hidden style="display:none"><option value="">Todos os materiais</option></select>
     <select id="filtro-nivel"><option value="">Todos os níveis de exigência</option></select>
     <select id="filtro-tipo">
       <option value="">Todos os formatos</option>
@@ -1536,7 +1539,9 @@ body.ap-arrastando,body.ap-arrastando *{cursor:grabbing !important}
       <label><input type="checkbox" id="m-habilidade" style="width:auto;margin-right:7px">Imprimir o código de habilidade acima de cada questão</label>
       <div class="botoes">
         <button class="botao" id="btn-gerar-timbrado">Gerar prova no timbrado</button>
+        <button type="button" class="botao-embaralhar" data-embaralhar-prova="1" aria-pressed="false" title="Sorteia uma ordem nova das questões a cada prova baixada (ótimo para segunda chamada)">🔀 Embaralhar questões</button>
       </div>
+      <p class="ajuda aviso-embaralhar" hidden>🔀 Ordem embaralhada: cada prova baixada sai com as questões numa ordem nova, sorteada na hora (e as alternativas também mudam de lugar). Clique de novo no botão para voltar à ordem do Banco.</p>
       <div id="retorno-timbrado"></div>
     </div>
   </div>
@@ -1558,7 +1563,9 @@ body.ap-arrastando,body.ap-arrastando *{cursor:grabbing !important}
       <button class="botao secundario" id="btn-imprimir">Imprimir ou salvar em PDF</button>
       <button class="botao secundario" id="btn-docx">Baixar em Word</button>
       <button class="botao secundario" id="btn-copiar">Copiar como texto</button>
+      <button type="button" class="botao-embaralhar" data-embaralhar-prova="1" aria-pressed="false" title="Sorteia uma ordem nova das questões a cada prova baixada (ótimo para segunda chamada)">🔀 Embaralhar questões</button>
     </div>
+    <p class="ajuda aviso-embaralhar" hidden>🔀 Ordem embaralhada: cada prova sai com as questões numa ordem nova, sorteada na hora. Clique de novo para voltar à ordem do Banco.</p>
     </details>
   </div>
   <div class="bloco nao-imprime">
@@ -1962,16 +1969,16 @@ body.ap-arrastando,body.ap-arrastando *{cursor:grabbing !important}
   <section class="chat-painel" id="chat-painel" role="dialog" aria-label="Assistente do Banco de Questões" hidden>
     <div class="chat-topo">
       <span class="avatar" aria-hidden="true">B</span>
-      <span class="nomes"><strong>Assistente do Banco</strong><span>dúvidas sobre o site, dicas e prints</span></span>
+      <span class="nomes"><strong>Assistente do Banco</strong><span>dúvidas, livros SESI, provas e arquivos</span></span>
       <button type="button" id="chat-limpar" title="Começar uma conversa nova" aria-label="Começar uma conversa nova"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg></button>
       <button type="button" id="chat-recolher" title="Recolher" aria-label="Recolher o chat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
     </div>
     <div class="chat-msgs" id="chat-msgs" aria-live="polite"></div>
     <div class="chat-anexos" id="chat-anexos"></div>
     <form class="chat-form" id="chat-form" autocomplete="off">
-      <button type="button" id="chat-anexar" title="Anexar um print da tela" aria-label="Anexar um print da tela"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2"/><path d="M21 16l-5-5-8 8"/></svg></button>
-      <input type="file" id="chat-arquivo" accept="image/*" multiple hidden>
-      <textarea id="chat-texto" rows="1" placeholder="Pergunte sobre o site… dá para colar um print aqui" aria-label="Sua mensagem"></textarea>
+      <button type="button" id="chat-anexar" title="Anexar print, Word, PDF ou texto" aria-label="Anexar print, Word, PDF ou texto"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2"/><path d="M21 16l-5-5-8 8"/></svg></button>
+      <input type="file" id="chat-arquivo" accept="image/*,.docx,.pdf,.txt" multiple hidden>
+      <textarea id="chat-texto" rows="1" placeholder="Pergunte ou peça algo… dá para anexar print, Word ou PDF" aria-label="Sua mensagem"></textarea>
       <button type="submit" id="chat-enviar" title="Enviar" aria-label="Enviar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
     </form>
   </section>
@@ -2954,7 +2961,8 @@ function livroRepetido(ind,L){
 function livrosEmUso(){
   return Object.keys(LS.marcados).filter(function(id){return LS.textos[id];}).map(function(id){
     var m=LS.marcados[id];
-    return {id:"livro-"+id,nome:m.nome,texto:LS.textos[id],palavras:m.palavras||0,ativo:true,tipo:"Livro didático",turma:nomeSerieSesi(m.serie)};
+    // números de página do PDF viram marcadores [fim da página N]: a IA cita a página na fonte
+    return {id:"livro-"+id,nome:m.nome,texto:apMarcarPaginas(LS.textos[id]).texto,palavras:m.palavras||0,ativo:true,tipo:"Livro didático",turma:nomeSerieSesi(m.serie)};
   });
 }
 
@@ -3815,7 +3823,7 @@ function gerarComImagens(p,lista,tipoImg,botao,idProg,aoAvisar){
       var perto=pertos.join("\n\n"), resto=JANELA-perto.length-2000;
       return "=== "+(marcado.nome||nomeCap)+" ===\n"+
         (perto?"TRECHO DO CAPÍTULO ONDE "+(grupo.length>1?"CADA IMAGEM APARECE":"A IMAGEM APARECE")+":\n"+perto+"\n\nRESTANTE DO CAPÍTULO (trecho):\n":"")+
-        String(texto||"").slice(0,Math.max(8000,resto));
+        apMarcarPaginas(String(texto||"")).texto.slice(0,Math.max(8000,resto));
     });
     return buscaBase.then(function(base){
       var n=grupo.length, q1={_total:n};TIPOS_VALIDOS.forEach(function(t){q1[t]=t===tipo?n:0;});
@@ -4220,6 +4228,7 @@ base?"- que a questão explora uma passagem real do material transcrito, e não 
 "Responda SOMENTE com um array JSON válido, sem cercas de código, sem comentários e sem texto antes ou depois. Cada objeto tem exatamente estes campos:",
 '[{"tipo":"objetiva","habilidade":"EF09HI09","assunto":"...","textoBase":"","fonte":"","enunciado":"...","alternativas":["...","...","...","...","..."],"correta":0,"respostaEsperada":"","justificativa":"...","resolucao":"..."}]',
 'O campo fonte traz a referência do texto-base no padrão do ENEM: "SOBRENOME, A. Título da obra. Cidade: Editora, ano (adaptado)." ou "Disponível em: www.site.com.br. Acesso em: 12 maio 2025 (adaptado)." Deixe vazio quando não houver texto-base. Nunca invente autor, obra ou endereço inexistentes: se o texto-base for de sua autoria, escreva "Texto elaborado para fins didáticos".',
+'Quando o texto-base vier de um capítulo do Livro SESI do material de origem (blocos "=== Livro SESI · … ==="), o campo fonte é curto e exato: "Adaptado do material SESI, Capítulo N, p. X." (com o número e a página reais). A página: o texto usa marcadores "[fim da página N]"; um trecho está na página do PRIMEIRO marcador que vem depois dele. Se o trecho atravessa páginas, escreva "p. X-Y". Sem marcadores perto do trecho, omita a página ("Adaptado do material SESI, Capítulo N."). Nesse caso nunca escreva "Texto elaborado para fins didáticos". Os marcadores de página nunca aparecem no texto-base nem no enunciado.',
 "",
 'Em "dissertativa": alternativas como array vazio, correta igual a -1 e respostaEsperada preenchida.',
 'Em "passe", "enem" e "ssa": o texto-base vai no campo textoBase e o comando da questão no enunciado.',
@@ -6030,9 +6039,23 @@ function embaralharSemRepetir(lista,usosExternos){
 }
 // cópias das questões marcadas, já com o número de alternativas da etapa da prova
 // (Fundamental 4, Médio 5); sem série escolhida, vale a etapa de cada questão
+/* segunda chamada: com o botão "Embaralhar questões" ligado, cada prova sai numa ordem sorteada na hora */
+var EMBARALHAR_PROVA=false;
+function marcarEmbaralhar(){
+  document.querySelectorAll("[data-embaralhar-prova]").forEach(function(b){b.setAttribute("aria-pressed",EMBARALHAR_PROVA?"true":"false");});
+  document.querySelectorAll(".aviso-embaralhar").forEach(function(p){p.hidden=!EMBARALHAR_PROVA;});
+}
+document.addEventListener("click",function(ev){
+  if(!ev.target.closest("[data-embaralhar-prova]"))return;
+  EMBARALHAR_PROVA=!EMBARALHAR_PROVA;marcarEmbaralhar();
+});
 function selecaoAtual(){
   var etapaProva=etapaDaSerie($("p-serie-turma").value||serieDaTurma($("p-turma").value||""));
-  return questoes.filter(function(q){return selecionadas[q.id];})
+  var lista=questoes.filter(function(q){return selecionadas[q.id];});
+  if(EMBARALHAR_PROVA&&lista.length>1){
+    var ordem=embaralharLista(lista.length);lista=ordem.map(function(i){return lista[i];});
+  }
+  return lista
     .map(function(q){
       var c=JSON.parse(JSON.stringify(q));
       if(c.tipo!=="dissertativa"&&c.alternativas&&c.alternativas.length)
@@ -11189,9 +11212,9 @@ var GUIA_SITE=[
 "",
 "GERAR (criar questões novas com a IA). Passo 1, 'Criar a partir de': Livro SESI (escolhe a série, abre o livro e marca os capítulos; os capítulos marcados alimentam a geração; clicar fora do livro fecha a lista; o botão vermelho 'Desmarcar tudo' limpa), ENEM (área, competência, habilidade e dificuldade da matriz do ENEM), SSA (etapa 1, 2 ou 3) ou PASSE. No Livro SESI dá para escolher a 'Estrutura das questões objetivas': Simples, ENEM, SSA ou PASSE. Passo 2, 'Sobre o quê': nível, série, componente e assunto (o assunto é opcional quando há capítulo marcado). Quando há capítulos marcados, aparece um bloco verde 'Habilidades dos capítulos marcados', com as habilidades que cada capítulo cita, separadas por capítulo. Passo 3: quantidade de Objetivas, Dissertativas e Adaptadas (para estudantes atípicos, TEA e TDAH), até 20 por geração; para mais, gere em rodadas, o banco acumula. Também no passo 3, só com Livro SESI: 'Com imagem do livro' (até 10). A questão parte de uma foto, mapa, gravura, charge ou gráfico do capítulo marcado, e a IA recebe a imagem junto com o texto do capítulo, relacionando-a ao contexto que o capítulo trabalha. Abre um quadro com as miniaturas das imagens dos capítulos marcados: em 'Eu escolho as imagens', o professor clica nas imagens (a lupa amplia; aparece 'já usada' quando a imagem já virou questão); em 'O sistema escolhe', o site sorteia entre elas, evitando as já usadas. Dá para escolher se a questão com imagem é Objetiva (no molde escolhido no passo 1) ou Dissertativa. A imagem sai no banco, na prova e no Word, com a legenda logo abaixo (editável no editor da questão, campo 'Legenda da imagem'). Se o capítulo não tiver imagens guardadas, aparece 'sem imagens guardadas'. 'Mais opções' (opcional): habilidades da matriz, nível de exigência, elaboração cuidadosa (mais lenta), orientações adicionais. 'Material complementar' (opcional): para quem tem outro material próprio, anexar PDFs ou colar um texto que apoia as questões. Botões Gerar questões, Cancelar geração e Limpar campos. Ensino Fundamental sai com 4 alternativas (A a D) e Médio com 5 (A a E); adaptadas têm 3.",
 "",
-"BANCO: todas as questões geradas e guardadas. Filtros por assunto, nível, componente, série, matriz, material, nível de exigência e formato, e busca por palavra. Cada questão pode ser editada (texto, alternativas, gabarito, resolução) ou excluída. Marque as caixas das questões para usar: aparece a barra azul com 'Montar prova com as selecionadas', 'Baixar sem timbre', 'Reequilibrar gabarito' (espalha as respostas certas entre as letras) e 'Excluir selecionadas'. Também há 'Selecionar tudo que o filtro mostra' e 'Limpar seleção'.",
+"BANCO: todas as questões geradas e guardadas. Filtros por assunto, nível, componente, série, matriz, nível de exigência e formato, e busca por palavra. Cada questão pode ser editada (texto, alternativas, gabarito, resolução) ou excluída. Marque as caixas das questões para usar: aparece a barra azul com 'Montar prova com as selecionadas', 'Baixar sem timbre', 'Reequilibrar gabarito' (espalha as respostas certas entre as letras) e 'Excluir selecionadas'. Também há 'Selecionar tudo que o filtro mostra' e 'Limpar seleção'.",
 "",
-"MONTAR PROVA: primeiro 'Série ou ano da prova' (define 4 ou 5 alternativas e entra no cabeçalho). 'Modelo timbrado': o .docx da escola é anexado uma vez em 'Anexar ou trocar o modelo' (fica recolhido); cada marcador entre chaves duplas do Word, como {{DISCIPLINA}}, {{PROFESSOR}}, {{TURMA}}, vira um campo, e {{QUESTOES}} marca onde entram as questões. Escolher uma ou duas colunas, gabarito em página separada e código de habilidade; botão 'Gerar prova no timbrado'. 'Versão sem timbre' (opcional, recolhida): montar na tela, imprimir ou salvar em PDF, baixar em Word, copiar como texto. 'Completar a prova com questões novas' (opcional): gera questões inéditas já incluídas na prova.",
+"MONTAR PROVA: primeiro 'Série ou ano da prova' (define 4 ou 5 alternativas e entra no cabeçalho). 'Modelo timbrado': o .docx da escola é anexado uma vez em 'Anexar ou trocar o modelo' (fica recolhido); cada marcador entre chaves duplas do Word, como {{DISCIPLINA}}, {{PROFESSOR}}, {{TURMA}}, vira um campo, e {{QUESTOES}} marca onde entram as questões. Escolher uma ou duas colunas, gabarito em página separada e código de habilidade; botão 'Gerar prova no timbrado'. Ao lado, o botão discreto '🔀 Embaralhar questões': ligado, cada prova baixada (no timbrado ou sem timbre) sai com as questões numa ordem sorteada, bom para segunda chamada; clicar de novo volta à ordem do Banco. 'Versão sem timbre' (opcional, recolhida): montar na tela, imprimir ou salvar em PDF, baixar em Word, copiar como texto. 'Completar a prova com questões novas' (opcional): gera questões inéditas já incluídas na prova.",
 "",
 "PROVAS OFICIAIS: acervo com ENEM 2009 a 2025, SSA (UPE) e PASSE (Avalia SESI), com as questões como no original. Passo 1, 'Escolher a prova': cartão da origem (ENEM, SSA, PASSE), depois Ano, Turma (PASSE e SSA) e Disciplina (Linguagens, Humanas, Natureza, Exatas/Matemática), e o caderno. Escolher a Disciplina no passo 1 já mostra só as questões dela. Passo 2, 'Filtrar as questões': Disciplina (quando não escolhida no passo 1), Matéria para detalhar (História, Filosofia, Sociologia…), assunto, busca por tema amplo, e dificuldade com ordem da mais fácil para a mais difícil. A matriz do ENEM (área, competência, habilidade) e a dificuldade da TRI do INEP só aparecem nas provas do ENEM; no SSA e no PASSE a dificuldade é estimada. Cada questão tem alternativas clicáveis: clicar numa alternativa mostra a certa com círculo verde e, se errou, a escolhida com círculo vermelho. O botão pequeno 'Mostrar gabarito', embaixo da questão, revela a resposta sem responder. O botão 'Abrir' (canto da questão) abre a questão em destaque sobre a página, ajustada à tela, sem gabarito exposto, com setas discretas (ou as setas do teclado) para ir à próxima e Esc para fechar; dá para selecionar a questão ali mesmo. Marcando as caixas das questões aparece a barra com 'Baixar Word no timbrado', 'Baixar Word sem timbre', 'Ver na tela' e 'incluir gabarito no fim'. Importar uma prova nova: bloco 'Importar uma prova oficial' (caderno e gabarito em PDF, com texto selecionável; PDF escaneado como imagem não funciona). Gabarito marcado 'não oficial' foi resolvido à parte porque o caderno veio sem gabarito.",
 "",
@@ -11204,7 +11227,7 @@ var GUIA_SITE=[
 "DEFEITOS DO SITE (estes sim): a faixa vermelha 'Falha no aplicativo: …' no rodapé, botão que não responde, tela ou layout quebrado, informação que some sem motivo, filtro que mostra resultado errado, documento Word que não abre."
 ].join("\n");
 var CHAVE_CHAT="bancoQuestoes.chat.v1", CHAVE_RELATOS="bancoQuestoes.relatosPendentes.v1", MAX_RELATOS_SESSAO=3;
-var CHAT={msgs:[],anexos:[],enviando:false,relatados:{},nRelatos:0};
+var CHAT={msgs:[],anexos:[],arquivo:null,enviando:false,relatados:{},nRelatos:0};
 try{var chatSalvo=JSON.parse(sessionStorage.getItem(CHAVE_CHAT)||"null");if(chatSalvo&&Array.isArray(chatSalvo.msgs))CHAT.msgs=chatSalvo.msgs;}catch(e){}
 function chatGuardar(){
   // as imagens não ficam guardadas: só o texto da conversa, nesta aba do navegador
@@ -11230,9 +11253,17 @@ function sistemaDoChat(){
     nome?"- O primeiro nome da pessoa no login é "+nome+". Você pode chamá-la de \"Prof. "+nome+"\" de vez em quando.":"",
     "",
     "COMO RESPONDER:",
-    "- Português do Brasil. Respostas curtas: em geral até 120 palavras. Quando for um passo a passo, use uma lista numerada com os nomes exatos dos botões e páginas do site, em negrito (**assim**).",
-    "- Responda só sobre o site e sobre o trabalho do professor com ele (montar provas, gerar questões, planejar aulas). Pode dar conselhos pedagógicos curtos quando ajudarem a usar bem o site (por exemplo, como dosar a dificuldade de uma prova ou combinar questões do ENEM com o livro).",
-    "- Use só o que está no guia abaixo. Se o site não tiver o que a pessoa pede, diga com gentileza que ainda não tem e, se fizer sentido, sugira o caminho mais próximo. Nunca invente botões, páginas ou recursos.",
+    "- Português do Brasil. Respostas curtas: em geral até 120 palavras (mais, só quando a pessoa pedir um conteúdo, como um resumo). Quando for um passo a passo, use uma lista numerada com os nomes exatos dos botões e páginas do site, em negrito (**assim**).",
+    "- Ajude no site e no trabalho do professor com ele: montar provas, gerar questões, planejar aulas, consultar os livros SESI e o banco, e trabalhar em arquivos que ele anexar. Pode dar conselhos pedagógicos curtos.",
+    "- Sobre botões, páginas e recursos, use só o que está no guia abaixo; nunca invente recursos. Se o site não tiver o que a pessoa pede, diga com gentileza e sugira o caminho mais próximo.",
+    "",
+    "FERRAMENTAS (use sem pedir licença, e nunca diga que não sabe algo que uma ferramenta responde):",
+    "- capitulos_dos_livros_sesi: nomes de todos os capítulos dos cadernos de uma série (ex.: 'capítulos 1 e 2 do caderno 4 de História do 9º ano'). Responda com os nomes exatos.",
+    "- texto_do_capitulo: o texto de um capítulo, para resumir, explicar, sugerir aula ou tirar dados, citando a página (marcadores [fim da página N]: um trecho está na página do primeiro marcador depois dele).",
+    "- buscar_questoes_no_banco e resumo_do_banco: o que já está guardado no Banco.",
+    "- provas_oficiais: números e cadernos do acervo de Provas oficiais (ENEM, SSA, PASSE), por ano, turma e disciplina.",
+    "- abrir_pagina: leva a pessoa à página certa quando ela quiser ir até lá.",
+    "- ARQUIVOS: quando a pessoa anexar um Word, PDF ou texto, o conteúdo chega na mensagem como [ARQUIVO ANEXADO]. Você pode ler, resumir, corrigir, reorganizar, criar questões a partir dele etc. Para embaralhar as questões de uma prova em Word, use embaralhar_prova_anexada (mantém a formatação; diga a nova ordem, de forma resumida, e lembre de ajustar o gabarito). Para devolver qualquer outro resultado como arquivo, use criar_arquivo_word com o conteúdo completo. Depois de criar um arquivo, diga só que o botão Baixar apareceu logo acima, sem repetir o conteúdo inteiro.",
     "- Se a pessoa mandar um print, descreva rapidinho o que você vê nele e responda a partir do print.",
     "- Nunca peça nem repita a chave de API, senhas ou dados pessoais.",
     "",
@@ -11268,8 +11299,8 @@ function chatRender(){
   if(!CHAT.msgs.length){
     var nome=nomeDaPessoa();
     alvo.innerHTML='<div class="chat-msg ia"><p>Olá'+(nome?", Prof. "+esc(nome):"")+'! 👋 Eu sou o assistente do Banco de Questões.</p>'+
-      "<p>Posso explicar como gerar questões, montar provas, usar as provas oficiais ou fazer o planejamento. Se algo estranho aparecer na tela, pode mandar um print que eu dou uma olhada.</p></div>"+
-      '<div class="chat-sugestoes">'+["Como gero questões a partir do livro?","Como monto uma prova no timbrado?","Como filtro só Humanas no SSA?","Como faço o planejamento?"].map(function(s){
+      "<p>Posso explicar como usar o site, consultar os capítulos dos livros SESI e o que já está no Banco, e trabalhar em arquivos: anexe um Word ou PDF pelo clipe e peça, por exemplo, para embaralhar as questões de uma prova. Se algo estranho aparecer na tela, mande um print.</p></div>"+
+      '<div class="chat-sugestoes">'+["Quais são os capítulos do 9º ano de História?","Como monto uma prova no timbrado?","Embaralhar as questões de uma prova em Word","Como faço o planejamento?"].map(function(s){
         return '<button type="button" data-sugestao="'+esc(s)+'">'+esc(s)+"</button>";}).join("")+"</div>";
     return;
   }
@@ -11315,14 +11346,25 @@ function chatLerImagem(arquivo){
   });
 }
 function chatAnexar(arquivos){
-  [].slice.call(arquivos||[]).filter(function(f){return /^image\//.test(f.type);}).slice(0,4-CHAT.anexos.length).forEach(function(f){
+  var lista=[].slice.call(arquivos||[]);
+  lista.filter(function(f){return /^image\//.test(f.type);}).slice(0,4-CHAT.anexos.length).forEach(function(f){
     chatLerImagem(f).then(function(d){CHAT.anexos.push(d);chatRenderAnexos();},function(){});
   });
+  // Word, PDF ou texto: um por vez; o assistente lê o conteúdo e pode devolver um arquivo novo
+  var doc=lista.filter(function(f){return !/^image\//.test(f.type);})[0];
+  if(doc){
+    CHAT.arquivo={nome:doc.name,lendo:true};chatRenderAnexos();
+    chatLerArquivo(doc).then(function(a){CHAT.arquivo=a;chatRenderAnexos();},function(e){
+      CHAT.arquivo=null;chatRenderAnexos();
+      CHAT.msgs.push({papel:"model",tipo:"falha",texto:esc(e.message||"Não consegui ler o arquivo.")});chatRender();
+    });
+  }
 }
 function chatRenderAnexos(){
   $("chat-anexos").innerHTML=CHAT.anexos.map(function(d,i){
     return '<span class="chat-anexo"><img src="'+d+'" alt="Print anexado"><button type="button" data-tirar-anexo="'+i+'" aria-label="Tirar este print">×</button></span>';
-  }).join("");
+  }).join("")+(CHAT.arquivo?'<span class="chat-anexo chat-anexo-arq">📄 '+esc(CHAT.arquivo.nome)+(CHAT.arquivo.lendo?" (lendo…)":"")+
+    '<button type="button" data-tirar-arquivo="1" aria-label="Tirar este arquivo">×</button></span>':"");
 }
 /* conversa com a IA: histórico com imagens, texto livre na resposta, troca de modelo quando ocupado */
 function chamarChatIA(sistema,historico){
@@ -11335,7 +11377,7 @@ function chamarChatIA(sistema,historico){
   var esperouMinuto=false;
   function base64(d){return String(d).replace(/^data:[^,]+,/,"");}
   function pedir(modelo){
-    var ctl=new AbortController(), relogio=setTimeout(function(){try{ctl.abort();}catch(e){}},60000);
+    var ctl=new AbortController(), relogio=setTimeout(function(){try{ctl.abort();}catch(e){}},180000);
     var req;
     if(provedorIA()==="anthropic"){
       req=fetch("https://api.anthropic.com/v1/messages",{method:"POST",signal:ctl.signal,
@@ -11349,20 +11391,34 @@ function chamarChatIA(sistema,historico){
         return (d.content||[]).map(function(b){return b.type==="text"?b.text:"";}).join("");
       });
     }else{
-      req=fetch("https://generativelanguage.googleapis.com/v1beta/models/"+encodeURIComponent(modelo)+":generateContent",{
-        method:"POST",signal:ctl.signal,headers:{"Content-Type":"application/json","x-goog-api-key":chaveIA()},
-        body:JSON.stringify({systemInstruction:{parts:[{text:sistema}]},
-          contents:historico.map(function(m){
-            var partes=(m.imagens||[]).map(function(d){return {inline_data:{mime_type:"image/jpeg",data:base64(d)}};});
-            partes.push({text:m.texto||"(print)"});
-            return {role:m.papel==="user"?"user":"model",parts:partes};
-          }),
-          generationConfig:{maxOutputTokens:4096,temperature:0.7}})
-      }).then(tratarResposta).then(function(d){
-        var c=d.candidates&&d.candidates[0];
-        if(!c||!c.content||!c.content.parts)throw new Error("O modelo respondeu vazio.");
-        return c.content.parts.filter(function(p){return !p.thought;}).map(function(p){return p.text||"";}).join("");
+      var conteudos=historico.map(function(m){
+        var partes=(m.imagens||[]).map(function(d){return {inline_data:{mime_type:"image/jpeg",data:base64(d)}};});
+        partes.push({text:m.texto||"(print)"});
+        return {role:m.papel==="user"?"user":"model",parts:partes};
       });
+      // o assistente pode pedir ferramentas (consultar livros, banco, mexer no arquivo anexado):
+      // o site executa, devolve o resultado e o modelo continua, até 6 rodadas
+      var rodada=function(k){
+        return fetch("https://generativelanguage.googleapis.com/v1beta/models/"+encodeURIComponent(modelo)+":generateContent",{
+          method:"POST",signal:ctl.signal,headers:{"Content-Type":"application/json","x-goog-api-key":chaveIA()},
+          body:JSON.stringify({systemInstruction:{parts:[{text:sistema}]},contents:conteudos,
+            tools:[{functionDeclarations:FERRAMENTAS_CHAT}],
+            generationConfig:{maxOutputTokens:32768,temperature:0.7}})
+        }).then(tratarResposta).then(function(d){
+          var c=d.candidates&&d.candidates[0];
+          if(!c||!c.content||!c.content.parts)throw new Error("O modelo respondeu vazio.");
+          var chamadas=c.content.parts.filter(function(p){return p.functionCall;});
+          if(chamadas.length&&k<6){
+            conteudos.push({role:"model",parts:c.content.parts});
+            return Promise.all(chamadas.map(function(p){
+              return executarFerramentaChat(p.functionCall.name,p.functionCall.args).then(function(r){
+                return {functionResponse:{name:p.functionCall.name,response:r}};});
+            })).then(function(resps){conteudos.push({role:"user",parts:resps});return rodada(k+1);});
+          }
+          return c.content.parts.filter(function(p){return !p.thought;}).map(function(p){return p.text||"";}).join("");
+        });
+      };
+      req=rodada(0);
     }
     return req.then(function(t){clearTimeout(relogio);return t;},function(e){clearTimeout(relogio);
       if(e&&e.name==="AbortError"){var t=new Error("O provedor não respondeu a tempo.");t.repetivel=true;throw t;}
@@ -11385,6 +11441,302 @@ function chamarChatIA(sistema,historico){
   }
   return tentar(0,null);
 }
+/* ===================== FERRAMENTAS DO ASSISTENTE =====================
+   O assistente do chat consulta o próprio site (livros SESI, banco de questões), abre páginas
+   e trabalha nos arquivos que o professor manda no chat (Word, PDF, texto): embaralha uma prova
+   no próprio Word e devolve o arquivo, ou escreve um Word novo com o que o professor pediu.
+   Funciona com o Gemini (chamada de funções); os arquivos gerados ficam para baixar no chat.  */
+var CHAT_ARQ={atual:null,downloads:{},n:0,feitos:{}};
+function chatSemAc(t){return semAcento(String(t||"")).replace(/\s+/g," ").trim();}
+function chaveDaSerie(s){
+  var t=chatSemAc(s), num=(t.match(/\d+/)||[""])[0];
+  var hit=SERIES_SESI.filter(function(x){return t===x[0]||t===chatSemAc(x[2])||t.indexOf(chatSemAc(x[2]))>-1;})[0];
+  if(hit)return hit[0];
+  if(num){
+    var medio=/serie|medio|\bem\b/.test(t), ano=/ano|fundamental/.test(t);
+    if(medio&&!ano&&SERIES_SESI.some(function(x){return x[0]==="em"+num;}))return "em"+num;
+    if(SERIES_SESI.some(function(x){return x[0]==="af"+num;}))return "af"+num;
+  }
+  return "";
+}
+function indiceDaSerie(chave){
+  if(LS.indices[chave]&&!LS.indices[chave].vazio)return Promise.resolve(LS.indices[chave]);
+  if(!livrosNaNuvem())return Promise.reject(new Error("Os livros SESI ficam na nuvem do grupo: é preciso entrar na nuvem (Ajustes › Nuvem compartilhada) para consultá-los."));
+  return NV.sdk.getDoc(NV.sdk.doc(NV.db,"livros","indice-"+chave)).then(function(d){
+    LS.indices[chave]=d.exists()?d.data():{vazio:true};
+    if(LS.indices[chave].vazio)throw new Error("Os livros desta série ainda não estão na nuvem.");
+    return LS.indices[chave];
+  });
+}
+function cadernosDaSerie(ind,componente){
+  var c=chatSemAc(componente);
+  return (ind.livros||[]).filter(function(L){
+    if(livroOculto(ind,L)||livroRepetido(ind,L))return false;
+    return !c||chatSemAc(areaLivro(L)+" "+L.titulo+" "+(L.area||"")).indexOf(c)>-1;
+  });
+}
+function acharCapitulo(L,cap){
+  var t=chatSemAc(cap), n=(t.match(/^\D*(\d+)\D*$/)||[])[1];
+  return (L.caps||[]).filter(function(c){
+    var nome=chatSemAc(c.nome);
+    if(n)return new RegExp("^capitulo\\s*0*"+n+"\\b").test(nome);
+    return nome.indexOf(t)>-1;
+  })[0];
+}
+function chatOferecerArquivo(blob,nome){
+  var id="a"+(++CHAT_ARQ.n);
+  CHAT_ARQ.downloads[id]={blob:blob,nome:nome};
+  CHAT.msgs.push({papel:"model",tipo:"aviso",texto:'📎 <strong>'+esc(nome)+'</strong> está pronto. <button type="button" class="botao" data-baixar-chat="'+id+'" style="margin-left:6px">Baixar</button>'});
+  chatGuardar();chatRender();
+  return id;
+}
+function docxDeTexto(conteudo){
+  var corpo=String(conteudo||"").replace(/\r/g,"").split("\n").map(function(l){
+    var m;
+    if(!l.trim())return paragrafo(" ",{depois:60});
+    if((m=/^#\s+(.*)$/.exec(l)))return paragrafo(m[1].replace(/\*\*/g,""),{negrito:true,tamanho:28,alinhar:"center",depois:200});
+    if((m=/^##+\s+(.*)$/.exec(l)))return paragrafo(m[1].replace(/\*\*/g,""),{negrito:true,tamanho:24,antes:160});
+    if((m=/^\*\*(.+)\*\*$/.exec(l.trim())))return paragrafo(m[1],{negrito:true});
+    return paragrafo(l.replace(/\*\*/g,""),{alinhar:"both"});
+  }).join("");
+  var W='xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"';
+  var arquivos=[
+    {nome:"[Content_Types].xml",texto:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/></Types>'},
+    {nome:"_rels/.rels",texto:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>'},
+    {nome:"word/_rels/document.xml.rels",texto:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>'},
+    {nome:"word/document.xml",texto:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document '+W+'><w:body>'+corpo+'<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1134" w:right="1021" w:bottom="1134" w:left="1021" w:header="709" w:footer="709" w:gutter="0"/></w:sectPr></w:body></w:document>'},
+    {nome:"word/styles.xml",texto:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:styles '+W+'><w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Arial" w:hAnsi="Arial" w:cs="Arial"/><w:sz w:val="22"/><w:szCs w:val="22"/><w:lang w:val="pt-BR"/></w:rPr></w:rPrDefault></w:docDefaults><w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/></w:style></w:styles>'}
+  ];
+  return zipar(arquivos);
+}
+/* ---- arquivos anexados no chat: Word, PDF ou texto ---- */
+var XML_W="http://schemas.openxmlformats.org/wordprocessingml/2006/main";
+function textoDoNoW(no){
+  var t="";
+  (function andar(n){
+    for(var c=n.firstChild;c;c=c.nextSibling){
+      if(c.nodeType!==1)continue;
+      if(c.localName==="t")t+=c.textContent;
+      else if(c.localName==="tab")t+=" ";
+      else if(c.localName==="br")t+="\n";
+      else andar(c);
+    }
+  })(no);
+  return t;
+}
+function documentoDocx(mapa){
+  var xmlDoc=new TextDecoder().decode(mapa["word/document.xml"]||new Uint8Array());
+  var doc=new DOMParser().parseFromString(xmlDoc,"application/xml");
+  if(doc.getElementsByTagName("parsererror").length)throw new Error("Não consegui ler o conteúdo deste Word.");
+  return doc;
+}
+function chatLerArquivo(f){
+  var nome=f.name||"arquivo", ext=(nome.split(".").pop()||"").toLowerCase();
+  return lerArquivo(f).then(function(buffer){
+    if(ext==="docx")return abrirZip(buffer).then(function(mapa){
+      var doc=documentoDocx(mapa), corpo=doc.getElementsByTagNameNS(XML_W,"body")[0];
+      var linhas=[];[].forEach.call(corpo.getElementsByTagNameNS(XML_W,"p"),function(p){linhas.push(textoDoNoW(p));});
+      return {nome:nome,tipo:"docx",buffer:buffer,texto:linhas.join("\n")};
+    });
+    if(ext==="pdf")return textoDoPdf(f).then(function(t){return {nome:nome,tipo:"pdf",texto:t};});
+    if(/^(txt|md|csv)$/.test(ext))return {nome:nome,tipo:"texto",texto:new TextDecoder().decode(buffer)};
+    throw new Error("Este tipo de arquivo eu ainda não leio: mande em Word (.docx), PDF ou texto (.txt).");
+  });
+}
+/* ---- embaralhar a prova do Word mantendo a formatação: troca a ordem dos blocos de questão ---- */
+function trocarTrechoW(p,inicio,fim,novo){
+  var ts=[].filter.call(p.getElementsByTagNameNS(XML_W,"t"),function(){return true;}), pos=0, posto=false;
+  ts.forEach(function(t){
+    var txt=t.textContent, a=pos, b=pos+txt.length;pos=b;
+    if(b<=inicio||a>=fim)return;
+    var i=Math.max(inicio,a)-a, j=Math.min(fim,b)-a;
+    t.textContent=txt.slice(0,i)+(posto?"":novo)+txt.slice(j);
+    posto=true;
+    t.setAttributeNS("http://www.w3.org/XML/1998/namespace","xml:space","preserve");
+  });
+}
+function embaralharLista(n){
+  var ordem=[];for(var i=0;i<n;i++)ordem.push(i);
+  for(var tent=0;tent<8;tent++){
+    for(var k=n-1;k>0;k--){var r=Math.floor(Math.random()*(k+1)), x=ordem[k];ordem[k]=ordem[r];ordem[r]=x;}
+    if(n<2||ordem.some(function(v,i){return v!==i;}))break;
+  }
+  return ordem;
+}
+function embaralharProvaDocx(arq,mexerAlternativas){
+  return abrirZip(arq.buffer).then(function(mapa){
+    var doc=documentoDocx(mapa), corpo=doc.getElementsByTagNameNS(XML_W,"body")[0];
+    var filhos=[].filter.call(corpo.childNodes,function(n){return n.nodeType===1;});
+    var textos=filhos.map(function(n){return n.localName==="p"?textoDoNoW(n):"";});
+    var R1=/^\s*QUEST[ÃA]O\s*(?:N[º°o.]*\s*)?(\d{1,3})\b/i, R2=/^\s*(\d{1,3})\s*[.)\-–]\s*\S/;
+    var inicios=[];
+    textos.forEach(function(t,i){if(R1.test(t))inicios.push(i);});
+    var regra=R1;
+    if(inicios.length<2){
+      regra=R2;inicios=[];var esperado=1;
+      textos.forEach(function(t,i){var m=R2.exec(t);if(m&&+m[1]===esperado){inicios.push(i);esperado++;}});
+    }
+    if(inicios.length<2)throw new Error("Não encontrei a numeração das questões neste Word. Elas precisam começar com \"QUESTÃO 01\" ou \"1.\" / \"1)\" escritos no texto (a numeração automática do Word eu não consigo mover).");
+    var fimGeral=filhos.length;
+    for(var g=inicios[inicios.length-1]+1;g<filhos.length;g++){
+      if(filhos[g].localName==="sectPr"||/^\s*GABARITO\b/i.test(textos[g])){fimGeral=g;break;}
+    }
+    var blocos=inicios.map(function(ini,k){return {ini:ini,fim:k+1<inicios.length?inicios[k+1]:fimGeral,antigo:k+1};});
+    var ancora=filhos[fimGeral]||null, largura=(regra.exec(textos[inicios[0]])||["",""])[1].length;
+    var relatorio=[];
+    // alternativas (opcional): parágrafos seguidos começando com A) B) C)… dentro de cada questão
+    if(mexerAlternativas)blocos.forEach(function(b){
+      var alts=[];
+      for(var i=b.ini+1;i<b.fim;i++){
+        if(!textos[i].trim())continue;
+        var m=/^\s*\(?([A-Ea-e])\s*[).\-–]\s*/.exec(textos[i]), L=m?m[1].toUpperCase():"";
+        if(L&&L==="ABCDE"[alts.length])alts.push(i);
+        else if(alts.length>=3)break;
+        else alts=L==="A"?[i]:[];
+      }
+      if(alts.length<3){b.alts="";return;}
+      var ordem=embaralharLista(alts.length), nos=alts.map(function(i){return filhos[i];});
+      var depois=nos[nos.length-1].nextSibling, pai=nos[0].parentNode, mapaLetras=[];
+      nos.forEach(function(n){pai.removeChild(n);});
+      ordem.forEach(function(antiga,nova){
+        var n=nos[antiga], t=textoDoNoW(n), m=/^(\s*\(?)([A-Ea-e])/.exec(t);
+        if(m){var letra="ABCDE"[nova];trocarTrechoW(n,m[1].length,m[1].length+1,m[2]===m[2].toLowerCase()?letra.toLowerCase():letra);}
+        pai.insertBefore(n,depois);
+        mapaLetras.push("ABCDE"[antiga]+"→"+"ABCDE"[nova]);
+      });
+      b.alts=mapaLetras.sort().join(", ");
+    });
+    var ordemQ=embaralharLista(blocos.length), pai=corpo;
+    // os nós de cada questão na ordem ATUAL do documento (as alternativas podem ter sido trocadas acima)
+    var grupos=blocos.map(function(b,k){
+      var fimNo=k+1<blocos.length?filhos[blocos[k+1].ini]:ancora, gr=[];
+      for(var n=filhos[b.ini];n&&n!==fimNo;n=n.nextSibling)gr.push(n);
+      return gr;
+    });
+    grupos.forEach(function(gr){gr.forEach(function(n){pai.removeChild(n);});});
+    ordemQ.forEach(function(antiga,nova){
+      var gr=grupos[antiga], p0=gr[0], t=textoDoNoW(p0), m=regra.exec(t);
+      if(m){
+        var ini=m.index+m[0].indexOf(m[1],m[0].search(/\d/)), num=String(nova+1);
+        while(num.length<largura)num="0"+num;
+        trocarTrechoW(p0,ini,ini+m[1].length,num);
+      }
+      gr.forEach(function(n){pai.insertBefore(n,ancora);});
+      relatorio.push({nova:nova+1,antiga:blocos[antiga].antigo,alternativas:blocos[antiga].alts||""});
+    });
+    var saida=new XMLSerializer().serializeToString(doc);
+    if(!/^<\?xml/.test(saida))saida='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+saida;
+    mapa["word/document.xml"]=new TextEncoder().encode(saida);
+    var nome=arq.nome.replace(/\.docx$/i,"")+" - embaralhada.docx";
+    var blob=zipar(Object.keys(mapa).map(function(n){return {nome:n,dados:mapa[n]};}));
+    return {blob:blob,nome:nome,relatorio:relatorio,temGabarito:fimGeral<filhos.length&&/GABARITO/i.test(textos[fimGeral]||"")};
+  });
+}
+var PAGINAS_CHAT={gerar:"gerar",banco:"banco","montar prova":"prova",prova:"prova","provas oficiais":"oficiais",oficiais:"oficiais",planejamento:"plano",plano:"plano",apresentacoes:"apres","apresentações":"apres",ajustes:"ajustes"};
+var FERRAMENTAS_CHAT=[
+  {name:"capitulos_dos_livros_sesi",description:"Lista os cadernos (livros) SESI de uma série e os nomes de todos os capítulos de cada caderno. Use sempre que perguntarem nomes, ordem ou conteúdo de capítulos/livros.",
+   parameters:{type:"object",properties:{serie:{type:"string",description:"6º ano, 7º ano, 8º ano, 9º ano, 1ª série, 2ª série ou 3ª série"},componente:{type:"string",description:"opcional: História, Geografia, Matemática, Língua Portuguesa, Ciências, Arte, Inglês, Filosofia, Sociologia, Física, Química, Biologia…"}},required:["serie"]}},
+  {name:"texto_do_capitulo",description:"Traz o texto de um capítulo de um livro SESI (com marcadores [fim da página N] para citar páginas). Use para resumir, explicar ou tirar informação de um capítulo.",
+   parameters:{type:"object",properties:{serie:{type:"string"},componente:{type:"string"},caderno:{type:"string",description:"número do caderno, ex.: 4"},capitulo:{type:"string",description:"número do capítulo ou parte do nome"}},required:["serie","componente","capitulo"]}},
+  {name:"buscar_questoes_no_banco",description:"Procura questões guardadas no Banco do site e diz quantas há. Filtros opcionais.",
+   parameters:{type:"object",properties:{texto:{type:"string",description:"palavra ou tema"},componente:{type:"string"},serie:{type:"string"},tipo:{type:"string",description:"objetiva, dissertativa ou adaptada"},limite:{type:"integer"}}}},
+  {name:"provas_oficiais",description:"Acervo de Provas oficiais (ENEM, SSA/UPE, PASSE): quantas provas e questões há, por ano, turma e disciplina, e a lista dos cadernos. Use para qualquer pergunta sobre o acervo (ex.: 'quantas questões tem o SSA?').",
+   parameters:{type:"object",properties:{origem:{type:"string",description:"ENEM, SSA ou PASSE (opcional)"},ano:{type:"string"},turma:{type:"string",description:"ex.: 9º ano, 2ª série (opcional)"},disciplina:{type:"string",description:"Linguagens, Humanas, Natureza ou Matemática (opcional)"}}}},
+  {name:"resumo_do_banco",description:"Números do Banco: total de questões por componente, série e formato.",parameters:{type:"object",properties:{}}},
+  {name:"abrir_pagina",description:"Leva o professor para uma página do site.",
+   parameters:{type:"object",properties:{pagina:{type:"string",description:"Gerar, Banco, Montar prova, Provas oficiais, Planejamento, Apresentações ou Ajustes"}},required:["pagina"]}},
+  {name:"embaralhar_prova_anexada",description:"Embaralha a ordem das questões do Word (.docx) que o professor anexou no chat, renumera e devolve um novo Word com a MESMA formatação, para baixar. Pode também embaralhar as alternativas.",
+   parameters:{type:"object",properties:{embaralhar_alternativas:{type:"boolean"}}}},
+  {name:"criar_arquivo_word",description:"Cria um arquivo Word (.docx) para o professor baixar, com o conteúdo que você escrever (uma linha por parágrafo; '# ' título; '## ' subtítulo; linha inteira entre ** em negrito). Use para devolver um arquivo modificado (corrigido, reorganizado, resumido, convertido) ou criar um documento novo.",
+   parameters:{type:"object",properties:{nome_do_arquivo:{type:"string"},conteudo:{type:"string"}},required:["nome_do_arquivo","conteudo"]}}
+];
+function executarFerramentaChat(nome,a){
+  a=a||{};
+  var chaveFeito=nome+"|"+JSON.stringify(a);
+  if(CHAT_ARQ.feitos[chaveFeito])return Promise.resolve(CHAT_ARQ.feitos[chaveFeito]);
+  function guardar(r){if(/embaralhar|criar_arquivo/.test(nome))CHAT_ARQ.feitos[chaveFeito]=r;return r;}
+  return Promise.resolve().then(function(){
+    if(nome==="capitulos_dos_livros_sesi"||nome==="texto_do_capitulo"){
+      var chave=chaveDaSerie(a.serie);
+      if(!chave)return {erro:"Série não reconhecida. Use uma destas: "+SERIES_SESI.map(function(x){return x[2];}).join(", ")};
+      return indiceDaSerie(chave).then(function(ind){
+        var lista=cadernosDaSerie(ind,a.componente);
+        if(!lista.length)return {erro:"Nenhum caderno de "+(a.componente||"")+" no "+nomeSerieSesi(chave)+".",componentes_disponiveis:cadernosDaSerie(ind,"").map(function(L){return areaLivro(L);}).filter(function(v,i,s){return s.indexOf(v)===i;})};
+        if(nome==="capitulos_dos_livros_sesi")return {serie:nomeSerieSesi(chave),cadernos:lista.slice(0,40).map(function(L){
+          return {caderno:nomeCaderno(L),capitulos:(L.caps||[]).map(function(c){return c.nome;})};})};
+        if(a.caderno){var nc=String(a.caderno).replace(/\D/g,"");var so=lista.filter(function(L){return numCaderno(L)===nc;});if(so.length)lista=so;}
+        var achado=null;lista.some(function(L){var c=acharCapitulo(L,a.capitulo);if(c){achado={L:L,c:c};return true;}return false;});
+        if(!achado)return {erro:"Capítulo não encontrado.",cadernos:lista.map(function(L){return {caderno:nomeCaderno(L),capitulos:(L.caps||[]).map(function(c){return c.nome;})};})};
+        return textoCapitulo(achado.c.id).then(function(t){
+          return {caderno:nomeCaderno(achado.L),capitulo:achado.c.nome,texto:apMarcarPaginas(t).texto.slice(0,40000)};
+        });
+      });
+    }
+    if(nome==="buscar_questoes_no_banco"){
+      var tx=chatSemAc(a.texto), co=chatSemAc(a.componente), se=chatSemAc(a.serie), ti=chatSemAc(a.tipo);
+      var achadas=questoes.filter(function(q){
+        if(co&&chatSemAc(q.componente).indexOf(co)<0)return false;
+        if(se&&chatSemAc(q.serie).indexOf(se)<0)return false;
+        if(ti&&chatSemAc(q.tipo).indexOf(ti)<0)return false;
+        if(tx&&chatSemAc([q.assunto,q.enunciado,q.textoBase,q.habilidade].join(" ")).indexOf(tx)<0)return false;
+        return true;
+      });
+      var lim=Math.min(30,Math.max(1,+a.limite||10));
+      return {total:achadas.length,mostrando:Math.min(lim,achadas.length),questoes:achadas.slice(0,lim).map(function(q){
+        return {componente:q.componente||"",serie:q.serie||"",formato:q.tipo||"",assunto:q.assunto||"",enunciado:String(q.enunciado||"").slice(0,220)};})};
+    }
+    if(nome==="provas_oficiais"){
+      return acervo().then(function(lista){
+        var o=chatSemAc(a.origem), an=String(a.ano||"").replace(/\D/g,""), tu=chatSemAc(a.turma), di=chatSemAc(a.disciplina);
+        var porOrigem={}, filtradas=lista.filter(function(p){
+          var og=origemDaProva(p);
+          porOrigem[og]=porOrigem[og]||{provas:0,questoes:0};porOrigem[og].provas++;porOrigem[og].questoes+=(p.questoes||[]).length;
+          if(o&&og!==o.replace(/[^a-z]/g,"").replace("upe","ssa"))return false;
+          if(an&&anoDaProva(p)!==an)return false;
+          if(tu&&chatSemAc(turmaDaProva(p)).indexOf(tu.replace(/serie/,"serie"))<0)return false;
+          return true;
+        });
+        var total=0, porDisc={}, porAno={};
+        filtradas.forEach(function(p){
+          (p.questoes||[]).forEach(function(q){
+            var d=NOME_DISCIPLINA[areaDaQuestao(q,p)]||"Outras";
+            if(di&&chatSemAc(d).indexOf(di)<0)return;
+            total++;porDisc[d]=(porDisc[d]||0)+1;var y=anoDaProva(p)||"sem ano";porAno[y]=(porAno[y]||0)+1;
+          });
+        });
+        if(!lista.length)return {erro:"O acervo ainda não carregou neste aparelho (precisa estar na nuvem ou abrir Provas oficiais uma vez)."};
+        return {acervo_inteiro:porOrigem,filtro:{origem:a.origem||"",ano:a.ano||"",turma:a.turma||"",disciplina:a.disciplina||""},
+          provas_no_filtro:filtradas.length,questoes_no_filtro:total,por_disciplina:porDisc,por_ano:porAno,
+          cadernos:filtradas.slice(0,60).map(function(p){return p.nome+" ("+(p.questoes||[]).length+" questões)";})};
+      });
+    }
+    if(nome==="resumo_do_banco"){
+      function contar(campo){var r={};questoes.forEach(function(q){var v=q[campo]||"(sem)";r[v]=(r[v]||0)+1;});return r;}
+      return {total:questoes.length,por_componente:contar("componente"),por_serie:contar("serie"),por_formato:contar("tipo")};
+    }
+    if(nome==="abrir_pagina"){
+      var v=PAGINAS_CHAT[chatSemAc(a.pagina)]||PAGINAS_CHAT[String(a.pagina||"").toLowerCase()];
+      if(!v)return {erro:"Página desconhecida."};
+      irPara(v);return {ok:true,pagina:a.pagina};
+    }
+    if(nome==="embaralhar_prova_anexada"){
+      var arq=CHAT_ARQ.atual;
+      if(!arq)return {erro:"Nenhum arquivo anexado. Peça ao professor para anexar a prova em Word (.docx) pelo clipe do chat."};
+      if(arq.tipo!=="docx")return {erro:"O arquivo anexado é "+arq.tipo.toUpperCase()+". Para embaralhar mantendo a formatação, preciso do Word (.docx). Alternativa: reescrever as questões em outra ordem com criar_arquivo_word."};
+      return embaralharProvaDocx(arq,!!a.embaralhar_alternativas).then(function(r){
+        chatOferecerArquivo(r.blob,r.nome);
+        return guardar({ok:true,arquivo:r.nome,questoes:r.relatorio.length,nova_ordem:r.relatorio,
+          aviso:"O botão Baixar já apareceu no chat."+(r.temGabarito?" O Word tem um GABARITO no fim, que NÃO foi alterado: avise o professor para atualizá-lo com a nova ordem.":" Se a prova tiver gabarito separado, ele precisa seguir a nova ordem.")});
+      });
+    }
+    if(nome==="criar_arquivo_word"){
+      var nomeArq=String(a.nome_do_arquivo||"documento").replace(/\.docx$/i,"").replace(/[^\wÀ-ÿ \-]/g,"").trim()||"documento";
+      chatOferecerArquivo(docxDeTexto(a.conteudo),nomeArq+".docx");
+      return guardar({ok:true,arquivo:nomeArq+".docx",aviso:"O botão Baixar já apareceu no chat."});
+    }
+    return {erro:"Ferramenta desconhecida."};
+  }).catch(function(e){return {erro:(e&&e.message)||"falhou"};});
+}
 function chatFalha(e){
   var t=(e&&e.message)||"";
   if(e&&e.rede)return "Não consegui falar com a IA agora: "+esc(t);
@@ -11396,21 +11748,25 @@ function chatFalha(e){
 }
 function chatEnviar(texto){
   texto=String(texto||"").trim();
-  if(CHAT.enviando||(!texto&&!CHAT.anexos.length))return;
+  if(CHAT.enviando||(!texto&&!CHAT.anexos.length&&!CHAT.arquivo))return;
+  if(CHAT.arquivo&&CHAT.arquivo.lendo)return;
   if(!chaveIA()){
     CHAT.msgs.push({papel:"user",texto:texto||"(print)",imagens:CHAT.anexos.slice()});
     CHAT.msgs.push({papel:"model",tipo:"aviso",texto:'Para eu conversar com você, preciso da chave da IA, a mesma que o site usa para gerar questões. É gratuita e leva dois minutos. <br><button type="button" class="botao" data-abrir-assistente="1">Cadastrar minha chave</button>'});
     CHAT.anexos=[];chatRenderAnexos();$("chat-texto").value="";chatGuardar();chatRender();return;
   }
-  var msg={papel:"user",texto:texto||"Veja este print.",imagens:CHAT.anexos.slice()};
+  var msg={papel:"user",texto:texto||(CHAT.arquivo?"Veja este arquivo.":"Veja este print."),imagens:CHAT.anexos.slice()};
+  if(CHAT.arquivo){msg.arquivo={nome:CHAT.arquivo.nome,texto:CHAT.arquivo.texto||""};msg.texto+="\n📄 "+CHAT.arquivo.nome;CHAT_ARQ.atual=CHAT.arquivo;CHAT.arquivo=null;}
+  CHAT_ARQ.feitos={};
   CHAT.msgs.push(msg);CHAT.anexos=[];chatRenderAnexos();
   $("chat-texto").value="";chatAjustarCampo();
   CHAT.enviando=true;$("chat-enviar").disabled=true;chatRender();
   // só as últimas mensagens vão para a IA; as imagens, só as das duas últimas falas do professor
   var conversa=CHAT.msgs.filter(function(m){return !m.tipo;}).slice(-14);
-  var comImagem=0;
+  var comImagem=0, comArquivo=0;
   var historico=conversa.slice().reverse().map(function(m){
     var c={papel:m.papel,texto:m.texto+(m.temPrint&&!(m.imagens||[]).length?" (havia um print nesta mensagem)":"")};
+    if(m.arquivo&&comArquivo<2){comArquivo++;c.texto+="\n\n[ARQUIVO ANEXADO: "+m.arquivo.nome+" — conteúdo extraído abaixo]\n"+String(m.arquivo.texto||"(sem texto legível)").slice(0,80000);}
     if(m.papel==="user"&&(m.imagens||[]).length&&comImagem<2){c.imagens=m.imagens;comImagem++;}
     return c;
   }).reverse();
@@ -11490,17 +11846,25 @@ $("chat-texto").addEventListener("keydown",function(ev){
 $("chat-texto").addEventListener("input",chatAjustarCampo);
 $("chat-texto").addEventListener("paste",function(ev){
   var itens=(ev.clipboardData&&ev.clipboardData.items)||[], arquivos=[];
-  for(var i=0;i<itens.length;i++)if(itens[i].kind==="file"&&/^image\//.test(itens[i].type))arquivos.push(itens[i].getAsFile());
+  for(var i=0;i<itens.length;i++)if(itens[i].kind==="file")arquivos.push(itens[i].getAsFile());
   if(arquivos.length){ev.preventDefault();chatAnexar(arquivos);}
 });
 $("chat-anexar").addEventListener("click",function(){$("chat-arquivo").click();});
 $("chat-arquivo").addEventListener("change",function(){chatAnexar(this.files);this.value="";});
 $("chat-anexos").addEventListener("click",function(ev){
+  if(ev.target.closest("[data-tirar-arquivo]")){CHAT.arquivo=null;chatRenderAnexos();return;}
   var b=ev.target.closest("[data-tirar-anexo]");if(!b)return;
   CHAT.anexos.splice(+b.dataset.tirarAnexo,1);chatRenderAnexos();
 });
 $("chat-msgs").addEventListener("click",function(ev){
   var s=ev.target.closest("[data-sugestao]");if(s)chatEnviar(s.dataset.sugestao);
+  var bx=ev.target.closest("[data-baixar-chat]");
+  if(bx){
+    var d=CHAT_ARQ.downloads[bx.dataset.baixarChat];
+    if(!d){alert("Este arquivo era de antes de recarregar a página. Peça de novo ao assistente.");return;}
+    var url=URL.createObjectURL(d.blob), a=document.createElement("a");a.href=url;a.download=d.nome;
+    document.body.appendChild(a);a.click();document.body.removeChild(a);setTimeout(function(){URL.revokeObjectURL(url);},1500);
+  }
   if(ev.target.closest("[data-abrir-assistente]")){chatFechar();abrirAssistenteChave();}
 });
 $("btn-testar-relato").addEventListener("click",function(){
