@@ -454,6 +454,18 @@ input[type=file]::file-selector-button:hover{background:var(--primaria-hover);bo
 .titulo-hab{font-size:12px;font-weight:700;color:var(--primaria-escura);text-transform:uppercase;letter-spacing:.03em;margin:12px 0 4px;padding-bottom:4px;border-bottom:1px solid var(--regua)}
 .hab .cod{font-weight:700;color:var(--primaria)}
 /* habilidades citadas nos capítulos escolhidos: bloco em destaque, um grupo por capítulo */
+.of-caps{border:2px solid var(--primaria-borda);background:var(--primaria-fundo);border-radius:14px;padding:12px 14px 6px;margin:12px 0}
+.of-caps .of-caps-titulo{font-family:var(--titulo);font-size:13.5px;font-weight:700;color:var(--primaria)}
+.of-caps .of-caps-n{font-size:12px;font-weight:600;color:var(--tinta)}
+.of-caps>summary{background:#fff}
+.of-cap-item{background:#fff;border:1px solid var(--primaria-borda);border-radius:10px;padding:10px 12px;margin:8px 0}
+.of-cap-item p{margin:0 0 4px}
+.of-cap-topo{font-size:13px}
+.of-cap-trecho{font-size:12.5px;color:var(--tinta);opacity:.85}
+.of-cap-acoes{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:6px;font-size:12.5px}
+.of-cap-acoes label{display:flex;align-items:center;gap:6px;margin:0;font-weight:600}
+.of-cap-acoes input{width:auto;margin:0}
+.of-cap-completa{margin-top:8px;padding:10px;border-left:3px solid var(--primaria);background:var(--primaria-fundo);font-size:13px;border-radius:6px}
 .hab-caps{border:2px solid var(--destaque);background:var(--destaque-fundo);border-radius:14px;padding:12px 14px 6px;margin:12px 0}
 .hab-caps .hab-caps-titulo{font-family:var(--titulo);font-size:13.5px;font-weight:700;color:#2F5E14}
 .hab-caps .hab-caps-n{font-size:12px;font-weight:600;color:#4A5A3E}
@@ -1355,6 +1367,7 @@ body.ap-arrastando,body.ap-arrastando *{cursor:grabbing !important}
         <input type="text" id="assunto" name="recorte-tema" autocomplete="off" data-lpignore="true" data-form-type="other" placeholder="Ex.: Revolução Pernambucana de 1817 — causas e desdobramentos">
         </div>
         <div id="hab-dos-capitulos"></div>
+        <div id="oficiais-dos-capitulos"></div>
 
     <h3 class="passo"><span>3</span> Formato e quantidade</h3>
         <div class="formatos">
@@ -4163,6 +4176,7 @@ function montarPrompt(p,quantidades,jaFeitas,passo,evitar){
   (p.unidade?", "+p.unidade:"")+", sobre o seguinte recorte: "+p.assunto+".",
 "",
 matriz,
+(p.referencias&&p.referencias.length)?("QUESTÕES OFICIAIS ESCOLHIDAS PELO PROFESSOR COMO REFERÊNCIA (do mesmo assunto dos capítulos): observe como elas abordam o assunto, o tipo de raciocínio exigido e o nível de exigência, e aproxime as questões novas disso. NÃO copie, não parafraseie e não reaproveite textos-base nem alternativas: as questões novas são inéditas e partem do material de origem.\n\n"+p.referencias.join("\n\n")+"\n"):"",
 (p.modelos&&p.modelos.length)?("QUESTÕES REAIS DO "+(p.estiloObjetiva&&ORIGENS[p.estiloObjetiva]?ORIGENS[p.estiloObjetiva].nome:p.matriz.indexOf("SSA")===0?"SSA":p.matriz)+" USADAS COMO MODELO — imite a estrutura delas: tipo e extensão do texto-base, forma de citar a fonte, formulação do comando, estilo e extensão das alternativas e nível de exigência. NÃO copie, não parafraseie e não reaproveite os textos, os temas específicos nem as alternativas: as questões novas devem ser inéditas e tratar do recorte pedido.\n\n"+p.modelos.join("\n\n")+"\n"):"",
 p.dificuldadeAlvo?("DIFICULDADE ALVO: "+p.dificuldadeAlvo+", como os modelos acima, que o INEP mediu pela TRI. Calibre o texto-base, o comando e os distratores para esse nível."):"",
 "Quantidades neste lote: "+pedidos.join("; ")+".",
@@ -5389,6 +5403,7 @@ $("btn-gerar").addEventListener("click",function(){
   if(!chaveIA()){msg("retorno-geracao","Nenhuma chave de API salva. Abra <strong>Ajustes</strong>, cole a chave e clique em testar conexão antes de gerar.","erro");abrirAssistenteChave();return;}
   if(total+nImg>20){msg("retorno-geracao","O limite é de 20 questões por geração — acima disso o provedor costuma recusar os lotes. Gere em rodadas de até 20; o banco vai acumulando.","erro");return;}
 
+  p.referencias=origem==="livro"?oficiaisEscolhidasDoGerar().slice(0,6).map(function(c,i){return textoModelo(c,i).replace(/^MODELO/,"REFERÊNCIA");}):[];
   prepararModelos(p).catch(function(){return [];}).then(function(modelos){
   p.modelos=modelos;
   ultimoPedido=p;
@@ -5537,6 +5552,138 @@ function componenteDasCitadas(capitulos,etapa,serie,chaveAtual){
   if(!nomes.length)return melhor.split("|")[0];
   return nomes.length===1?nomes[0]:nomes.slice(0,-1).join(", ")+" ou "+nomes[nomes.length-1];
 }
+/* ===== QUESTÕES OFICIAIS SOBRE OS CAPÍTULOS MARCADOS (Gerar, passo 2) =====
+   Com capítulos do livro SESI marcados, o site procura no acervo de Provas oficiais (ENEM, SSA,
+   PASSE) as questões do mesmo assunto, pelo título de cada capítulo e pela matéria do caderno.
+   O professor lê ali mesmo, abre na prova original ou marca algumas como referência: as marcadas
+   vão para a IA junto com o pedido, como exemplos de abordagem e nível (sem copiar).            */
+var OF_CAPS={aberto:false,escolhidas:{},achadas:[],chave:"",vendo:{}};
+var PALAVRAS_VAZIAS=" capitulo entre sobre como para pelo pela pelos pelas seus suas mais muito outras outros desde ate apos antes durante quando onde qual quais esse essa este esta isso isto aquele aquela parte partes introducao apresentacao unidade tema temas mundo brasil brasileira brasileiro historia geografia ";
+function termosDoTitulo(t){
+  t=semAcento(String(t||"").replace(/^cap[ií]tulo\s*\d+\s*[-–:]\s*/i,""));
+  var ps=t.replace(/[^a-z0-9 ]+/g," ").split(/\s+/).filter(function(w){return w.length>=4&&PALAVRAS_VAZIAS.indexOf(" "+w+" ")<0;});
+  var duplas=[];for(var i=0;i+1<ps.length;i++)duplas.push(ps[i]+" "+ps[i+1]);
+  var bruto=t.replace(/[^a-z0-9 ]+/g," ").replace(/\s+/g," ");
+  // pares de palavras seguidas no título original ("guerra fria", "revolucao industrial")
+  var pares=[];bruto.split(" ").forEach(function(w,i,a){if(i+1<a.length&&w.length>=4&&a[i+1].length>=3)pares.push(w+" "+a[i+1]);});
+  return {palavras:ps,pares:pares.concat(duplas).filter(function(v,i,s){return s.indexOf(v)===i;})};
+}
+function textoBuscaOficial(q,prova){
+  var comum=q.comum&&(prova.comuns||[]).filter(function(x){return x.id===q.comum;})[0], partes=[];
+  [comum,q].forEach(function(b){if(b)(b.partes||[]).forEach(function(x){if(x.tipo==="texto")partes.push(x.texto);});});
+  return {assunto:semAcento(q.assunto),palavras:semAcento((q.palavras||[]).join(" ")),corpo:semAcento(partes.join(" ")+" "+(q.comando||"")+" "+(q.texto||""))};
+}
+function pontuarOficial(b,termos){
+  var pts=0;
+  termos.pares.forEach(function(p){if(b.assunto.indexOf(p)>=0||b.palavras.indexOf(p)>=0)pts+=12;else if(b.corpo.indexOf(p)>=0)pts+=5;});
+  termos.palavras.forEach(function(w){if(b.assunto.indexOf(w)>=0)pts+=6;else if(b.palavras.indexOf(w)>=0)pts+=4;else if(b.corpo.indexOf(w)>=0)pts+=1;});
+  return pts;
+}
+function procurarOficiaisDosCapitulos(){
+  var ids=Object.keys(LS.marcados);
+  if(!ids.length)return Promise.resolve([]);
+  var caps=ids.map(function(id){
+    var m=LS.marcados[id], partes=String(m.nome||"").split(" · ");
+    return {id:id,titulo:partes[partes.length-1]||"",materia:areaVista(m.area||""),termos:termosDoTitulo(partes[partes.length-1]||"")};
+  });
+  return acervo().then(function(provas){
+    var achadas=[];
+    provas.forEach(function(prova){
+      var og=origemDaProva(prova);
+      if(["enem","ssa","passe"].indexOf(og)<0)return;
+      (prova.questoes||[]).forEach(function(q){
+        if(q.gabarito==="Anulada")return;
+        if(!q.comando&&!(q.partes||[]).length)return;
+        var b=null, melhor=0, cap=null;
+        caps.forEach(function(c){
+          // a questão precisa ser da matéria do caderno (quando a questão tem matéria classificada)
+          if(c.materia&&(q.materias||[]).length&&(q.materias||[]).indexOf(c.materia)<0)return;
+          b=b||textoBuscaOficial(q,prova);
+          var p=pontuarOficial(b,c.termos);
+          if(p>melhor){melhor=p;cap=c;}
+        });
+        if(melhor>=12)achadas.push({chave:prova.id+"|"+q.chave,prova:prova,q:q,pontos:melhor,cap:cap.titulo});
+      });
+    });
+    return achadas.sort(function(a,b){return b.pontos-a.pontos||(anoDaProva(b.prova)||"").localeCompare(anoDaProva(a.prova)||"");}).slice(0,24);
+  });
+}
+function resumoQuestaoOficial(c){
+  var q=c.q, t=(q.partes||[]).filter(function(x){return x.tipo==="texto";}).map(function(x){return x.texto;}).join(" ")||q.comando||"";
+  t=String(t).replace(/\s+/g," ").trim();
+  return t.length>200?t.slice(0,197)+"…":t;
+}
+function nomeCurtoProva(p){
+  var og=origemDaProva(p).toUpperCase(), ano=anoDaProva(p), tu=turmaDaProva(p);
+  return og+(ano?" "+ano:"")+(tu?" · "+tu:"");
+}
+function renderOficiaisDosCapitulos(){
+  var alvo=$("oficiais-dos-capitulos");if(!alvo)return;
+  var ids=origemAtual()==="livro"?Object.keys(LS.marcados).sort():[];
+  if(!ids.length){alvo.innerHTML="";OF_CAPS.achadas=[];OF_CAPS.escolhidas={};OF_CAPS.chave="";return;}
+  var chave=ids.join(",");
+  if(chave!==OF_CAPS.chave){
+    OF_CAPS.chave=chave;OF_CAPS.achadas=null;
+    procurarOficiaisDosCapitulos().then(function(l){
+      if(OF_CAPS.chave!==chave)return;
+      OF_CAPS.achadas=l;
+      var validas={};l.forEach(function(c){validas[c.chave]=1;});
+      Object.keys(OF_CAPS.escolhidas).forEach(function(k){if(!validas[k])delete OF_CAPS.escolhidas[k];});
+      renderOficiaisDosCapitulos();
+    },function(){OF_CAPS.achadas=[];renderOficiaisDosCapitulos();});
+  }
+  var l=OF_CAPS.achadas, n=l?l.length:0, esc2=Object.keys(OF_CAPS.escolhidas).length;
+  var resumo=l===null?"— procurando no acervo…":(n?"— "+n+" encontrada"+(n>1?"s":"")+(esc2?", "+esc2+" como referência":""):"— nenhuma encontrada");
+  alvo.innerHTML='<details class="of-caps"'+(OF_CAPS.aberto?" open":"")+'><summary><span><span class="of-caps-titulo">Questões de provas oficiais sobre estes capítulos</span> '+
+    '<span class="opcional">opcional</span> <span class="of-caps-n">'+esc(resumo)+"</span></span></summary>"+
+    (l===null?'<p class="ajuda">Procurando no ENEM, SSA e PASSE…</p>':
+     !n?'<p class="ajuda">Nenhuma questão do ENEM, SSA ou PASSE trata do assunto destes capítulos'+(acervoCache&&acervoCache.length?".":" (o acervo de Provas oficiais ainda não carregou neste aparelho).")+"</p>":
+     '<p class="ajuda">Questões reais do mesmo assunto, das mais próximas para as menos próximas. Marque <strong>Usar como referência</strong> nas que quiser: elas vão para a IA junto com o pedido, como exemplo de abordagem e nível, e as questões novas continuam inéditas.</p>'+
+     l.map(function(c){
+       var q=c.q;
+       return '<div class="of-cap-item">'+
+         '<p class="of-cap-topo"><strong>'+esc(nomeCurtoProva(c.prova))+" · questão "+esc(q.numero)+"</strong>"+(q.assunto?" — "+esc(q.assunto):"")+"</p>"+
+         '<p class="of-cap-trecho">'+esc(resumoQuestaoOficial(c))+"</p>"+
+         '<div class="of-cap-acoes"><label><input type="checkbox" data-of-ref="'+esc(c.chave)+'"'+(OF_CAPS.escolhidas[c.chave]?" checked":"")+'> Usar como referência</label>'+
+         '<button type="button" class="botao-embaralhar" data-of-ver="'+esc(c.chave)+'">'+(OF_CAPS.vendo[c.chave]?"Esconder":"Ver questão")+"</button>"+
+         '<button type="button" class="botao-embaralhar" data-of-abrir="'+esc(c.chave)+'">Abrir na prova</button></div>'+
+         (OF_CAPS.vendo[c.chave]?'<div class="of-cap-completa">'+esc(textoModelo({prova:c.prova,q:q},0).replace(/^MODELO 1 — /,"")).replace(/\n/g,"<br>")+"</div>":"")+
+         "</div>";
+     }).join(""))+"</details>";
+}
+function oficiaisEscolhidasDoGerar(){
+  return (OF_CAPS.achadas||[]).filter(function(c){return OF_CAPS.escolhidas[c.chave];});
+}
+document.addEventListener("toggle",function(ev){var d=ev.target;if(d&&d.classList&&d.classList.contains("of-caps"))OF_CAPS.aberto=d.open;},true);
+document.addEventListener("change",function(ev){
+  var c=ev.target.closest&&ev.target.closest("[data-of-ref]");if(!c)return;
+  if(c.checked)OF_CAPS.escolhidas[c.dataset.ofRef]=1;else delete OF_CAPS.escolhidas[c.dataset.ofRef];
+  var s=document.querySelector(".of-caps-n"), n=(OF_CAPS.achadas||[]).length, e=Object.keys(OF_CAPS.escolhidas).length;
+  if(s)s.textContent="— "+n+" encontrada"+(n>1?"s":"")+(e?", "+e+" como referência":"");
+});
+document.addEventListener("click",function(ev){
+  var v=ev.target.closest&&ev.target.closest("[data-of-ver]");
+  if(v){ev.stopPropagation();var k=v.dataset.ofVer;if(OF_CAPS.vendo[k])delete OF_CAPS.vendo[k];else OF_CAPS.vendo[k]=1;renderOficiaisDosCapitulos();return;}
+  var a=ev.target.closest&&ev.target.closest("[data-of-abrir]");
+  if(!a)return;
+  ev.stopPropagation();
+  var c=(OF_CAPS.achadas||[]).filter(function(x){return x.chave===a.dataset.ofAbrir;})[0];if(!c)return;
+  irPara("oficiais");
+  var p=provasCarregadas.filter(function(x){return x.id===c.prova.id;})[0]||c.prova;
+  var sel=$("prova-escolhida");
+  if(sel&&[].some.call(sel.options,function(o){return o.value===p.id;}))sel.value=p.id;
+  trocarProvaAtual(p);
+  // a questão abre em destaque assim que a prova estiver pronta (com os filtros limpos para ela aparecer)
+  var tent=0;(function abrir(){
+    tent++;
+    if(provaAtual&&provaAtual.id===p.id&&!provaAtual.hidratando&&(provaAtual.questoes||[]).length){
+      if(oficiaisFiltradas().some(function(q){return q.chave===c.q.chave;}))abrirJanelaQuestao(c.q.chave);
+      else{var el=document.querySelector('[data-chave="'+c.q.chave+'"]');if(el)el.scrollIntoView({block:"center"});}
+      return;
+    }
+    if(tent<40)setTimeout(abrir,150);
+  })();
+});
 function capitulosDoGerar(){
   return Object.keys(LS.marcados).map(function(id){
     var partes=String(LS.marcados[id].nome||"").split(" · ");
@@ -5595,6 +5742,7 @@ function chaveMatriz(){
   return chaveDaMatriz($("etapa").value,$("componente").value,$("serie").value);
 }
 function renderHabilidades(){
+  try{renderOficiaisDosCapitulos();}catch(e){}
   var alvo=$("lista-habilidades"), chave=chaveMatriz();
   var lista=HABILIDADES[chave]||[];
   var caps=$("hab-dos-capitulos");
@@ -11210,7 +11358,7 @@ var GUIA_SITE=[
 "",
 "ENTRADA E CHAVE: o site pede login com Google; o administrador (Matheus) libera o e-mail de cada colega em Ajustes › Nuvem compartilhada. "+(IA_ESCOLA_LIGADA?"Se a IA da escola estiver ligada (Ajustes › IA da escola), ninguém precisa de chave: basta o login. Só sem ela, quem não tem chave de IA vê uma tela para cadastrá-la.":"A IA da escola está pausada: cada professor usa a própria chave gratuita, e quem não tem vê uma tela para cadastrá-la.")+" A chave é gratuita: aistudio.google.com/apikey, entrar com uma conta Google (se a da escola estiver bloqueada, use a pessoal), Criar chave de API, copiar (começa com AQ. ou AIza) e colar em Ajustes › Chave de acesso à IA › Salvar chave › Testar conexão. A chave fica só naquele aparelho e navegador: em outro computador ou navegador é preciso colar de novo. Botão 'Buscar modelos disponíveis na minha conta' escolhe um modelo estável e um reserva.",
 "",
-"GERAR (criar questões novas com a IA). Passo 1, 'Criar a partir de': Livro SESI (escolhe a série, abre o livro e marca os capítulos; os capítulos marcados alimentam a geração; clicar fora do livro fecha a lista; o botão vermelho 'Desmarcar tudo' limpa), ENEM (área, competência, habilidade e dificuldade da matriz do ENEM), SSA (etapa 1, 2 ou 3) ou PASSE. No Livro SESI dá para escolher a 'Estrutura das questões objetivas': Simples, ENEM, SSA ou PASSE. Passo 2, 'Sobre o quê': nível, série, componente e assunto (o assunto é opcional quando há capítulo marcado). Quando há capítulos marcados, aparece um bloco verde 'Habilidades dos capítulos marcados', com as habilidades que cada capítulo cita, separadas por capítulo. Passo 3: quantidade de Objetivas, Dissertativas e Adaptadas (para estudantes atípicos, TEA e TDAH), até 20 por geração; para mais, gere em rodadas, o banco acumula. Também no passo 3, só com Livro SESI: 'Com imagem do livro' (até 10). A questão parte de uma foto, mapa, gravura, charge ou gráfico do capítulo marcado, e a IA recebe a imagem junto com o texto do capítulo, relacionando-a ao contexto que o capítulo trabalha. Abre um quadro com as miniaturas das imagens dos capítulos marcados: em 'Eu escolho as imagens', o professor clica nas imagens (a lupa amplia; aparece 'já usada' quando a imagem já virou questão); em 'O sistema escolhe', o site sorteia entre elas, evitando as já usadas. Dá para escolher se a questão com imagem é Objetiva (no molde escolhido no passo 1) ou Dissertativa. A imagem sai no banco, na prova e no Word, com a legenda logo abaixo (editável no editor da questão, campo 'Legenda da imagem'). Se o capítulo não tiver imagens guardadas, aparece 'sem imagens guardadas'. 'Mais opções' (opcional): habilidades da matriz, nível de exigência, elaboração cuidadosa (mais lenta), orientações adicionais. 'Material complementar' (opcional): para quem tem outro material próprio, anexar PDFs ou colar um texto que apoia as questões. Botões Gerar questões, Cancelar geração e Limpar campos. Ensino Fundamental sai com 4 alternativas (A a D) e Médio com 5 (A a E); adaptadas têm 3.",
+"GERAR (criar questões novas com a IA). Passo 1, 'Criar a partir de': Livro SESI (escolhe a série, abre o livro e marca os capítulos; os capítulos marcados alimentam a geração; clicar fora do livro fecha a lista; o botão vermelho 'Desmarcar tudo' limpa), ENEM (área, competência, habilidade e dificuldade da matriz do ENEM), SSA (etapa 1, 2 ou 3) ou PASSE. No Livro SESI dá para escolher a 'Estrutura das questões objetivas': Simples, ENEM, SSA ou PASSE. Passo 2, 'Sobre o quê': nível, série, componente e assunto (o assunto é opcional quando há capítulo marcado). Quando há capítulos marcados, aparece um bloco verde 'Habilidades dos capítulos marcados', com as habilidades que cada capítulo cita, separadas por capítulo. Logo abaixo, o bloco azul 'Questões de provas oficiais sobre estes capítulos' (recolhido) mostra questões reais do ENEM, SSA e PASSE do mesmo assunto dos capítulos: dá para ler ('Ver questão'), abrir na prova original ('Abrir na prova') e marcar 'Usar como referência', que manda essas questões para a IA como exemplo de abordagem e nível (as novas continuam inéditas). Passo 3: quantidade de Objetivas, Dissertativas e Adaptadas (para estudantes atípicos, TEA e TDAH), até 20 por geração; para mais, gere em rodadas, o banco acumula. Também no passo 3, só com Livro SESI: 'Com imagem do livro' (até 10). A questão parte de uma foto, mapa, gravura, charge ou gráfico do capítulo marcado, e a IA recebe a imagem junto com o texto do capítulo, relacionando-a ao contexto que o capítulo trabalha. Abre um quadro com as miniaturas das imagens dos capítulos marcados: em 'Eu escolho as imagens', o professor clica nas imagens (a lupa amplia; aparece 'já usada' quando a imagem já virou questão); em 'O sistema escolhe', o site sorteia entre elas, evitando as já usadas. Dá para escolher se a questão com imagem é Objetiva (no molde escolhido no passo 1) ou Dissertativa. A imagem sai no banco, na prova e no Word, com a legenda logo abaixo (editável no editor da questão, campo 'Legenda da imagem'). Se o capítulo não tiver imagens guardadas, aparece 'sem imagens guardadas'. 'Mais opções' (opcional): habilidades da matriz, nível de exigência, elaboração cuidadosa (mais lenta), orientações adicionais. 'Material complementar' (opcional): para quem tem outro material próprio, anexar PDFs ou colar um texto que apoia as questões. Botões Gerar questões, Cancelar geração e Limpar campos. Ensino Fundamental sai com 4 alternativas (A a D) e Médio com 5 (A a E); adaptadas têm 3.",
 "",
 "BANCO: todas as questões geradas e guardadas. Filtros por assunto, nível, componente, série, matriz, nível de exigência e formato, e busca por palavra. Cada questão pode ser editada (texto, alternativas, gabarito, resolução) ou excluída. Marque as caixas das questões para usar: aparece a barra azul com 'Montar prova com as selecionadas', 'Baixar sem timbre', 'Reequilibrar gabarito' (espalha as respostas certas entre as letras) e 'Excluir selecionadas'. Também há 'Selecionar tudo que o filtro mostra' e 'Limpar seleção'.",
 "",
