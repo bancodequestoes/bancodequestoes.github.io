@@ -123,6 +123,10 @@ button,input,select,textarea{font-family:inherit;font-size:inherit;color:inherit
 .passos-chave{padding-left:20px;margin:12px 0;font-size:14px;line-height:1.7}
 .passos-chave li{margin-bottom:8px}
 body.pode-admin .so-admin{display:block}
+body:not(.pode-admin) [data-gab-da-prova]{display:none !important}
+.gab-em-breve{max-width:560px;margin:40px auto;text-align:center;background:#fff;border:1px solid var(--regua);border-radius:var(--raio);padding:40px 28px;box-shadow:var(--sombra)}
+.gab-em-breve h2{font-family:var(--titulo);color:var(--primaria);margin:14px 0 8px;font-size:26px}
+.gab-em-breve p{margin:0;color:var(--cinza)}
 .nuvem-chip{font:inherit;font-size:12px;font-weight:800;padding:6px 14px;border-radius:999px;border:1px solid transparent;background:#fff;color:var(--barra);cursor:pointer;white-space:nowrap}
 .nuvem-chip.ok{background:var(--primaria-fundo);color:var(--primaria-escura);border-color:transparent}
 .nuvem-chip.enviando,.nuvem-chip.baixando,.nuvem-chip.carregando{background:var(--ambar-fundo);color:#7a5210;border-color:transparent}
@@ -1245,6 +1249,7 @@ body.ap-arrastando,body.ap-arrastando *{cursor:grabbing !important}
       <button class="aba" role="tab" aria-selected="false" data-vista="oficiais" title="Provas oficiais"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5V5a2 2 0 0 1 2-2h4v18H6a2 2 0 0 1-2-1.5z"/><path d="M10 3h4v18h-4"/><path d="M15.5 4.2l3.7-1 2.6 16.4-3.7 1z"/></svg><span>Provas oficiais</span></button>
       <button class="aba" role="tab" aria-selected="false" data-vista="plano" title="Planejamento"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/><path d="M8 14h3M8 17h6"/></svg><span>Planejamento</span></button>
       <button class="aba" role="tab" aria-selected="false" data-vista="apres" title="Apresentações"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M12 16v4M8 20h8"/><path d="M10 8.5v4l3.5-2z"/></svg><span>Apresentações</span></button>
+      <button class="aba" role="tab" aria-selected="false" data-vista="gabarito" title="Leitor de gabarito"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><circle cx="9" cy="9" r="1.6" fill="currentColor"/><circle cx="15" cy="9" r="1.6"/><circle cx="9" cy="15" r="1.6"/><circle cx="15" cy="15" r="1.6" fill="currentColor"/></svg><span>Leitor de gabarito</span></button>
       <button class="aba" role="tab" aria-selected="false" data-vista="ajustes" title="Ajustes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg><span>Ajustes</span></button>
   </nav>
   <div class="lateral-pe"><strong>Banco de Questões</strong>Provas, questões, planejamento e apresentações</div>
@@ -1552,6 +1557,7 @@ body.ap-arrastando,body.ap-arrastando *{cursor:grabbing !important}
       <label><input type="checkbox" id="m-habilidade" style="width:auto;margin-right:7px">Imprimir o código de habilidade acima de cada questão</label>
       <div class="botoes">
         <button class="botao" id="btn-gerar-timbrado">Gerar prova no timbrado</button>
+        <button type="button" class="botao secundario" data-gab-da-prova="1" title="Cria no Leitor de gabarito uma avaliação com o gabarito desta prova, para imprimir as folhas de resposta e corrigir pela câmera">📷 Corrigir com o leitor de gabarito</button>
         <button type="button" class="botao-embaralhar" data-embaralhar-prova="1" aria-pressed="false" title="Sorteia uma ordem nova das questões a cada prova baixada (ótimo para segunda chamada)">🔀 Embaralhar questões</button>
       </div>
       <p class="ajuda aviso-embaralhar" hidden>🔀 Ordem embaralhada: cada prova baixada sai com as questões numa ordem nova, sorteada na hora (e as alternativas também mudam de lugar). Clique de novo no botão para voltar à ordem do Banco.</p>
@@ -1576,6 +1582,7 @@ body.ap-arrastando,body.ap-arrastando *{cursor:grabbing !important}
       <button class="botao secundario" id="btn-imprimir">Imprimir ou salvar em PDF</button>
       <button class="botao secundario" id="btn-docx">Baixar em Word</button>
       <button class="botao secundario" id="btn-copiar">Copiar como texto</button>
+      <button type="button" class="botao secundario" data-gab-da-prova="1" title="Cria no Leitor de gabarito uma avaliação com o gabarito desta prova, para imprimir as folhas de resposta e corrigir pela câmera">📷 Corrigir com o leitor de gabarito</button>
       <button type="button" class="botao-embaralhar" data-embaralhar-prova="1" aria-pressed="false" title="Sorteia uma ordem nova das questões a cada prova baixada (ótimo para segunda chamada)">🔀 Embaralhar questões</button>
     </div>
     <p class="ajuda aviso-embaralhar" hidden>🔀 Ordem embaralhada: cada prova sai com as questões numa ordem nova, sorteada na hora. Clique de novo para voltar à ordem do Banco.</p>
@@ -1850,6 +1857,12 @@ body.ap-arrastando,body.ap-arrastando *{cursor:grabbing !important}
   <div class="cabeca-vista"><h1>Apresentações</h1><p>Slides de aula a partir dos capítulos dos livros SESI, prontos para editar e apresentar.</p></div>
   <div class="ap-passos" id="ap-passos"></div>
   <div id="ap-corpo"></div>
+</section>
+
+<section class="vista" id="vista-gabarito">
+  <div class="cabeca-vista"><h1>Leitor de gabarito</h1><p>Folhas de resposta por aluno, correção pela câmera do celular e notas por turma. Siga as etapas na ordem: turmas, avaliação, folhas, corrigir e notas.</p></div>
+  <div id="gab-em-breve" class="gab-em-breve" hidden><svg viewBox="0 0 120 120" width="120" height="120" aria-hidden="true"><rect x="22" y="12" width="76" height="96" rx="10" fill="#fff" stroke="#164194" stroke-width="4"/><g fill="none" stroke="#164194" stroke-width="3"><circle cx="44" cy="38" r="7"/><circle cx="76" cy="38" r="7"/><circle cx="44" cy="62" r="7"/><circle cx="76" cy="62" r="7"/></g><circle cx="44" cy="38" r="7" fill="#5FAE2E"/><circle cx="76" cy="62" r="7" fill="#5FAE2E"/><path d="M36 86h48" stroke="#F79425" stroke-width="5" stroke-linecap="round"/></svg><h2>Disponível em breve</h2><p>O leitor de gabarito está sendo preparado e logo estará liberado para todos os professores.</p></div>
+  <div id="gab-host"><div class="vazio"><strong>Abrindo o leitor de gabarito…</strong></div></div>
 </section>
 
 <section class="vista" id="vista-ajustes">
@@ -2775,6 +2788,7 @@ for(var i=0;i<abas.length;i++){
     editando=null;
     if(this.dataset.vista==="banco")renderBanco();
     if(this.dataset.vista==="prova")atualizarResumoPedido();
+    if(this.dataset.vista==="gabarito")abrirLeitorGabarito();else if(GAB)GAB.sair();
     window.scrollTo(0,0);
   });
 }
@@ -3168,7 +3182,7 @@ document.addEventListener("click",function(ev){
    e de capítulos em todo o site: a prateleira do Gerar e os capítulos do Planejamento.
    O que foi marcado continua marcado e aparece no resumo.                              */
 function cliqueEmCampo(el){
-  return !!(el.closest&&el.closest("input,select,textarea,button,a,label,summary,option,[role=button],[contenteditable],.calendario,#chat-ia,#janela-questao,.fundo-janela"));
+  return !!(el.closest&&el.closest("input,select,textarea,button,a,label,summary,option,[role=button],[contenteditable],.calendario,#chat-ia,#janela-questao,.fundo-janela,#gab-host"));
 }
 /* regra do site todo: clicar numa parte vazia fecha toda seção aberta (details) e as caixas da
    "Outra fonte"; a página volta para onde estava antes de a seção ser aberta pelo professor */
@@ -6197,6 +6211,37 @@ document.addEventListener("click",function(ev){
   if(!ev.target.closest("[data-embaralhar-prova]"))return;
   EMBARALHAR_PROVA=!EMBARALHAR_PROVA;marcarEmbaralhar();
 });
+var CHAVE_PROVAS_MONTADAS="bancoQuestoes.provasMontadas.v1";
+/* cada prova montada (na tela, em Word ou no timbrado) guarda o gabarito na ordem em que saiu,
+   para o Leitor de gabarito criar a avaliação sem redigitar as respostas */
+function registrarProvaMontada(lista,titulo){
+  try{
+    if(!lista||!lista.length)return;
+    var gab=lista.map(function(q){return q.alternativas&&q.alternativas.length&&q.correta>=0?LETRAS[q.correta]:"-";}).join("");
+    if(!/[A-E]/.test(gab))return;
+    var nAlt=Math.max.apply(null,lista.map(function(q){return (q.alternativas||[]).length;}));
+    var comps={};lista.forEach(function(q){if(q.componente)comps[q.componente]=1;});
+    var p={titulo:titulo||$("p-titulo").value||"Avaliação",componente:Object.keys(comps).join(" / "),
+      turma:$("p-turma").value||"",nQ:lista.length,nAlt:Math.max(2,Math.min(5,nAlt)),gabarito:gab,em:new Date().toISOString()};
+    var ps=[];try{ps=JSON.parse(localStorage.getItem(CHAVE_PROVAS_MONTADAS)||"[]");}catch(e){}
+    ps=ps.filter(function(x){return !(x.titulo===p.titulo&&x.gabarito===p.gabarito);});
+    ps.unshift(p);
+    localStorage.setItem(CHAVE_PROVAS_MONTADAS,JSON.stringify(ps.slice(0,10)));
+  }catch(e){}
+}
+document.addEventListener("click",function(ev){
+  if(!ev.target.closest||!ev.target.closest("[data-gab-da-prova]"))return;
+  var lista=selecaoAtual();
+  if(!lista.length){alert("Marque as questões da prova na aba Banco primeiro.");return;}
+  var ps=[];try{ps=JSON.parse(localStorage.getItem(CHAVE_PROVAS_MONTADAS)||"[]");}catch(e){}
+  // ainda não saiu nenhuma versão desta prova: monta agora (a ordem das alternativas é sorteada ao montar)
+  if(!ps.length||ps[0].nQ!==lista.length){
+    alert("Primeiro gere a prova (no timbrado, em Word ou na tela). O gabarito vem da versão que você gerou, porque as alternativas mudam de lugar a cada prova montada.");
+    return;
+  }
+  irPara("gabarito");
+  abrirLeitorGabarito().then(function(g){if(g)g.novaDaProva();});
+});
 function selecaoAtual(){
   var etapaProva=etapaDaSerie($("p-serie-turma").value||serieDaTurma($("p-turma").value||""));
   var lista=questoes.filter(function(q){return selecionadas[q.id];});
@@ -6213,6 +6258,7 @@ function selecaoAtual(){
 }
 $("btn-montar").addEventListener("click",function(){
   var lista=embaralharSemRepetir(selecaoAtual());
+  registrarProvaMontada(lista);
   if(!lista.length){
     $("folha").innerHTML='<div class="vazio"><strong>Nenhuma questão selecionada</strong>Marque as questões desejadas na aba Banco.</div>';
     return;
@@ -6926,6 +6972,7 @@ function paragrafo(texto,op){
 function baixarDocx(){
   var lista=embaralharSemRepetir(selecaoAtual());
   if(!lista.length){alert("Marque as questões desejadas no banco antes de exportar.");return;}
+  registrarProvaMontada(lista);
   MODO_AEE=ehProvaAdaptada(lista);
   try{
   var corpo="", ctxFig={midias:[],larguraMax:6263640,fonte:MODO_AEE?"Arial":"Calibri",tamanho:MODO_AEE?24:22};
@@ -7345,6 +7392,7 @@ $("btn-gerar-timbrado").addEventListener("click",function(){
   if(!modeloArquivos){msg("retorno-timbrado","Anexe o modelo timbrado primeiro.","erro");return;}
   var lista=embaralharSemRepetir(selecaoAtual());
   if(!lista.length){msg("retorno-timbrado","Nenhuma questão marcada. Selecione as questões na aba Banco.","erro");return;}
+  registrarProvaMontada(lista,(document.querySelector('#campos-modelo [data-campo="ASSUNTO"]')||{}).value||(document.querySelector('#campos-modelo [data-campo="DISCIPLINA"]')||{}).value);
 
   var valores={};
   document.querySelectorAll("#campos-modelo [data-campo]").forEach(function(i){
@@ -10677,6 +10725,7 @@ var TEXTO_NUVEM={
 };
 function nuvemEstado(qual,detalhe){
   NV.estado=qual;
+  setTimeout(function(){var v=$("vista-gabarito");if(v&&v.classList.contains("ativa"))abrirLeitorGabarito();else if(GAB)GAB.sincronizar();},0);
   var t=TEXTO_NUVEM[qual]||TEXTO_NUVEM.erro, chip=$("nuvem-chip");
   if(chip){chip.textContent=t[0];chip.className="nuvem-chip "+qual;}
   var alvo=$("nuvem-estado");
@@ -15002,6 +15051,1925 @@ async function apBaixarPptx(){
   // offline: guarda o site e as fontes para abrir sem internet depois da primeira visita
   if("serviceWorker" in navigator&&location.protocol==="https:")navigator.serviceWorker.register("sw.js").catch(function(){});
 })();
+
+/* ================= Leitor de gabarito =================
+   Cópia completa do app Gabarito (antes em /gabarito): turmas, avaliações, folhas de resposta com QR code,
+   correção pela câmera ou por fotos e notas. Fica dentro de uma sombra (shadow DOM), então o CSS dele não
+   mexe no resto do site, e usa o login e o Firestore do site (coleções gab_*). Só carrega ao abrir a aba. */
+var GAB=null, GAB_ABRINDO=null;
+var GAB_CSS="\n/* Layout: barra superior com etapas numeradas (o fluxo real do professor), conteúdo em coluna única larga, painéis laterais para edição. */\n:host {\n  /* paleta do Banco de Questões */\n  --bg: #FFF4ED; --surface: #ffffff; --surface-2: #F7EFE8; --ink: #23304A; --muted: #5E6472; --line: #EFE2D8;\n  --accent: #164194; --accent-ink: #ffffff; --accent-soft: #EDF1FB;\n  --ok: #2F7D1E; --ok-soft: #EAF5E1; --bad: #B0322A; --bad-soft: #FCEBE8; --warn: #A15200; --warn-soft: #FDF1E4;\n  --f-display: \"Sora\", \"Segoe UI\", system-ui, sans-serif;\n  --f-body: \"Nunito Sans\", \"Segoe UI\", system-ui, sans-serif;\n  --f-mono: ui-monospace, \"SF Mono\", \"Cascadia Mono\", Consolas, monospace;\n  --r: 14px;\n  display: block; color: var(--ink); font: 16px/1.5 var(--f-body);\n}\n* { box-sizing: border-box; }\n[hidden] { display: none !important; }\nbutton, input, select, textarea { font: inherit; color: inherit; }\nh1, h2, h3 { font-family: var(--f-display); line-height: 1.15; text-wrap: balance; margin: 0; }\nh2 { font-size: 1.55rem; }\nh3 { font-size: 1.1rem; }\na { color: var(--accent); }\n.mono { font-family: var(--f-mono); font-size: .9em; letter-spacing: .02em; }\n.muted { color: var(--muted); }\n.wrap { max-width: 1080px; margin: 0; }\n\n/* Topo */\n.topo { position: sticky; top: calc(var(--altura-topo, 72px) + 8px); z-index: 20; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 6px 22px rgba(120,72,40,.08); max-width: 1080px; }\n.topo .wrap { display: flex; align-items: center; gap: 16px; padding: 8px 10px; }\n.marca, .conta { display: none !important; }\n.marca { display: flex; align-items: center; gap: 10px; font-family: var(--f-display); font-weight: 700; font-size: 1.25rem; white-space: nowrap; }\n.marca svg { flex: none; }\n.etapas { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; flex: 1; min-width: 0; }\n.etapas::-webkit-scrollbar { display: none; }\n.etapa { border: 0; background: none; padding: 8px 12px; border-radius: 999px; cursor: pointer; white-space: nowrap; color: var(--muted); display: flex; align-items: center; gap: 7px; }\n.etapa b { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--surface-2); font-size: .78rem; color: var(--muted); }\n.etapa[aria-current=\"page\"] { background: var(--accent-soft); color: var(--accent); font-weight: 700; }\n.etapa[aria-current=\"page\"] b { background: var(--accent); color: var(--accent-ink); }\n.conta { display: flex; align-items: center; gap: 8px; }\n.avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--surface-2); display: grid; place-items: center; font-weight: 700; overflow: hidden; border: 0; cursor: pointer; padding: 0; }\n.avatar img { width: 100%; height: 100%; object-fit: cover; }\n@media (max-width: 760px) {\n  .topo .wrap { flex-wrap: wrap; gap: 6px 12px; padding-block: 8px 4px; }\n  .etapas { order: 3; flex-basis: 100%; }\n  .conta { margin-left: auto; }\n}\n\n.gab-main { padding-block: 22px 40px; }\n.cab { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px 24px; flex-wrap: wrap; margin-bottom: 18px; }\n.cab p { margin: 6px 0 0; color: var(--muted); max-width: 62ch; }\n.acoes { display: flex; gap: 8px; flex-wrap: wrap; }\n\n/* Botões e campos */\n.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); padding: 9px 15px; border-radius: 8px; cursor: pointer; font-weight: 700; text-decoration: none; min-height: 42px; }\n.btn:hover { border-color: var(--accent); }\n.btn.pri { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }\n.btn.pri:hover { filter: brightness(1.08); }\n.btn.perigo { color: var(--bad); }\n.btn.perigo.armado { background: var(--bad); color: #fff; border-color: var(--bad); }\n.btn.peq { min-height: 34px; padding: 5px 11px; font-size: .9rem; }\n.btn:disabled { opacity: .55; cursor: default; }\n.btn:focus-visible, .etapa:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, .chip:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }\nlabel.campo { display: grid; gap: 5px; font-size: .9rem; font-weight: 700; color: var(--muted); }\nlabel.campo > span small { font-weight: 400; }\ninput[type=text], input[type=number], input[type=search], select, textarea { width: 100%; border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 9px 11px; color: var(--ink); font-weight: 400; min-height: 42px; }\ntextarea { resize: vertical; line-height: 1.45; }\n.grade-campos { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px 14px; }\n.opcoes-tipo { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }\n.opcao { display: flex; gap: 10px; align-items: flex-start; border: 1px solid var(--line); border-radius: var(--r); padding: 12px; cursor: pointer; font-weight: 400; color: var(--ink); }\n.opcao:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }\n.opcao input { margin-top: 4px; accent-color: var(--accent); }\n.opcao strong { display: block; }\n.opcao small { color: var(--muted); }\n.check { display: inline-flex; gap: 8px; align-items: center; font-weight: 400; color: var(--ink); cursor: pointer; }\n.check input { width: 18px; height: 18px; accent-color: var(--accent); }\n\n/* Cartões e listas */\n.lista { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }\n.cartao { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }\n.cartao.clicavel { cursor: pointer; text-align: left; font: inherit; color: inherit; }\n.cartao.clicavel:hover { border-color: var(--accent); }\n.cartao h3 { overflow-wrap: anywhere; }\n.cartao .meta { display: flex; flex-wrap: wrap; gap: 6px; }\n.chip { display: inline-flex; align-items: center; gap: 4px; padding: 2px 9px; border-radius: 999px; background: var(--surface-2); color: var(--muted); font-size: .82rem; font-weight: 700; white-space: nowrap; }\n.chip.ok { background: var(--ok-soft); color: var(--ok); }\n.chip.bad { background: var(--bad-soft); color: var(--bad); }\n.chip.warn { background: var(--warn-soft); color: var(--warn); }\n.chip.acc { background: var(--accent-soft); color: var(--accent); }\n.vazio { border: 1.5px dashed var(--line); border-radius: var(--r); padding: 28px 20px; text-align: center; color: var(--muted); display: grid; gap: 12px; justify-items: center; }\n.vazio strong { color: var(--ink); font-size: 1.05rem; }\n.aviso { background: var(--warn-soft); color: var(--warn); border-radius: 8px; padding: 10px 12px; font-size: .92rem; }\n.aviso.info { background: var(--accent-soft); color: var(--accent); }\n.aviso.erro { background: var(--bad-soft); color: var(--bad); }\n.bloco { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 18px; display: grid; gap: 14px; min-width: 0; }\n.bloco + .bloco { margin-top: 14px; }\n.duas { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 16px; align-items: start; }\n@media (max-width: 860px) { .duas { grid-template-columns: minmax(0, 1fr); } }\n\n/* Tabela de notas */\n.tabela-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--r); background: var(--surface); }\ntable { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }\nth, td { padding: 9px 12px; text-align: left; border-bottom: 1px solid var(--line); white-space: nowrap; }\nth { font-size: .78rem; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); background: var(--surface-2); position: sticky; top: 0; }\ntbody tr { cursor: pointer; }\ntbody tr:hover { background: var(--surface-2); }\ntd.num { text-align: right; }\ntd.nota { font-weight: 700; font-size: 1.05rem; }\ntd.resp { font-family: var(--f-mono); font-size: .82rem; color: var(--muted); }\n.resumo { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 14px; }\n.resumo div { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 12px 14px; }\n.resumo b { display: block; font-family: var(--f-display); font-size: 1.6rem; font-variant-numeric: tabular-nums; }\n.resumo span { color: var(--muted); font-size: .85rem; }\n.barras { display: grid; grid-template-columns: repeat(auto-fill, minmax(26px, 1fr)); gap: 4px; align-items: end; }\n.barra { display: grid; gap: 3px; justify-items: center; font-size: .7rem; color: var(--muted); font-variant-numeric: tabular-nums; }\n.barra i { display: block; width: 100%; height: 60px; background: var(--surface-2); border-radius: 4px; position: relative; overflow: hidden; }\n.barra i::after { content: \"\"; position: absolute; inset: auto 0 0; height: var(--p); background: var(--c, var(--accent)); }\n\n/* Gabarito */\n.gab { display: grid; grid-template-columns: repeat(auto-fill, minmax(232px, 1fr)); gap: 6px 14px; }\n.gq { display: flex; align-items: center; gap: 6px; }\n.gq > span { width: 28px; text-align: right; font-variant-numeric: tabular-nums; color: var(--muted); font-weight: 700; }\n.bol { width: 32px; height: 32px; border-radius: 50%; border: 1.5px solid var(--line); background: var(--surface); cursor: pointer; font-weight: 700; font-size: .85rem; color: var(--muted); padding: 0; }\n.bol[aria-pressed=\"true\"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }\n.bol.anula { border-style: dashed; font-size: .75rem; }\n.bol.anula[aria-pressed=\"true\"] { background: var(--warn); border-color: var(--warn); color: #fff; }\n\n/* Respostas de uma leitura */\n.resps { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 6px; }\n.rq { display: flex; align-items: center; gap: 4px; border-radius: 6px; padding: 2px 4px 2px 7px; background: var(--surface-2); font-variant-numeric: tabular-nums; font-size: .85rem; }\n.rq b { width: 22px; color: var(--muted); }\n.rq select { min-height: 30px; padding: 2px 4px; border-radius: 6px; font-family: var(--f-mono); font-size: .85rem; }\n.rq.ok { background: var(--ok-soft); }\n.rq.bad { background: var(--bad-soft); }\n.rq.warn { background: var(--warn-soft); }\n\n/* Leituras */\n.leitura { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 16px; }\n.leitura img { width: 150px; border-radius: 6px; border: 1px solid var(--line); background: #fff; }\n.leitura .nota-grande { font-family: var(--f-display); font-size: 2.4rem; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }\n@media (max-width: 560px) { .leitura { grid-template-columns: 96px minmax(0, 1fr); } .leitura img { width: 96px; } }\n.camera { position: relative; background: #000; border-radius: var(--r); overflow: hidden; max-width: 560px; margin: 0 auto; width: 100%; }\n.camera video { width: 100%; display: block; max-height: 70vh; object-fit: contain; }\n.camera .guia { position: absolute; inset: 6% 10%; border: 2px dashed rgba(255,255,255,.55); border-radius: 8px; pointer-events: none; }\n.camera .status { position: absolute; left: 0; right: 0; bottom: 0; padding: 10px 14px; background: rgba(0,0,0,.6); color: #fff; font-size: .95rem; }\n.camera .fechar { position: absolute; top: 10px; right: 10px; }\n.grandes { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }\n.grande { display: flex; gap: 14px; align-items: center; text-align: left; padding: 18px; border-radius: var(--r); border: 1px solid var(--line); background: var(--surface); cursor: pointer; font: inherit; color: inherit; }\n.grande:hover { border-color: var(--accent); }\n.grande .ic { width: 46px; height: 46px; border-radius: 12px; background: var(--accent-soft); color: var(--accent); display: grid; place-items: center; flex: none; }\n.grande strong { display: block; font-size: 1.05rem; }\n.grande small { color: var(--muted); }\n.previa-folha { background: #fff; border: 1px solid var(--line); border-radius: 6px; width: 100%; max-width: 420px; display: block; margin: 0 auto; box-shadow: 0 6px 24px rgba(20, 30, 60, .08); }\n.linha-turma { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px 0; border-bottom: 1px solid var(--line); }\n.linha-turma:last-child { border-bottom: 0; }\n.linha-turma .nome { flex: 1; min-width: 160px; font-weight: 700; }\n.progresso { height: 6px; background: var(--surface-2); border-radius: 3px; overflow: hidden; }\n.progresso i { display: block; height: 100%; background: var(--accent); width: 0; transition: width .2s; }\n\n/* Painel lateral */\n.painel-fundo { position: fixed; inset: var(--altura-topo, 72px) 0 0 0; background: rgba(10, 14, 24, .45); z-index: 400; display: flex; justify-content: flex-end; }\n.painel { background: var(--bg); width: min(720px, 100%); height: 100%; overflow-y: auto; box-shadow: -10px 0 40px rgba(0,0,0,.2); display: flex; flex-direction: column; }\n.painel-cab { position: sticky; top: 0; background: var(--surface); border-bottom: 1px solid var(--line); padding: 12px max(16px, env(safe-area-inset-right, 0px)) 12px 20px; display: flex; gap: 10px; align-items: center; z-index: 2; }\n.painel-cab h2 { font-size: 1.25rem; flex: 1; }\n.painel-corpo { padding: 18px max(16px, env(safe-area-inset-right, 0px)) calc(28px + env(safe-area-inset-bottom, 0px)) 20px; display: grid; gap: 16px; }\n.painel-rodape { position: sticky; bottom: 0; background: var(--surface); border-top: 1px solid var(--line); padding: 12px max(16px, env(safe-area-inset-right, 0px)) calc(12px + env(safe-area-inset-bottom, 0px)) 20px; display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; margin-top: auto; }\n\n.toast { position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 11px 18px; border-radius: 10px; z-index: 600; max-width: calc(100% - 32px); box-shadow: 0 8px 30px rgba(0,0,0,.25); }\n.entrar { min-height: 80vh; display: grid; place-items: center; text-align: center; }\n.entrar .bloco { max-width: 440px; justify-items: center; padding: 32px 24px; }\n.faixa-local { background: var(--warn-soft); color: var(--warn); font-size: .88rem; }\n.faixa-local .wrap { padding-block: 7px; }\n@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }\n\n.etapa { font: inherit; font-weight: 600; }\n.btn, .bol, .etapa, .grande, .cartao.clicavel { -webkit-tap-highlight-color: transparent; }\n";
+var GAB_HTML="<header class=\"topo\">\n  <div class=\"wrap\">\n    <div class=\"marca\">\n      <svg width=\"28\" height=\"28\" viewBox=\"0 0 32 32\" aria-hidden=\"true\"><rect width=\"32\" height=\"32\" rx=\"7\" fill=\"var(--accent)\"/><circle cx=\"11\" cy=\"16\" r=\"4.5\" fill=\"var(--accent-ink)\"/><circle cx=\"22\" cy=\"16\" r=\"4.5\" fill=\"none\" stroke=\"var(--accent-ink)\" stroke-width=\"2\"/><\/svg>\n      Gabarito\n    <\/div>\n    <nav class=\"etapas\" id=\"etapas\" aria-label=\"Etapas\"><\/nav>\n    <div class=\"conta\" id=\"conta\"><\/div>\n  <\/div>\n<\/header>\n<div class=\"faixa-local\" id=\"faixaLocal\" hidden><div class=\"wrap\" style=\"padding:8px 12px;border-radius:10px;margin-top:10px\">Sem a nuvem do site: as turmas, avaliações e notas ficam só neste navegador.<\/div><\/div>\n<div class=\"wrap gab-main\" id=\"main\"><\/div>\n<div class=\"painel-fundo\" id=\"painelFundo\" hidden><aside class=\"painel\" id=\"painel\" role=\"dialog\" aria-modal=\"true\"><\/aside><\/div>\n<div class=\"toast\" id=\"toast\" role=\"status\" hidden><\/div>\n<input type=\"file\" id=\"arqAtas\" accept=\".docx,.pdf,.xlsx,.xls,.csv,.txt\" multiple hidden>\n<input type=\"file\" id=\"arqFotos\" accept=\"image/*\" capture=\"environment\" hidden>\n<input type=\"file\" id=\"arqGaleria\" accept=\"image/*\" multiple hidden>\n<input type=\"file\" id=\"arqLogo\" accept=\"image/*\" hidden>";
+var GAB_LIBS=[
+  ["jspdf/2.5.1/jspdf.umd.min.js","jspdf@2.5.1/dist/jspdf.umd.min.js",function(){return window.jspdf;}],
+  ["jszip/3.10.1/jszip.min.js","jszip@3.10.1/dist/jszip.min.js",function(){return window.JSZip;}],
+  ["xlsx/0.18.5/xlsx.full.min.js","xlsx@0.18.5/dist/xlsx.full.min.js",function(){return window.XLSX;}],
+  ["qrcode-generator/1.4.4/qrcode.min.js","qrcode-generator@1.4.4/qrcode.js",function(){return window.qrcode;}],
+  ["jsQR/1.4.0/jsQR.min.js","jsqr@1.4.0/dist/jsQR.js",function(){return window.jsQR;}]
+];
+function gabScript(src){
+  return new Promise(function(ok,falha){
+    var s=document.createElement("script");s.src=src;s.onload=ok;s.onerror=function(){s.remove();falha(new Error(src));};
+    document.head.appendChild(s);
+  });
+}
+function gabCarregarLibs(){
+  return Promise.all(GAB_LIBS.map(function(l){
+    if(l[2]())return true;
+    return gabScript("https://cdnjs.cloudflare.com/ajax/libs/"+l[0])
+      .catch(function(){return gabScript("https://cdn.jsdelivr.net/npm/"+l[1]);})
+      .then(function(){return true;},function(){return false;});
+  }));
+}
+/* por enquanto só o administrador usa (Matheus está ajustando); os outros professores veem "Disponível em breve".
+   Para liberar a todos, basta trocar gabLiberado para devolver sempre true. */
+function gabLiberado(){return NV.estado==="arquivo"||(NV.admin&&NV.membro);}
+function gabTela(){
+  var aguardando=NV.estado!=="arquivo"&&(!NV.authPronto||(NV.usuario&&!NV.membro&&NV.estado!=="semacesso"));
+  var lib=gabLiberado();
+  $("gab-em-breve").hidden=lib||aguardando;
+  $("gab-host").hidden=!lib&&!aguardando;
+  if(!lib&&GAB)GAB.sair();
+  return lib;
+}
+function abrirLeitorGabarito(){
+  if(!gabTela())return Promise.resolve(null);
+  if(GAB){GAB.sincronizar();return Promise.resolve(GAB);}
+  if(GAB_ABRINDO)return GAB_ABRINDO;
+  GAB_ABRINDO=gabCarregarLibs().then(function(ok){
+    var host=$("gab-host");host.innerHTML="";
+    try{GAB=GAB_criar(host);if(/^(localhost|127\.0\.0\.1)$/.test(location.hostname))window.__gab=GAB;}
+    catch(e){host.innerHTML='<div class="vazio"><strong>Não foi possível abrir o leitor de gabarito.</strong>'+esc(e.message)+'</div>';GAB_ABRINDO=null;return null;}
+    if(ok.indexOf(false)>-1)GAB.avisar("Parte das bibliotecas do leitor não carregou (internet?). A leitura das folhas ou a geração do PDF pode falhar; recarregue a página com internet.");
+    return GAB;
+  });
+  return GAB_ABRINDO;
+}
+function GAB_criar(host){
+const GAB_RAIZ=host.attachShadow({mode:"open"});
+GAB_RAIZ.innerHTML="<style>"+GAB_CSS+"</style>"+GAB_HTML;
+/* Folha de respostas: geometria, desenho (PDF, canvas, Word), código de barras e QR.
+   Todas as medidas em milímetros numa folha A4 em pé (210 x 297). */
+
+const A4 = { w: 210, h: 297 };
+// Quadrados pretos dos cantos (centros), na ordem TL, TR, BR, BL
+const MARCAS = { lado: 9, centros: [[12, 12], [198, 12], [198, 285], [12, 285]] };
+const LETRAS = "ABCDE";
+const MAX_QUESTOES = 100;
+
+/* Geometria da grade de bolinhas. Depende só de nQ, nAlt e da caixa de transcrição,
+   que vão dentro do QR code, então a leitura não depende de edições posteriores. */
+function geometria(nQ, nAlt, transcricao) {
+  const T = transcricao ? 113 : 92;          // topo do quadro de instruções
+  const top = T + 26 + 13;                    // centro da primeira linha
+  const bottom = 272;                         // centro máximo da última linha
+  const cols = Math.min(4, Math.max(1, Math.ceil(nQ / 16)));
+  const rows = Math.ceil(nQ / cols);
+  const pitch = rows > 1 ? Math.min(7.6, (bottom - top) / (rows - 1)) : 7.6;
+  const lab = 9, gapC = cols <= 2 ? 14 : 6;
+  const px = Math.min(6.6, (174 / cols - lab - gapC) / nAlt);
+  const r = Math.min(2.4, pitch * 0.36, px * 0.38);
+  const colW = lab + nAlt * px + gapC;
+  const x0 = 105 - (cols * colW - gapC) / 2;
+  return {
+    T, top, cols, rows, pitch, px, r, colW, x0, lab, gapC, nQ, nAlt,
+    pos(q, a) {
+      const c = Math.floor(q / rows), row = q % rows;
+      return [x0 + c * colW + lab + (a + 0.5) * px, top + row * pitch];
+    },
+  };
+}
+
+/* ---------- Código de barras Code 128 ---------- */
+const C128 = [11011001100, 11001101100, 11001100110, 10010011000, 10010001100, 10001001100, 10011001000, 10011000100, 10001100100, 11001001000, 11001000100, 11000100100, 10110011100, 10011011100, 10011001110, 10111001100, 10011101100, 10011100110, 11001110010, 11001011100, 11001001110, 11011100100, 11001110100, 11101101110, 11101001100, 11100101100, 11100100110, 11101100100, 11100110100, 11100110010, 11011011000, 11011000110, 11000110110, 10100011000, 10001011000, 10001000110, 10110001000, 10001101000, 10001100010, 11010001000, 11000101000, 11000100010, 10110111000, 10110001110, 10001101110, 10111011000, 10111000110, 10001110110, 11101110110, 11010001110, 11000101110, 11011101000, 11011100010, 11011101110, 11101011000, 11101000110, 11100010110, 11101101000, 11101100010, 11100011010, 11101111010, 11001000010, 11110001010, 10100110000, 10100001100, 10010110000, 10010000110, 10000101100, 10000100110, 10110010000, 10110000100, 10011010000, 10011000010, 10000110100, 10000110010, 11000010010, 11001010000, 11110111010, 11000010100, 10001111010, 10100111100, 10010111100, 10010011110, 10111100100, 10011110100, 10011110010, 11110100100, 11110010100, 11110010010, 11011011110, 11011110110, 11110110110, 10101111000, 10100011110, 10001011110, 10111101000, 10111100010, 11110101000, 11110100010, 10111011110, 10111101110, 11101011110, 11110101110, 11010000100, 11010010000, 11010011100, 1100011101011];
+function code128(texto) {
+  const s = String(texto);
+  const codes = [];
+  if (/^\d+$/.test(s) && s.length % 2 === 0) {
+    codes.push(105);
+    for (let i = 0; i < s.length; i += 2) codes.push(+s.slice(i, i + 2));
+  } else {
+    codes.push(104);
+    for (const ch of s) {
+      const c = ch.charCodeAt(0);
+      codes.push(c >= 32 && c < 128 ? c - 32 : 31);
+    }
+  }
+  let soma = codes[0];
+  for (let i = 1; i < codes.length; i++) soma += codes[i] * i;
+  codes.push(soma % 103, 106);
+  return codes.map((c) => String(C128[c])).join("");   // "1" = barra, "0" = espaço
+}
+
+/* ---------- QR code ---------- */
+function qrMatriz(texto) {
+  const qr = qrcode(0, "M");
+  qr.addData(texto);
+  qr.make();
+  const n = qr.getModuleCount();
+  const m = [];
+  for (let y = 0; y < n; y++) { const linha = []; for (let x = 0; x < n; x++) linha.push(qr.isDark(y, x)); m.push(linha); }
+  return m;
+}
+
+/* Conteúdo do QR: GB2|avaliação|turma|aluno|nQ|nAlt|transcrição */
+function codigoQR(av, turmaId, alunoId) {
+  return ["GB2", av.id, turmaId || "-", alunoId || "-", av.nQ, av.nAlt, av.transcricao ? 1 : 0].join("|");
+}
+function lerCodigoQR(txt) {
+  const p = String(txt || "").split("|");
+  if (p[0] !== "GB2" || p.length < 7) return null;
+  return { avId: p[1], turmaId: p[2] === "-" ? null : p[2], alunoId: p[3] === "-" ? null : p[3], nQ: +p[4], nAlt: +p[5], transcricao: p[6] === "1" };
+}
+
+const INSTRUCOES_PADRAO = [
+  "1. Não será permitido substituir a folha de respostas;",
+  "2. Esta folha deverá, obrigatoriamente, ser devolvida ao aplicador;",
+  "3. Não amasse, dobre ou rasure esta folha;",
+  "4. Utilize caneta de tinta azul ou preta;",
+  "5. Assinale apenas uma alternativa para cada questão; mais de uma marcação anulará a resposta.",
+];
+
+/* Monta a lista de operações de desenho de uma folha.
+   d = { av, perfil, turma, aluno (ou null para folha neutra) } */
+function opsFolha(d) {
+  const { av, perfil = {}, turma, aluno } = d;
+  const g = geometria(av.nQ, av.nAlt, av.transcricao);
+  const ops = [];
+  const cinzaBorda = "#9a9a9a", cinzaFundo = "#efefef", tinta = "#111111";
+  const L = (o) => ops.push(o);
+
+  for (const [x, y] of MARCAS.centros) L({ t: "rect", x: x - MARCAS.lado / 2, y: y - MARCAS.lado / 2, w: MARCAS.lado, h: MARCAS.lado, fill: "#000000" });
+
+  // Código de barras (folha nominal) e QR code
+  if (aluno) {
+    const cod = String(aluno.ra || aluno.id);
+    const bars = code128(cod);
+    const mod = Math.min(0.42, 46 / bars.length);
+    const bw = bars.length * mod;
+    L({ t: "bars", bars, x: 105 - bw / 2, y: 8, h: 13, mod });
+    L({ t: "text", s: cod.split("").join(" "), x: 105, y: 25.5, size: 10, align: "center", font: "courier" });
+  }
+  L({ t: "qr", s: codigoQR(av, turma && turma.id, aluno && aluno.id), x: 161, y: 7.5, size: 26 });
+
+  // Títulos
+  L({ t: "text", s: ("FOLHA DE RESPOSTAS" + (av.titulo ? " | " + av.titulo : "")).toUpperCase(), x: 18, y: 38, size: 17, bold: true, color: "#555555", maxW: 132 });
+  if (av.componente) L({ t: "text", s: av.componente.toUpperCase(), x: 18, y: 45.5, size: 14, bold: true, color: tinta, maxW: 120 });
+  const etapa = etapaDaTurma(turma);
+  const sub = [etapa.toUpperCase(), (av.subtitulo || "").toUpperCase()].filter(Boolean).join(" - ");
+  if (sub) L({ t: "text", s: sub, x: 18, y: 51, size: 10, color: "#333333", maxW: 125 });
+  if (perfil.logo) L({ t: "img", src: perfil.logo, x: 150, y: 37, w: 42, h: 16 });
+
+  // Campos
+  const campo = (x, y, w, h, rot, valor, tam) => {
+    L({ t: "rrect", x, y, w, h, stroke: "#b8b8b8", lw: 0.25, rx: 1.2 });
+    L({ t: "text", s: rot, x: x + 1.8, y: y + h / 2 + 1.1, size: 7.5, bold: true, color: "#333333" });
+    if (valor) L({ t: "text", s: valor, x: x + 1.8 + largTexto(rot, 7.5, true) + 1.5, y: y + h / 2 + 1.3, size: tam || 10, color: tinta, maxW: w - largTexto(rot, 7.5, true) - 5 });
+  };
+  campo(18, 55, 100, 7, "Município:", perfil.municipio);
+  campo(120, 55, 36, 7, "Regional:", perfil.regional);
+  campo(158, 55, 34, 7, "Turno:", av.turno || (turma && turma.turno) || "");
+  campo(18, 64, 174, 7, "Escola:", perfil.escola);
+  campo(18, 73, 70, 7, "Etapa Escolar:", etapa);
+  campo(90, 73, 102, 7, "Turma:", turma ? turma.nome : "");
+  campo(18, 82, 152, 7, "Estudante:", aluno ? aluno.nome : "", 10.5);
+  campo(172, 82, 20, 7, "Nº:", aluno && aluno.num ? String(aluno.num).padStart(2, "0") : "");
+
+  // Caixa de transcrição (opcional)
+  if (av.transcricao) {
+    L({ t: "rrect", x: 18, y: 92, w: 174, h: 18, stroke: "#b8b8b8", lw: 0.25, rx: 1.2 });
+    L({ t: "line", x1: 62, y1: 92, x2: 62, y2: 110, color: "#b8b8b8", w: 0.25 });
+    const linhas = quebrarTexto((av.transcricaoTexto || "ATENÇÃO: TRANSCREVA AQUI, COM A SUA CALIGRAFIA USUAL, A FRASE APRESENTADA NA CAPA DO SEU CADERNO DE QUESTÕES.").toUpperCase(), 6.2, 41, true);
+    linhas.slice(0, 6).forEach((ln, i) => L({ t: "text", s: ln, x: 20, y: 95.6 + i * 2.6, size: 6.2, bold: true, color: "#222222" }));
+  }
+
+  // Instruções e exemplo
+  const T = g.T;
+  L({ t: "rrect", x: 18, y: T, w: 112, h: 24, stroke: "#b8b8b8", lw: 0.25, rx: 1.2 });
+  L({ t: "rect", x: 18.15, y: T + 0.15, w: 111.7, h: 5, fill: cinzaFundo });
+  L({ t: "text", s: "Instruções:", x: 20, y: T + 3.7, size: 8, bold: true, color: "#333333" });
+  const instr = (av.instrucoes && av.instrucoes.trim() ? av.instrucoes.split("\n") : INSTRUCOES_PADRAO).flatMap((ln) => quebrarTexto(ln, 6.8, 106));
+  instr.slice(0, 7).forEach((ln, i) => L({ t: "text", s: ln, x: 20, y: T + 8.3 + i * 2.55, size: 6.8, color: "#222222" }));
+  L({ t: "rrect", x: 133, y: T, w: 59, h: 24, stroke: "#b8b8b8", lw: 0.25, rx: 1.2 });
+  L({ t: "rect", x: 133.15, y: T + 0.15, w: 58.7, h: 5, fill: cinzaFundo });
+  L({ t: "text", s: "Exemplo:", x: 135, y: T + 3.7, size: 8, bold: true, color: "#333333" });
+  L({ t: "text", s: "Preencha a bolinha por completo:", x: 135, y: T + 9.5, size: 7, color: "#222222" });
+  L({ t: "rrect", x: 141, y: T + 12.5, w: 43, h: 8, stroke: "#b8b8b8", lw: 0.2, rx: 1 });
+  L({ t: "text", s: "00", x: 143, y: T + 16.5, size: 8, color: "#333333", mid: true });
+  for (let a = 0; a < 4; a++) {
+    const cx = 152 + a * 8, cy = T + 16.5;
+    if (a === 1) L({ t: "circle", x: cx, y: cy, r: 2.6, fill: "#111111" });
+    else { L({ t: "circle", x: cx, y: cy, r: 2.6, stroke: cinzaBorda, lw: 0.25 }); L({ t: "text", s: LETRAS[a], x: cx, y: cy + 0.1, size: 6.5, color: "#9a9a9a", align: "center", mid: true }); }
+  }
+
+  // Grade de respostas
+  for (let c = 0; c < g.cols; c++) {
+    const xc = g.x0 + c * g.colW - 1.5, wc = g.colW - g.gapC + 3;
+    const nLin = Math.min(g.rows, av.nQ - c * g.rows);
+    if (nLin <= 0) continue;
+    L({ t: "rect", x: xc, y: g.top - g.pitch / 2 - 6, w: wc, h: 5.4, fill: cinzaFundo });
+    L({ t: "text", s: "Questão | Resposta", x: xc + wc / 2, y: g.top - g.pitch / 2 - 3.3, size: Math.min(8, wc * 0.24), color: "#555555", align: "center", mid: true });
+    for (let row = 0; row < nLin; row++) {
+      const q = c * g.rows + row;
+      const [, cy] = g.pos(q, 0);
+      if (row % 2 === 1) L({ t: "rect", x: xc, y: cy - g.pitch / 2 + 0.25, w: wc, h: g.pitch - 0.5, fill: "#f3f3f3" });
+      L({ t: "text", s: String(q + 1).padStart(2, "0"), x: g.x0 + c * g.colW + g.lab - 2, y: cy + 0.1, size: Math.min(9, g.r * 3.6), color: "#444444", align: "right", mid: true });
+      for (let a = 0; a < av.nAlt; a++) {
+        const [cx] = g.pos(q, a);
+        L({ t: "circle", x: cx, y: cy, r: g.r, stroke: cinzaBorda, lw: 0.25 });
+        L({ t: "text", s: LETRAS[a], x: cx, y: cy + 0.1, size: g.r * 2.5, color: "#a5a5a5", align: "center", mid: true });
+      }
+    }
+  }
+
+  L({ t: "text", s: aluno ? "Folha nominal · não troque com colegas" : "Folha neutra · escreva seu nome no campo Estudante", x: 105, y: 286, size: 6.5, color: "#888888", align: "center" });
+  return ops;
+}
+
+function etapaDaTurma(turma) {
+  if (!turma) return "";
+  if (turma.etapa) return turma.etapa;
+  const m = /(\d+)\s*[°º]/.exec(turma.nome || "");
+  return m ? m[1] + "º ano" : "";
+}
+
+/* Medida aproximada de texto em Helvetica (mm), para posicionar e quebrar linhas */
+let _ctxMed = null;
+function largTexto(s, pt, bold) {
+  if (!_ctxMed) _ctxMed = document.createElement("canvas").getContext("2d");
+  _ctxMed.font = `${bold ? "700 " : ""}100px Helvetica, Arial, sans-serif`;
+  return (_ctxMed.measureText(s).width / 100) * pt * 0.3528;
+}
+function quebrarTexto(s, pt, maxW, bold) {
+  const out = []; let linha = "";
+  for (const w of String(s).split(/\s+/)) {
+    const t = linha ? linha + " " + w : w;
+    if (largTexto(t, pt, bold) > maxW && linha) { out.push(linha); linha = w; } else linha = t;
+  }
+  if (linha) out.push(linha);
+  return out;
+}
+
+/* ---------- Renderização ---------- */
+function desenharPDF(doc, ops, imgs) {
+  for (const o of ops) {
+    switch (o.t) {
+      case "rect": doc.setFillColor(o.fill); doc.rect(o.x, o.y, o.w, o.h, "F"); break;
+      case "rrect": doc.setDrawColor(o.stroke); doc.setLineWidth(o.lw); doc.roundedRect(o.x, o.y, o.w, o.h, o.rx, o.rx, "S"); break;
+      case "line": doc.setDrawColor(o.color); doc.setLineWidth(o.w); doc.line(o.x1, o.y1, o.x2, o.y2); break;
+      case "circle":
+        if (o.fill) { doc.setFillColor(o.fill); doc.circle(o.x, o.y, o.r, "F"); }
+        else { doc.setDrawColor(o.stroke); doc.setLineWidth(o.lw); doc.circle(o.x, o.y, o.r, "S"); }
+        break;
+      case "text": {
+        doc.setFont(o.font === "courier" ? "courier" : "helvetica", o.bold ? "bold" : "normal");
+        let size = o.size;
+        doc.setFontSize(size);
+        if (o.maxW) while (doc.getTextWidth(o.s) > o.maxW && size > 5) doc.setFontSize((size -= 0.5));
+        doc.setTextColor(o.color || "#000000");
+        doc.text(String(o.s), o.x, o.y, { align: o.align || "left", baseline: o.mid ? "middle" : "alphabetic" });
+        break;
+      }
+      case "bars": {
+        doc.setFillColor("#000000");
+        let i = 0;
+        while (i < o.bars.length) {
+          if (o.bars[i] === "1") { let j = i; while (j < o.bars.length && o.bars[j] === "1") j++; doc.rect(o.x + i * o.mod, o.y, (j - i) * o.mod, o.h, "F"); i = j; } else i++;
+        }
+        break;
+      }
+      case "qr": {
+        const m = qrMatriz(o.s), n = m.length, s = o.size / n;
+        doc.setFillColor("#000000");
+        for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) if (m[y][x]) doc.rect(o.x + x * s, o.y + y * s, s + 0.01, s + 0.01, "F");
+        break;
+      }
+      case "img": {
+        const im = imgs && imgs[o.src];
+        if (!im) break;
+        const k = Math.min(o.w / im.width, o.h / im.height);
+        const w = im.width * k, h = im.height * k;
+        try { doc.addImage(o.src, o.x + o.w - w, o.y + (o.h - h) / 2, w, h); } catch (e) { /* logo inválida: ignora */ }
+        break;
+      }
+    }
+  }
+}
+
+function desenharCanvas(ctx, ops, s, imgs) {
+  ctx.save();
+  ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, A4.w * s, A4.h * s);
+  for (const o of ops) {
+    switch (o.t) {
+      case "rect": ctx.fillStyle = o.fill; ctx.fillRect(o.x * s, o.y * s, o.w * s, o.h * s); break;
+      case "rrect":
+        ctx.strokeStyle = o.stroke; ctx.lineWidth = o.lw * s; ctx.beginPath();
+        if (ctx.roundRect) ctx.roundRect(o.x * s, o.y * s, o.w * s, o.h * s, o.rx * s); else ctx.rect(o.x * s, o.y * s, o.w * s, o.h * s);
+        ctx.stroke(); break;
+      case "line": ctx.strokeStyle = o.color; ctx.lineWidth = o.w * s; ctx.beginPath(); ctx.moveTo(o.x1 * s, o.y1 * s); ctx.lineTo(o.x2 * s, o.y2 * s); ctx.stroke(); break;
+      case "circle":
+        ctx.beginPath(); ctx.arc(o.x * s, o.y * s, o.r * s, 0, Math.PI * 2);
+        if (o.fill) { ctx.fillStyle = o.fill; ctx.fill(); } else { ctx.strokeStyle = o.stroke; ctx.lineWidth = o.lw * s; ctx.stroke(); }
+        break;
+      case "text": {
+        let size = o.size;
+        const fam = o.font === "courier" ? "'Courier New', Courier, monospace" : "Helvetica, Arial, sans-serif";
+        const setF = () => (ctx.font = `${o.bold ? "700 " : ""}${size * 0.3528 * s}px ${fam}`);
+        setF();
+        if (o.maxW) while (ctx.measureText(o.s).width > o.maxW * s && size > 5) { size -= 0.5; setF(); }
+        ctx.fillStyle = o.color || "#000"; ctx.textAlign = o.align || "left"; ctx.textBaseline = o.mid ? "middle" : "alphabetic";
+        ctx.fillText(String(o.s), o.x * s, o.y * s); break;
+      }
+      case "bars": {
+        ctx.fillStyle = "#000";
+        for (let i = 0; i < o.bars.length; i++) if (o.bars[i] === "1") ctx.fillRect((o.x + i * o.mod) * s, o.y * s, Math.ceil(o.mod * s * 1000) / 1000 + 0.3, o.h * s);
+        break;
+      }
+      case "qr": {
+        const m = qrMatriz(o.s), n = m.length, q = (o.size / n) * s;
+        ctx.fillStyle = "#000";
+        for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) if (m[y][x]) ctx.fillRect(o.x * s + x * q, o.y * s + y * q, q + 0.5, q + 0.5);
+        break;
+      }
+      case "img": {
+        const im = imgs && imgs[o.src];
+        if (!im) break;
+        const k = Math.min(o.w / im.width, o.h / im.height);
+        const w = im.width * k, h = im.height * k;
+        ctx.drawImage(im, (o.x + o.w - w) * s, (o.y + (o.h - h) / 2) * s, w * s, h * s);
+        break;
+      }
+    }
+  }
+  ctx.restore();
+}
+
+function carregarImagens(srcs) {
+  const out = {};
+  return Promise.all([...new Set(srcs.filter(Boolean))].map((src) => new Promise((res) => {
+    const im = new Image();
+    im.onload = () => { out[src] = im; res(); };
+    im.onerror = () => res();
+    im.src = src;
+  }))).then(() => out);
+}
+
+/* Lista de folhas a gerar: uma por aluno (nominal) ou n cópias neutras */
+function folhasPara(av, turma, perfil, copiasNeutras) {
+  if (av.tipo === "neutra") return Array.from({ length: Math.max(1, copiasNeutras || 1) }, () => ({ av, perfil, turma, aluno: null }));
+  return (turma ? turma.alunos : []).map((aluno) => ({ av, perfil, turma, aluno }));
+}
+
+async function gerarPDF(folhas, aoProgredir) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: "mm", format: "a4", compress: true });
+  const imgs = await carregarImagens(folhas.map((f) => f.perfil && f.perfil.logo));
+  for (let i = 0; i < folhas.length; i++) {
+    if (i) doc.addPage();
+    desenharPDF(doc, opsFolha(folhas[i]), imgs);
+    if (aoProgredir) aoProgredir(i + 1, folhas.length);
+    if (i % 5 === 4) await new Promise((r) => setTimeout(r));
+  }
+  return doc.output("blob");
+}
+
+/* Word: cada folha vira uma imagem de página inteira, para manter a posição exata das bolinhas */
+async function gerarDOCX(folhas, aoProgredir) {
+  const s = 6.5; // px por mm (~165 dpi)
+  const cv = document.createElement("canvas");
+  cv.width = A4.w * s; cv.height = A4.h * s;
+  const ctx = cv.getContext("2d");
+  const imgs = await carregarImagens(folhas.map((f) => f.perfil && f.perfil.logo));
+  const zip = new JSZip();
+  const EMU = 36000;
+  const cx = Math.round(209.5 * EMU), cy = Math.round(296.3 * EMU);
+  let corpo = "", rels = "";
+  for (let i = 0; i < folhas.length; i++) {
+    desenharCanvas(ctx, opsFolha(folhas[i]), s, imgs);
+    const blob = await new Promise((r) => cv.toBlob(r, "image/jpeg", 0.85));
+    zip.file(`word/media/folha${i + 1}.jpg`, blob);
+    rels += `<Relationship Id="rIdF${i + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/folha${i + 1}.jpg"/>`;
+    corpo += `<w:p><w:pPr>${i ? "<w:pageBreakBefore/>" : ""}<w:spacing w:before="0" w:after="0" w:line="240" w:lineRule="auto"/><w:jc w:val="center"/></w:pPr><w:r><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent cx="${cx}" cy="${cy}"/><wp:docPr id="${i + 1}" name="Folha ${i + 1}"/><a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:nvPicPr><pic:cNvPr id="${i + 1}" name="folha${i + 1}.jpg"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed="rIdF${i + 1}"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${cx}" cy="${cy}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r></w:p>`;
+    if (aoProgredir) aoProgredir(i + 1, folhas.length);
+  }
+  zip.file("[Content_Types].xml", `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Default Extension="jpg" ContentType="image/jpeg"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>`);
+  zip.file("_rels/.rels", `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>`);
+  zip.file("word/_rels/document.xml.rels", `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">${rels}</Relationships>`);
+  zip.file("word/document.xml", `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"><w:body>${corpo}<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="0" w:right="0" w:bottom="0" w:left="0" w:header="0" w:footer="0" w:gutter="0"/></w:sectPr></w:body></w:document>`);
+  return zip.generateAsync({ type: "blob", mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
+}
+
+/* Leitura da folha a partir de uma foto ou de um quadro da câmera.
+   1) acha os 4 quadrados pretos, 2) calcula a perspectiva (homografia),
+   3) lê o QR code na posição esperada, 4) mede o preenchimento de cada bolinha. */
+
+class ErroLeitura extends Error {
+  constructor(codigo, msg) { super(msg); this.codigo = codigo; }
+}
+
+function cinza(rgba, w, h) {
+  const g = new Uint8ClampedArray(w * h);
+  for (let i = 0, j = 0; i < g.length; i++, j += 4) g[i] = (rgba[j] * 77 + rgba[j + 1] * 150 + rgba[j + 2] * 29) >> 8;
+  return g;
+}
+
+function reduzir(g, w, h, maxLado) {
+  const k = Math.min(1, maxLado / Math.max(w, h));
+  if (k === 1) return { g, w, h, k };
+  const W = Math.round(w * k), H = Math.round(h * k), out = new Uint8ClampedArray(W * H);
+  const inv = 1 / k;
+  for (let y = 0; y < H; y++) {
+    const y0 = Math.floor(y * inv), y1 = Math.min(h, Math.floor((y + 1) * inv));
+    for (let x = 0; x < W; x++) {
+      const x0 = Math.floor(x * inv), x1 = Math.min(w, Math.floor((x + 1) * inv));
+      let s = 0, n = 0;
+      for (let yy = y0; yy < Math.max(y1, y0 + 1); yy++) for (let xx = x0; xx < Math.max(x1, x0 + 1); xx++) { s += g[yy * w + xx]; n++; }
+      out[y * W + x] = s / n;
+    }
+  }
+  return { g: out, w: W, h: H, k };
+}
+
+/* Encontra os 4 quadrados dos cantos. Devolve os centros na ordem horária a partir do mais acima-à-esquerda. */
+function acharMarcas(g, w, h) {
+  const W1 = w + 1, I = new Float64Array(W1 * (h + 1));
+  for (let y = 0; y < h; y++) {
+    let lin = 0;
+    for (let x = 0; x < w; x++) { lin += g[y * w + x]; I[(y + 1) * W1 + x + 1] = I[y * W1 + x + 1] + lin; }
+  }
+  const R = Math.max(10, Math.round(Math.max(w, h) / 12));
+  const bin = new Uint8Array(w * h);
+  for (let y = 0; y < h; y++) {
+    const ya = Math.max(0, y - R), yb = Math.min(h, y + R + 1);
+    for (let x = 0; x < w; x++) {
+      const xa = Math.max(0, x - R), xb = Math.min(w, x + R + 1);
+      const soma = I[yb * W1 + xb] - I[ya * W1 + xb] - I[yb * W1 + xa] + I[ya * W1 + xa];
+      const media = soma / ((yb - ya) * (xb - xa));
+      const v = g[y * w + x];
+      if (v < media * 0.68 && v < 150) bin[y * w + x] = 1;
+    }
+  }
+  // componentes conectados
+  const lab = new Int32Array(w * h), pilha = new Int32Array(w * h);
+  const cands = [];
+  let id = 0;
+  for (let i = 0; i < bin.length; i++) {
+    if (!bin[i] || lab[i]) continue;
+    id++;
+    let sp = 0; pilha[sp++] = i; lab[i] = id;
+    let area = 0, sx = 0, sy = 0, minx = w, maxx = 0, miny = h, maxy = 0;
+    while (sp) {
+      const p = pilha[--sp], x = p % w, y = (p - x) / w;
+      area++; sx += x; sy += y;
+      if (x < minx) minx = x; if (x > maxx) maxx = x; if (y < miny) miny = y; if (y > maxy) maxy = y;
+      if (x > 0 && bin[p - 1] && !lab[p - 1]) { lab[p - 1] = id; pilha[sp++] = p - 1; }
+      if (x < w - 1 && bin[p + 1] && !lab[p + 1]) { lab[p + 1] = id; pilha[sp++] = p + 1; }
+      if (y > 0 && bin[p - w] && !lab[p - w]) { lab[p - w] = id; pilha[sp++] = p - w; }
+      if (y < h - 1 && bin[p + w] && !lab[p + w]) { lab[p + w] = id; pilha[sp++] = p + w; }
+    }
+    const bw = maxx - minx + 1, bh = maxy - miny + 1;
+    if (bw < 6 || bh < 6) continue;
+    const ar = bw / bh;
+    if (ar < 0.5 || ar > 2) continue;
+    if (area / (bw * bh) < 0.5) continue;
+    if (bw > w * 0.2 || bh > h * 0.2) continue;
+    cands.push({ x: sx / area, y: sy / area, area });
+  }
+  cands.sort((a, b) => b.area - a.area);
+  const top = cands.slice(0, 12);
+  let melhor = null, melhorScore = 0;
+  const n = top.length;
+  for (let a = 0; a < n; a++) for (let b = a + 1; b < n; b++) for (let c = b + 1; c < n; c++) for (let d = c + 1; d < n; d++) {
+    const q = [top[a], top[b], top[c], top[d]];
+    const areas = q.map((p) => p.area), mx = Math.max(...areas), mn = Math.min(...areas);
+    if (mn < mx * 0.3) continue;
+    const ord = ordenarHorario(q);
+    if (!convexo(ord)) continue;
+    const aq = areaPoligono(ord);
+    if (aq < w * h * 0.12) continue;
+    // lados opostos com tamanhos parecidos (folha retangular, perspectiva moderada)
+    const L = [0, 1, 2, 3].map((i) => dist(ord[i], ord[(i + 1) % 4]));
+    if (Math.min(L[0], L[2]) / Math.max(L[0], L[2]) < 0.6 || Math.min(L[1], L[3]) / Math.max(L[1], L[3]) < 0.6) continue;
+    const score = aq * Math.sqrt(mn / mx);
+    if (score > melhorScore) { melhorScore = score; melhor = ord; }
+  }
+  return melhor;
+}
+const dist = (p, q) => Math.hypot(p.x - q.x, p.y - q.y);
+function ordenarHorario(pts) {
+  const cx = pts.reduce((s, p) => s + p.x, 0) / pts.length, cy = pts.reduce((s, p) => s + p.y, 0) / pts.length;
+  const ord = pts.slice().sort((a, b) => Math.atan2(a.y - cy, a.x - cx) - Math.atan2(b.y - cy, b.x - cx));
+  // começa pelo mais acima-à-esquerda
+  let k = 0, best = Infinity;
+  ord.forEach((p, i) => { if (p.x + p.y < best) { best = p.x + p.y; k = i; } });
+  return ord.slice(k).concat(ord.slice(0, k));
+}
+function convexo(p) {
+  let sinal = 0;
+  for (let i = 0; i < 4; i++) {
+    const a = p[i], b = p[(i + 1) % 4], c = p[(i + 2) % 4];
+    const z = (b.x - a.x) * (c.y - b.y) - (b.y - a.y) * (c.x - b.x);
+    const s = Math.sign(z);
+    if (!s) return false;
+    if (sinal && s !== sinal) return false;
+    sinal = s;
+  }
+  return true;
+}
+function areaPoligono(p) {
+  let s = 0;
+  for (let i = 0; i < p.length; i++) { const a = p[i], b = p[(i + 1) % p.length]; s += a.x * b.y - b.x * a.y; }
+  return Math.abs(s) / 2;
+}
+
+/* Homografia que leva (X,Y) em mm para (x,y) em pixels */
+function homografia(src, dst) {
+  const A = [], B = [];
+  for (let i = 0; i < 4; i++) {
+    const [X, Y] = src[i], { x, y } = dst[i];
+    A.push([X, Y, 1, 0, 0, 0, -X * x, -Y * x]); B.push(x);
+    A.push([0, 0, 0, X, Y, 1, -X * y, -Y * y]); B.push(y);
+  }
+  const h = resolver(A, B);
+  if (!h) return null;
+  return (X, Y) => {
+    const d = h[6] * X + h[7] * Y + 1;
+    return [(h[0] * X + h[1] * Y + h[2]) / d, (h[3] * X + h[4] * Y + h[5]) / d];
+  };
+}
+function resolver(A, B) {
+  const n = B.length, M = A.map((r, i) => [...r, B[i]]);
+  for (let c = 0; c < n; c++) {
+    let p = c;
+    for (let r = c + 1; r < n; r++) if (Math.abs(M[r][c]) > Math.abs(M[p][c])) p = r;
+    if (Math.abs(M[p][c]) < 1e-12) return null;
+    [M[c], M[p]] = [M[p], M[c]];
+    for (let r = 0; r < n; r++) {
+      if (r === c) continue;
+      const f = M[r][c] / M[c][c];
+      for (let k = c; k <= n; k++) M[r][k] -= f * M[c][k];
+    }
+  }
+  return M.map((r, i) => r[n] / r[i]);
+}
+
+function amostrador(g, w, h, H) {
+  return (X, Y) => {
+    const [x, y] = H(X, Y);
+    if (x < 0 || y < 0 || x >= w - 1 || y >= h - 1) return 255;
+    const x0 = x | 0, y0 = y | 0, fx = x - x0, fy = y - y0, i = y0 * w + x0;
+    return (g[i] * (1 - fx) + g[i + 1] * fx) * (1 - fy) + (g[i + w] * (1 - fx) + g[i + w + 1] * fx) * fy;
+  };
+}
+
+/* Recorta a região do QR já "endireitada" e tenta decodificar */
+function lerQRRetificado(g, w, h, H) {
+  const s = 10, x0 = 157, y0 = 3.5, lado = 34, n = lado * s;
+  const amostra = amostrador(g, w, h, H);
+  const rgba = new Uint8ClampedArray(n * n * 4);
+  for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) {
+    const v = amostra(x0 + (i + 0.5) / s, y0 + (j + 0.5) / s), k = (j * n + i) * 4;
+    rgba[k] = rgba[k + 1] = rgba[k + 2] = v; rgba[k + 3] = 255;
+  }
+  const r = jsQR(rgba, n, n, { inversionAttempts: "dontInvert" });
+  return r && r.data;
+}
+
+function mediaDisco(amostra, cx, cy, raio) {
+  let s = 0, n = 0;
+  const passo = Math.max(0.25, raio / 3);
+  for (let dy = -raio; dy <= raio + 1e-9; dy += passo) for (let dx = -raio; dx <= raio + 1e-9; dx += passo) {
+    if (dx * dx + dy * dy > raio * raio) continue;
+    s += amostra(cx + dx, cy + dy); n++;
+  }
+  return s / n;
+}
+
+/* Lê as bolinhas. Devolve string de respostas: letra, "-" (branco) ou "*" (mais de uma). */
+function lerBolinhas(amostra, geo) {
+  // referência de preto: interior dos quadrados dos cantos
+  const pretos = MARCAS.centros.map(([x, y]) => mediaDisco(amostra, x, y, 2.5));
+  const preto = pretos.sort((a, b) => a - b)[1];
+  let resp = "";
+  const fills = [];
+  for (let q = 0; q < geo.nQ; q++) {
+    // referência de branco: vãos entre as bolinhas da mesma linha
+    const brancos = [];
+    for (let a = 0; a < geo.nAlt; a++) {
+      const [cx, cy] = geo.pos(q, a);
+      brancos.push(mediaDisco(amostra, cx + geo.px / 2, cy, 0.25));
+      if (a === 0) brancos.push(mediaDisco(amostra, cx - geo.px / 2, cy, 0.25));
+    }
+    brancos.sort((a, b) => b - a);
+    const branco = brancos[Math.floor(brancos.length / 3)];
+    const faixa = Math.max(40, branco - preto);
+    const f = [];
+    for (let a = 0; a < geo.nAlt; a++) {
+      const [cx, cy] = geo.pos(q, a);
+      let max = 0;
+      const off = geo.r * 0.3;
+      for (const dy of [-off, 0, off]) for (const dx of [-off, 0, off]) {
+        const v = (branco - mediaDisco(amostra, cx + dx, cy + dy, geo.r * 0.55)) / faixa;
+        if (v > max) max = v;
+      }
+      f.push(Math.min(1, max));
+    }
+    fills.push(f);
+    const ord = f.map((v, i) => [v, i]).sort((a, b) => b[0] - a[0]);
+    const [m1, i1] = ord[0], m2 = ord[1] ? ord[1][0] : 0;
+    if (m1 < 0.35) resp += "-";
+    else if (m2 >= 0.35 && m2 > m1 * 0.6) resp += "*";
+    else resp += LETRAS[i1];
+  }
+  return { resp, fills };
+}
+
+/* Entrada: um canvas (foto ou quadro de vídeo). Saída: { codigo, info, resp, fills, H, previa } */
+function lerFolha(canvas, opcoes = {}) {
+  const w = canvas.width, h = canvas.height;
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  const rgba = ctx.getImageData(0, 0, w, h).data;
+  const g = cinza(rgba, w, h);
+  const red = reduzir(g, w, h, 900);
+  const marcas = acharMarcas(red.g, red.w, red.h);
+  if (!marcas) throw new ErroLeitura("cantos", "Não encontrei os 4 quadrados pretos dos cantos. Fotografe a folha inteira, de cima, com boa luz.");
+  const pts = marcas.map((p) => ({ x: (p.x + 0.5) / red.k - 0.5, y: (p.y + 0.5) / red.k - 0.5 }));
+
+  // tenta as 4 orientações; a certa é a que tem o QR code no canto superior direito
+  let codigo = null, H = null;
+  for (const k of [0, 1, 3, 2]) {
+    const dst = [0, 1, 2, 3].map((i) => pts[(i + k) % 4]);
+    const Hk = homografia(MARCAS.centros, dst);
+    if (!Hk) continue;
+    const txt = lerQRRetificado(g, w, h, Hk);
+    if (txt && lerCodigoQR(txt)) { codigo = txt; H = Hk; break; }
+  }
+  if (!codigo) {
+    const r = jsQR(rgba, w, h, { inversionAttempts: "dontInvert" });
+    if (r && lerCodigoQR(r.data)) {
+      codigo = r.data;
+      const c = r.location;
+      const qc = { x: (c.topLeftCorner.x + c.bottomRightCorner.x) / 2, y: (c.topLeftCorner.y + c.bottomRightCorner.y) / 2 };
+      let j = 0, best = Infinity;
+      pts.forEach((p, i) => { const d = dist(p, qc); if (d < best) { best = d; j = i; } });
+      const k = (j + 3) % 4; // o canto mais perto do QR é o superior direito
+      H = homografia(MARCAS.centros, [0, 1, 2, 3].map((i) => pts[(i + k) % 4]));
+    }
+  }
+  if (!codigo) throw new ErroLeitura("qr", "Achei a folha, mas não consegui ler o QR code. Aproxime um pouco o celular e evite sombra ou reflexo sobre o código.");
+  const info = lerCodigoQR(codigo);
+  const geo = geometria(info.nQ, info.nAlt, info.transcricao);
+  const amostra = amostrador(g, w, h, H);
+  const { resp, fills } = lerBolinhas(amostra, geo);
+  return { codigo, info, resp, fills, H, geo, pts };
+}
+
+/* Desenha uma prévia reduzida com as marcações reconhecidas */
+function previaLeitura(canvas, leitura, gabarito, largura = 520) {
+  const k = largura / canvas.width;
+  const cv = document.createElement("canvas");
+  cv.width = largura; cv.height = Math.round(canvas.height * k);
+  const ctx = cv.getContext("2d");
+  ctx.drawImage(canvas, 0, 0, cv.width, cv.height);
+  const { H, geo, resp } = leitura;
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = "#2f6fed";
+  ctx.beginPath();
+  MARCAS.centros.forEach(([X, Y], i) => { const [x, y] = H(X, Y); i ? ctx.lineTo(x * k, y * k) : ctx.moveTo(x * k, y * k); });
+  ctx.closePath(); ctx.stroke();
+  for (let q = 0; q < geo.nQ; q++) {
+    const r = resp[q];
+    const gab = gabarito ? gabarito[q] : null;
+    for (let a = 0; a < geo.nAlt; a++) {
+      const L = LETRAS[a];
+      const marcada = r === L || (r === "*" && leitura.fills[q][a] >= 0.35);
+      const correta = gab === L;
+      if (!marcada && !correta) continue;
+      const [X, Y] = geo.pos(q, a);
+      const [x, y] = H(X, Y);
+      const [x2] = H(X + geo.r, Y);
+      const rad = Math.max(3, Math.abs(x2 - x) * k + 1.5);
+      ctx.beginPath(); ctx.arc(x * k, y * k, rad, 0, Math.PI * 2);
+      if (marcada) { ctx.strokeStyle = r === "*" ? "#e08a00" : correta || !gab || gab === "X" ? "#16a34a" : "#dc2626"; ctx.lineWidth = 2.5; }
+      else { ctx.strokeStyle = "rgba(22,163,74,.6)"; ctx.lineWidth = 1.2; ctx.setLineDash([3, 2]); }
+      ctx.stroke(); ctx.setLineDash([]);
+    }
+  }
+  return cv;
+}
+
+function arquivoParaCanvas(file, maxLado = 2200) {
+  return new Promise((res, rej) => {
+    const url = URL.createObjectURL(file);
+    const im = new Image();
+    im.onload = () => {
+      const k = Math.min(1, maxLado / Math.max(im.naturalWidth, im.naturalHeight));
+      const cv = document.createElement("canvas");
+      cv.width = Math.round(im.naturalWidth * k); cv.height = Math.round(im.naturalHeight * k);
+      cv.getContext("2d").drawImage(im, 0, 0, cv.width, cv.height);
+      URL.revokeObjectURL(url);
+      res(cv);
+    };
+    im.onerror = () => { URL.revokeObjectURL(url); rej(new ErroLeitura("arquivo", "Não consegui abrir esta imagem.")); };
+    im.src = url;
+  });
+}
+
+/* Importação de atas (listas de alunos por turma).
+   Modelo principal: ata .docx da escola, com "TURMA: 6° A BILÍNGUE" e a tabela Nº | R.A. | ALUNO (A) | ASSINATURA.
+   Também aceita Excel/CSV (colunas parecidas) e PDF com o mesmo conteúdo. */
+
+function limparNomeTurma(s) {
+  let t = String(s || "").replace(/\s+/g, " ").trim();
+  t = t.replace(/(\d+)\s*[°ºo]\s*/i, "$1º ");                 // 8°A -> 8º A
+  t = t.replace(/\s*-\s*/g, " - ");
+  t = t.replace(/^(\d+º [A-Z])\s+(?!- )/, "$1 - ");           // 6º A BILÍNGUE -> 6º A - BILÍNGUE
+  return t.trim();
+}
+
+function normalizarNome(s) {
+  return String(s || "").replace(/\s+/g, " ").trim();
+}
+
+/* Número da linha da ata. Nas atas da escola os números 9, 19, 29... aparecem como "0G", "1G", "2G" */
+function numeroDaLinha(txt, anterior) {
+  const t = String(txt || "").trim();
+  let m = /^(\d{1,3})$/.exec(t);
+  if (m) return +m[1];
+  m = /^(\d)G$/i.exec(t);
+  if (m) return +m[1] * 10 + 9;
+  return (anterior || 0) + 1;
+}
+
+/* Converte linhas de tabela (arrays de texto) em alunos */
+function linhasParaAlunos(linhas) {
+  const alunos = [];
+  let turma = null, escola = [], ult = 0;
+  let colRA = -1, colNome = -1, colNum = -1;
+  for (const cels0 of linhas) {
+    const cels = cels0.map((c) => normalizarNome(c));
+    const junto = cels.join(" ");
+    const mT = /TURMA\s*:\s*(.+)/i.exec(junto);
+    if (mT && !alunos.length) { turma = mT[1].trim(); continue; }
+    // cabeçalho de tabela
+    const iNome = cels.findIndex((c) => /^(aluno|nome|estudante)/i.test(c));
+    if (iNome >= 0 && cels.some((c) => /r\.?\s?a\.?|matr/i.test(c))) {
+      colNome = iNome;
+      colRA = cels.findIndex((c) => /^r\.?\s?a\.?$|matr/i.test(c));
+      colNum = cels.findIndex((c) => /^(n[º°o.]?|num|nº)$/i.test(c) || c === "");
+      continue;
+    }
+    // linha de aluno: tem um código de 5+ dígitos e um nome com letras
+    let iRA = colRA >= 0 && /^\d{5,}$/.test(cels[colRA] || "") ? colRA : cels.findIndex((c) => /^\d{5,}$/.test(c));
+    let iN = colNome >= 0 && /[A-Za-zÀ-ú]{2,}/.test(cels[colNome] || "") ? colNome : -1;
+    if (iN < 0) {
+      let melhor = -1;
+      cels.forEach((c, i) => { if (i !== iRA && /^[A-Za-zÀ-ú' .-]{5,}$/.test(c) && c.includes(" ") && (melhor < 0 || c.length > cels[melhor].length)) melhor = i; });
+      iN = melhor;
+    }
+    if (iN < 0) {
+      if (cels.length === 1 && cels[0] && !alunos.length) escola.push(cels[0]);
+      continue;
+    }
+    if (iRA < 0 && !cels.some((c) => /^\d{1,3}$|^\dG$/i.test(c))) continue;
+    const numTxt = colNum >= 0 ? cels[colNum] : cels.find((c, i) => i !== iRA && i !== iN && /^(\d{1,3}|\dG)$/i.test(c));
+    const num = numeroDaLinha(numTxt, ult);
+    ult = num;
+    alunos.push({ num, ra: iRA >= 0 ? cels[iRA] : "", nome: cels[iN].toUpperCase() });
+  }
+  return { turma, escola, alunos };
+}
+
+async function lerDocx(buf) {
+  const zip = await JSZip.loadAsync(buf);
+  const xml = (await zip.file("word/document.xml").async("string")).replace(/^\uFEFF/, "");
+  const doc = new DOMParser().parseFromString(xml, "application/xml");
+  const W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
+  const texto = (el) => Array.from(el.getElementsByTagNameNS(W, "t")).map((t) => t.textContent).join("");
+  const linhas = [];
+  for (const tr of Array.from(doc.getElementsByTagNameNS(W, "tr"))) {
+    const cels = Array.from(tr.childNodes).filter((n) => n.localName === "tc").map(texto);
+    linhas.push(cels);
+  }
+  // parágrafos fora de tabelas (ex.: "TURMA: ..." escrito fora da tabela)
+  const fora = Array.from(doc.getElementsByTagNameNS(W, "p")).filter((p) => !p.closest || !p.closest("tc"));
+  const extras = fora.map(texto).filter((t) => /TURMA\s*:/i.test(t)).map((t) => [t]);
+  return linhasParaAlunos(extras.concat(linhas));
+}
+
+async function lerPlanilha(buf, ehCSV) {
+  let wb;
+  if (ehCSV) {
+    let txt = new TextDecoder("utf-8").decode(buf);
+    if (txt.includes("�")) txt = new TextDecoder("windows-1252").decode(buf);
+    wb = XLSX.read(txt, { type: "string", raw: true });
+  } else wb = XLSX.read(buf, { type: "array", raw: true });
+  const resultados = [];
+  for (const nome of wb.SheetNames) {
+    const linhas = XLSX.utils.sheet_to_json(wb.Sheets[nome], { header: 1, raw: false, defval: "" }).map((r) => r.map((c) => String(c)));
+    const r = linhasParaAlunos(linhas);
+    if (!r.turma && wb.SheetNames.length > 1) r.turma = nome;
+    if (r.alunos.length) resultados.push(r);
+  }
+  return resultados;
+}
+
+async function lerPDF(buf) {
+  const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+  const linhas = [];
+  for (let p = 1; p <= pdf.numPages; p++) {
+    const page = await pdf.getPage(p);
+    const tc = await page.getTextContent();
+    const porY = new Map();
+    for (const it of tc.items) {
+      if (!it.str.trim()) continue;
+      const y = Math.round(it.transform[5] / 3);
+      if (!porY.has(y)) porY.set(y, []);
+      porY.get(y).push({ x: it.transform[4], s: it.str.trim() });
+    }
+    [...porY.entries()].sort((a, b) => b[0] - a[0]).forEach(([, its]) => linhas.push(its.sort((a, b) => a.x - b.x).map((i) => i.s)));
+  }
+  return linhasParaAlunos(linhas);
+}
+
+/* Lê um arquivo de ata e devolve uma ou mais turmas: [{arquivo, turma, escola, alunos, avisos}] */
+async function importarAta(file) {
+  const buf = await file.arrayBuffer();
+  const nome = file.name.toLowerCase();
+  let rs;
+  if (nome.endsWith(".docx")) rs = [await lerDocx(buf)];
+  else if (nome.endsWith(".pdf")) rs = [await lerPDF(buf)];
+  else if (/\.(xlsx|xls|ods)$/.test(nome)) rs = await lerPlanilha(buf, false);
+  else if (/\.(csv|txt)$/.test(nome)) rs = await lerPlanilha(buf, true);
+  else throw new Error("Formato não reconhecido. Use .docx, .pdf, .xlsx ou .csv.");
+  if (!rs.some((r) => r.alunos.length)) throw new Error("Não encontrei alunos neste arquivo. A ata precisa ter as colunas Nº, R.A. e nome do aluno.");
+  return rs.filter((r) => r.alunos.length).map((r) => {
+    const avisos = [];
+    const vistos = new Map();
+    const alunos = [];
+    for (const a of r.alunos) {
+      if (a.ra && vistos.has(a.ra)) { avisos.push(`${a.nome} aparece duas vezes (Nº ${vistos.get(a.ra)} e Nº ${a.num}). Mantive só a primeira.`); continue; }
+      if (a.ra) vistos.set(a.ra, a.num);
+      if (!a.ra) avisos.push(`${a.nome} está sem R.A.; vou gerar um código para ele.`);
+      alunos.push(a);
+    }
+    const nums = alunos.map((a) => a.num);
+    if (new Set(nums).size !== nums.length) avisos.push("Há números de chamada repetidos na ata.");
+    const turma = r.turma ? limparNomeTurma(r.turma) : limparNomeTurma(file.name.replace(/\.[^.]+$/, ""));
+    return { arquivo: file.name, turma, escola: r.escola || [], alunos, avisos };
+  });
+}
+
+/* Gabarito: estado, nuvem (Firebase) ou modo local, e telas. */
+
+const $ = (s, r = GAB_RAIZ) => r.querySelector(s);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const novoId = () => Date.now().toString(36).slice(-4) + Math.random().toString(36).slice(2, 7);
+const fmt = (n) => (Math.round(n * 100) / 100).toLocaleString("pt-BR", { maximumFractionDigits: 2 });
+const agora = () => new Date().toISOString();
+const dataCurta = (iso) => (iso ? new Date(iso).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : "");
+
+const S = { turmas: {}, avaliacoes: {}, resultados: {}, perfil: {} };
+const ui = { aba: "turmas", avSel: null, turmaFiltro: "", leituras: [], carregando: true, camera: null };
+const ABAS = [
+  ["turmas", "Turmas"],
+  ["avaliacoes", "Avaliações"],
+  ["folhas", "Folhas"],
+  ["corrigir", "Corrigir"],
+  ["notas", "Notas"],
+  ["escola", "Escola"],
+];
+
+/* ===================== Armazenamento ===================== */
+const KINDS = ["turmas", "avaliacoes", "resultados"];
+/* Na nuvem, as coleções ficam com o prefixo gab_ para não se misturar com outros dados do mesmo projeto Firebase */
+const COL = (k) => (window.GABARITO_PREFIXO ?? "gab_") + k;
+const Nuvem = {
+  modo: "local",
+  usuario: null,
+  db: null,
+  auth: null,
+  subs: [],
+  tokenSheets: null,
+
+  chave: null,
+  /* O leitor usa o login e o Firestore que o Banco de Questões já abriu (mesmo projeto, coleções gab_*).
+     É chamado ao abrir a aba e sempre que a nuvem do site muda: entrar, sair, liberação do e-mail. */
+  sincronizar() {
+    const nv = NV;
+    if (!nv || nv.estado === "arquivo" || (nv.estado === "erro" && !nv.sdk)) {
+      if (this.chave !== "local") this.iniciarLocal();
+      return;
+    }
+    this.modo = "nuvem";
+    const u = nv.sdk && nv.authPronto && nv.auth ? nv.auth.currentUser : undefined;
+    const chave = u === undefined ? "?" : !u ? "-" : u.uid + (nv.membro ? ":ok" : nv.estado === "semacesso" ? ":barrado" : ":conferindo");
+    if (chave === this.chave) { render(); return; }
+    this.chave = chave;
+    this.subs.forEach((f) => f()); this.subs = [];
+    KINDS.forEach((k) => (S[k] = {})); S.perfil = {};
+    this.usuario = u || null;
+    ui.semAcesso = false;
+    if (u === undefined || (u && !nv.membro && nv.estado !== "semacesso")) { ui.carregando = true; render(); return; }
+    if (!u) { ui.carregando = false; render(); return; }
+    if (!nv.membro) { ui.semAcesso = true; ui.carregando = false; render(); return; }
+    const F = nv.sdk, db = nv.db, uid = u.uid;
+    ui.carregando = true; render();
+    let pendentes = KINDS.length + 1;
+    const pronto = () => { if (--pendentes === 0) { ui.carregando = false; } render(); };
+    for (const k of KINDS) {
+      let primeira = true;
+      this.subs.push(F.onSnapshot(F.query(F.collection(db, COL(k)), F.where("dono", "==", uid)), (snap) => {
+        const m = {};
+        snap.forEach((d) => (m[d.id] = { ...d.data(), id: d.id }));
+        S[k] = m;
+        if (primeira) { primeira = false; pronto(); } else render();
+      }, (e) => { erroSync(e); if (primeira) { primeira = false; pronto(); } }));
+    }
+    let primeiraP = true;
+    this.subs.push(F.onSnapshot(F.doc(db, COL("perfis"), uid), (d) => {
+      S.perfil = d.exists() ? d.data() : {};
+      if (primeiraP) { primeiraP = false; pronto(); } else render();
+    }, () => { if (primeiraP) { primeiraP = false; pronto(); } }));
+  },
+
+  iniciarLocal() {
+    this.modo = "local";
+    this.chave = "local";
+    this.subs.forEach((f) => f()); this.subs = [];
+    try {
+      const o = JSON.parse(localStorage.getItem("gabarito-local-v1") || "{}");
+      KINDS.forEach((k) => (S[k] = o[k] || {}));
+      S.perfil = o.perfil || {};
+    } catch (e) { /* armazenamento indisponível */ }
+    ui.carregando = false;
+    render();
+  },
+  salvarLocal() {
+    try { localStorage.setItem("gabarito-local-v1", JSON.stringify({ turmas: S.turmas, avaliacoes: S.avaliacoes, resultados: S.resultados, perfil: S.perfil })); }
+    catch (e) { toast("Não consegui salvar neste aparelho (armazenamento cheio ou bloqueado)."); }
+  },
+
+  put(kind, id, obj) {
+    const dados = { ...obj, id, atualizadoEm: agora() };
+    if (this.modo === "local") { S[kind] = { ...S[kind], [id]: dados }; this.salvarLocal(); render(); return Promise.resolve(); }
+    if (!this.usuario) { toast("Entre com sua conta Google no site para salvar."); return Promise.resolve(); }
+    dados.dono = this.usuario.uid;
+    const F = NV.sdk;
+    return F.setDoc(F.doc(NV.db, COL(kind), id), dados).catch((e) => toast("Não foi possível salvar: " + e.message));
+  },
+  del(kind, id) {
+    if (this.modo === "local") { const m = { ...S[kind] }; delete m[id]; S[kind] = m; this.salvarLocal(); render(); return Promise.resolve(); }
+    const F = NV.sdk;
+    return F.deleteDoc(F.doc(NV.db, COL(kind), id)).catch((e) => toast("Não foi possível excluir: " + e.message));
+  },
+  salvarPerfil(p) {
+    S.perfil = { ...S.perfil, ...p };
+    if (this.modo === "local") { this.salvarLocal(); render(); return Promise.resolve(); }
+    if (!this.usuario) return Promise.resolve();
+    const F = NV.sdk;
+    return F.setDoc(F.doc(NV.db, COL("perfis"), this.usuario.uid), { ...S.perfil, dono: this.usuario.uid }).catch((e) => toast("Não foi possível salvar: " + e.message));
+  },
+
+  /* o login é o do próprio site */
+  entrar() {
+    const b = document.getElementById("portao-entrar") || document.getElementById("btn-nuvem-entrar");
+    if (b) b.click();
+  },
+  sair() {},
+
+  /* Token para criar e atualizar planilhas no Google Drive do professor */
+  async tokenGoogle() {
+    if (this.tokenSheets && this.tokenSheets.ate > Date.now()) return this.tokenSheets.v;
+    const F = NV.sdk;
+    const p = new F.GoogleAuthProvider();
+    p.addScope("https://www.googleapis.com/auth/drive.file");
+    p.setCustomParameters({ login_hint: this.usuario.email || "", prompt: "consent" });
+    const r = await F.signInWithPopup(NV.auth, p);
+    if (!r.user || r.user.uid !== this.usuario.uid) throw new Error("escolha a mesma conta Google que você usa no site.");
+    const c = F.GoogleAuthProvider.credentialFromResult(r);
+    const v = c && c.accessToken;
+    if (!v) throw new Error("O Google não liberou o acesso às planilhas.");
+    this.tokenSheets = { v, ate: Date.now() + 50 * 60 * 1000 };
+    return v;
+  },
+};
+
+function erroSync(e) {
+  if (e && e.code === "permission-denied") { ui.semAcesso = true; render(); }
+  else toast("Erro ao sincronizar: " + ((e && e.message) || e));
+}
+function msgErroLogin(e) {
+  const c = (e && e.code) || "";
+  if (c.includes("unauthorized-domain")) return "Este endereço ainda não foi autorizado no Firebase (Authentication > Configurações > Domínios autorizados).";
+  if (c.includes("popup-closed")) return "A janela de login foi fechada antes de terminar.";
+  return "Não foi possível entrar: " + ((e && e.message) || c);
+}
+
+function carregarScript(src) {
+  return new Promise((res, rej) => {
+    const s = document.createElement("script");
+    s.src = src; s.onload = res; s.onerror = () => rej(new Error("falha ao carregar " + src));
+    document.head.appendChild(s);
+  });
+}
+async function garantirPdfJs() {
+  if (window.pdfjsLib) return;
+  await carregarScript("https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js");
+  pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+}
+
+/* ===================== Utilidades de tela ===================== */
+let _toastT = null;
+function toast(msg, ms = 3800) {
+  const t = $("#toast");
+  t.textContent = msg; t.hidden = false;
+  clearTimeout(_toastT);
+  _toastT = setTimeout(() => (t.hidden = true), ms);
+}
+
+function salvarArquivo(blob, nome) {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = nome;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 5000);
+}
+const nomeArquivo = (s) => String(s).replace(/[ºª°]/g, "o").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\w .()+-]+/g, "-").replace(/\s+/g, " ").trim();
+
+/* Botão de excluir em dois toques (sem confirm(), que alguns navegadores bloqueiam) */
+function armar(btn, acao) {
+  if (btn.classList.contains("armado")) { acao(); return; }
+  btn.classList.add("armado");
+  const txt = btn.textContent;
+  btn.textContent = "Toque de novo para confirmar";
+  setTimeout(() => { btn.classList.remove("armado"); btn.textContent = txt; }, 3500);
+}
+
+const ordenarTurmas = (ts) => ts.sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR", { numeric: true }));
+const listaTurmas = () => ordenarTurmas(Object.values(S.turmas));
+const listaAvaliacoes = () => Object.values(S.avaliacoes).sort((a, b) => (b.criadoEm || "").localeCompare(a.criadoEm || ""));
+
+function corrigir(av, resp) {
+  let ac = 0, tot = 0;
+  const g = av.gabarito || "";
+  for (let q = 0; q < av.nQ; q++) {
+    const k = g[q];
+    if (!k || k === "-") continue;
+    tot++;
+    if (k === "X" || (resp || "")[q] === k) ac++;
+  }
+  const valor = +av.valor || 10;
+  return { ac, tot, nota: tot ? (ac / tot) * valor : 0 };
+}
+function resultadosDe(avId) { return Object.values(S.resultados).filter((r) => r.avaliacaoId === avId); }
+
+/* ===================== Render ===================== */
+function render() {
+  const nuvem = Nuvem.modo === "nuvem";
+  $("#faixaLocal").hidden = nuvem || ui.carregando;
+  // topo
+  const logado = !nuvem || Nuvem.usuario;
+  $("#etapas").innerHTML = logado ? ABAS.map(([id, nome], i) => `<button class="etapa" data-aba="${id}" ${ui.aba === id ? 'aria-current="page"' : ""}>${i < 5 ? `<b>${i + 1}</b>` : ""}${nome}</button>`).join("") : "";
+  const u = Nuvem.usuario;
+  $("#conta").innerHTML = nuvem && u ? `<button class="avatar" data-aba="escola" title="${esc(u.email)}">${u.photoURL ? `<img src="${esc(u.photoURL)}" alt="">` : esc((u.displayName || u.email || "?")[0])}</button>` : "";
+
+  const m = $("#main");
+  if (ui.carregando) { m.innerHTML = `<div class="vazio"><strong>Carregando seus dados…</strong></div>`; return; }
+  if (nuvem && !u) { m.innerHTML = telaEntrar(); return; }
+  if (nuvem && ui.semAcesso) { m.innerHTML = `<div class="entrar"><div class="bloco"><h2>Conta ainda não liberada</h2><p class="muted" style="margin:0">Você entrou como <strong>${esc(u.email)}</strong>, mas este e-mail ainda não está na lista de professores liberados. Peça ao administrador para incluir seu e-mail e depois recarregue a página.</p><button class="btn" data-acao="sair">Sair</button></div></div>`; return; }
+  const telas = { turmas: telaTurmas, avaliacoes: telaAvaliacoes, folhas: telaFolhas, corrigir: telaCorrigir, notas: telaNotas, escola: telaEscola };
+  m.innerHTML = (telas[ui.aba] || telaTurmas)();
+  if (ui.aba === "folhas") desenharPrevia();
+  const atual = $(".etapa[aria-current=page]");
+  if (atual && atual.scrollIntoView) atual.scrollIntoView({ block: "nearest", inline: "nearest" });
+  if (ui.aba === "corrigir" && ui.camera) $("#camSlot") && $("#camSlot").appendChild(ui.camera.el);
+}
+
+function telaEntrar() {
+  return `<div class="entrar"><div class="bloco">
+    <svg width="56" height="56" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="7" fill="var(--accent)"/><circle cx="11" cy="16" r="4.5" fill="var(--accent-ink)"/><circle cx="22" cy="16" r="4.5" fill="none" stroke="var(--accent-ink)" stroke-width="2"/></svg>
+    <h2>Gabarito</h2>
+    <p class="muted" style="margin:0">Folhas de resposta por aluno, correção pela câmera do celular e notas sincronizadas entre seus aparelhos.</p>
+    <button class="btn pri" data-acao="entrar">Entrar com Google</button>
+    <small class="muted">Cada professor vê apenas as próprias turmas, avaliações e notas.</small>
+  </div></div>`;
+}
+
+/* ---------- Turmas ---------- */
+function telaTurmas() {
+  const ts = listaTurmas();
+  const total = ts.reduce((s, t) => s + (t.alunos || []).length, 0);
+  return `<div class="cab"><div><h2>Turmas</h2><p>Importe as atas das turmas (.docx da escola, Excel, CSV ou PDF). Cada aluno fica identificado pelo R.A., que vira o código de barras da folha.</p></div>
+    <div class="acoes"><button class="btn pri" data-acao="importar-atas">Importar atas</button><button class="btn" data-acao="nova-turma">Nova turma</button></div></div>
+    ${ts.length ? `<p class="muted" style="margin:-6px 0 14px">${ts.length} turma${ts.length > 1 ? "s" : ""} · ${total} alunos</p>
+    <div class="lista">${ts.map((t) => `<button class="cartao clicavel" data-acao="editar-turma" data-id="${t.id}">
+      <h3>${esc(t.nome)}</h3>
+      <div class="meta"><span class="chip acc">${(t.alunos || []).length} alunos</span>${t.turno ? `<span class="chip">${esc(t.turno)}</span>` : ""}</div>
+      <small class="muted">${esc((t.alunos || []).slice(0, 3).map((a) => a.nome.split(" ")[0]).join(", "))}${(t.alunos || []).length > 3 ? "…" : ""}</small>
+    </button>`).join("")}</div>`
+    : `<div class="vazio"><strong>Nenhuma turma ainda</strong>Importe as atas de uma vez: o site reconhece a turma, o número, o R.A. e o nome de cada aluno.<button class="btn pri" data-acao="importar-atas">Importar atas</button></div>`}`;
+}
+
+/* ---------- Avaliações ---------- */
+function telaAvaliacoes() {
+  const avs = listaAvaliacoes();
+  return `<div class="cab"><div><h2>Avaliações</h2><p>Cadastre a prova, o gabarito e as turmas que vão fazê-la. A folha pode ser nominal (um por aluno) ou neutra (sem nome).</p></div>
+    <div class="acoes"><button class="btn pri" data-acao="nova-av">Nova avaliação</button></div></div>
+    ${avs.length ? `<div class="lista">${avs.map((av) => {
+      const gabOk = av.gabarito && !av.gabarito.slice(0, av.nQ).includes("-") && av.gabarito.length >= av.nQ;
+      const lidas = resultadosDe(av.id).length;
+      return `<button class="cartao clicavel" data-acao="editar-av" data-id="${av.id}">
+        <h3>${esc(av.titulo || "Sem título")}</h3>
+        <small class="muted">${esc(av.componente || "")}</small>
+        <div class="meta"><span class="chip ${av.tipo === "neutra" ? "" : "acc"}">${av.tipo === "neutra" ? "Folha neutra" : "Folha nominal"}</span>
+          <span class="chip">${av.nQ} questões · A–${LETRAS[av.nAlt - 1]}</span>
+          <span class="chip ${gabOk ? "ok" : "warn"}">${gabOk ? "Gabarito completo" : "Gabarito incompleto"}</span>
+          ${lidas ? `<span class="chip ok">${lidas} lida${lidas > 1 ? "s" : ""}</span>` : ""}</div>
+        <small class="muted">${esc((av.turmas || []).map((id) => S.turmas[id] && S.turmas[id].nome).filter(Boolean).join(" · ") || "Nenhuma turma selecionada")}</small>
+      </button>`;
+    }).join("")}</div>`
+    : `<div class="vazio"><strong>Nenhuma avaliação ainda</strong>Crie a primeira: título, componente, número de questões, alternativas e gabarito.<button class="btn pri" data-acao="nova-av">Nova avaliação</button></div>`}`;
+}
+
+/* ---------- Folhas ---------- */
+function avAtual() {
+  const avs = listaAvaliacoes();
+  if (!ui.avSel || !S.avaliacoes[ui.avSel]) ui.avSel = avs[0] ? avs[0].id : null;
+  return ui.avSel ? S.avaliacoes[ui.avSel] : null;
+}
+function seletorAv() {
+  const avs = listaAvaliacoes();
+  return `<label class="campo" style="max-width:420px"><span>Avaliação</span><select id="selAv" data-muda="av">${avs.map((a) => `<option value="${a.id}" ${a.id === ui.avSel ? "selected" : ""}>${esc(a.titulo || "Sem título")}${a.componente ? " · " + esc(a.componente) : ""}</option>`).join("")}</select></label>`;
+}
+function telaFolhas() {
+  const av = avAtual();
+  if (!av) return `<div class="cab"><div><h2>Folhas de resposta</h2></div></div><div class="vazio"><strong>Crie uma avaliação primeiro</strong>As folhas usam o número de questões, as alternativas e as turmas da avaliação.<button class="btn pri" data-acao="nova-av">Nova avaliação</button></div>`;
+  const ts = (av.turmas || []).map((id) => S.turmas[id]).filter(Boolean);
+  const neutra = av.tipo === "neutra";
+  return `<div class="cab"><div><h2>Folhas de resposta</h2><p>${neutra ? "Folha neutra: sem nome do aluno. O QR code identifica a avaliação e a turma." : "Folha nominal: uma por aluno, com nome, Nº, código de barras do R.A. e QR code."} Imprima em A4, sem ajustar à página (escala 100%).</p></div></div>
+    <div class="duas">
+      <div class="bloco">
+        ${seletorAv()}
+        <div>
+          ${ts.length ? ts.map((t) => `<div class="linha-turma"><span class="nome">${esc(t.nome)} <small class="muted">· ${neutra ? "" : (t.alunos || []).length + " folhas"}</small></span>
+            ${neutra ? `<label class="check" title="Cópias">Cópias <input type="number" min="1" max="200" value="${(t.alunos || []).length || 30}" id="cop-${t.id}" style="width:84px"></label>` : ""}
+            <button class="btn peq" data-acao="gerar" data-fmt="pdf" data-turma="${t.id}">PDF</button>
+            <button class="btn peq" data-acao="gerar" data-fmt="docx" data-turma="${t.id}">Word</button></div>`).join("")
+          : `<div class="aviso">Esta avaliação ainda não tem turmas. Abra a avaliação e marque as turmas.</div>`}
+          ${neutra ? `<div class="linha-turma"><span class="nome">Sem turma <small class="muted">· identifica só a avaliação</small></span>
+            <label class="check">Cópias <input type="number" min="1" max="200" value="30" id="cop--" style="width:84px"></label>
+            <button class="btn peq" data-acao="gerar" data-fmt="pdf" data-turma="">PDF</button><button class="btn peq" data-acao="gerar" data-fmt="docx" data-turma="">Word</button></div>` : ""}
+        </div>
+        ${ts.length > 1 && !neutra ? `<div class="acoes"><button class="btn pri" data-acao="gerar" data-fmt="pdf" data-turma="*">PDF de todas as turmas</button></div>` : ""}
+        <div id="progGerar" hidden><div class="progresso"><i></i></div><small class="muted"></small></div>
+        ${av.gabarito && av.gabarito.length >= av.nQ && !av.gabarito.slice(0, av.nQ).includes("-") ? "" : `<div class="aviso">O gabarito ainda está incompleto. Você pode imprimir as folhas agora e completar o gabarito antes de corrigir.</div>`}
+      </div>
+      <div><canvas id="previa" class="previa-folha" width="630" height="891" aria-label="Prévia da folha"></canvas><p class="muted" style="text-align:center;font-size:.85rem">Prévia da primeira folha</p></div>
+    </div>`;
+}
+async function desenharPrevia() {
+  const cv = $("#previa"), av = avAtual();
+  if (!cv || !av) return;
+  const t = (av.turmas || []).map((id) => S.turmas[id]).filter(Boolean)[0] || null;
+  const aluno = av.tipo === "neutra" ? null : (t && t.alunos && t.alunos[0]) || { id: "00000000", ra: "00000000", nome: "NOME DO ALUNO", num: 1 };
+  const imgs = await carregarImagens([S.perfil.logo]);
+  desenharCanvas(cv.getContext("2d"), opsFolha({ av, perfil: S.perfil, turma: t, aluno }), cv.width / A4.w, imgs);
+}
+
+/* ---------- Corrigir ---------- */
+function telaCorrigir() {
+  const ls = ui.leituras;
+  return `<div class="cab"><div><h2>Corrigir</h2><p>Aponte o celular para a folha preenchida. O site acha os quadrados dos cantos, lê o QR code, identifica a avaliação, a turma e o aluno, e lança a nota.</p></div></div>
+    ${ui.camera ? `<div id="camSlot"></div>` : `<div class="grandes">
+      <button class="grande" data-acao="camera"><span class="ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8h3l2-3h8l2 3h3v12H3z"/><circle cx="12" cy="13.5" r="3.8"/></svg></span><span><strong>Câmera ao vivo</strong><small>Lê automaticamente quando a folha inteira aparece</small></span></button>
+      <button class="grande" data-acao="foto"><span class="ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="m3 16 5-5 4 4 3-3 6 6"/></svg></span><span><strong>Tirar foto</strong><small>Usa a câmera do celular, com mais resolução</small></span></button>
+      <button class="grande" data-acao="galeria"><span class="ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h10l6 6v10H4z"/><path d="M14 4v6h6"/></svg></span><span><strong>Enviar imagens</strong><small>Várias fotos ou digitalizações de uma vez</small></span></button>
+    </div>`}
+    <div class="aviso info" style="margin-top:14px">Dicas: folha apoiada numa mesa, os 4 quadrados pretos aparecendo, boa luz e sem sombra do celular sobre a folha.</div>
+    <div style="display:grid;gap:12px;margin-top:16px">${ls.map(cartaoLeitura).join("")}</div>`;
+}
+
+function cartaoLeitura(l) {
+  if (l.erro) return `<div class="bloco"><div class="aviso erro"><strong>${esc(l.arquivo || "Leitura")}:</strong> ${esc(l.erro)}</div></div>`;
+  const r = S.resultados[l.resId] || l.res;
+  const av = S.avaliacoes[r.avaliacaoId];
+  if (!av) return "";
+  const { ac, tot, nota } = corrigir(av, r.respostas);
+  const turma = S.turmas[r.turmaId];
+  const brancos = (r.respostas.match(/-/g) || []).length, duplas = (r.respostas.match(/\*/g) || []).length;
+  const titulo = r.alunoId ? `${esc(r.nome)}` : `Folha neutra${r.seq ? " nº " + r.seq : ""}${r.nome ? " · " + esc(r.nome) : ""}`;
+  return `<div class="bloco"><div class="leitura">
+    <img src="${l.previa}" alt="Folha lida">
+    <div style="display:grid;gap:10px;min-width:0;align-content:start">
+      <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-start">
+        <div style="min-width:0"><h3>${titulo}</h3><small class="muted">${esc(av.titulo)} · ${esc(turma ? turma.nome : "sem turma")}${r.ra ? " · R.A. " + esc(r.ra) : ""}</small></div>
+        <div style="text-align:right"><div class="nota-grande">${fmt(nota)}</div><small class="muted">${ac} de ${tot} acertos</small></div>
+      </div>
+      <div class="meta" style="display:flex;gap:6px;flex-wrap:wrap"><span class="chip ok">Salvo nas notas</span>${l.substituiu ? `<span class="chip warn">Substituiu leitura anterior</span>` : ""}${brancos ? `<span class="chip warn">${brancos} em branco</span>` : ""}${duplas ? `<span class="chip bad">${duplas} com marcação dupla</span>` : ""}</div>
+      ${!r.alunoId && turma ? `<label class="campo"><span>Vincular a um aluno <small>(opcional)</small></span><select data-muda="vincular" data-res="${r.id}"><option value="">Não vincular</option>${(turma.alunos || []).map((a) => `<option value="${a.id}">${String(a.num).padStart(2, "0")} · ${esc(a.nome)}</option>`).join("")}</select></label>` : ""}
+      <details><summary class="muted" style="cursor:pointer">Conferir e corrigir respostas</summary><div style="margin-top:10px">${gradeRespostas(av, r)}</div></details>
+    </div></div></div>`;
+}
+
+function gradeRespostas(av, r) {
+  const g = av.gabarito || "";
+  let h = `<div class="resps">`;
+  for (let q = 0; q < av.nQ; q++) {
+    const v = (r.respostas || "")[q] || "-";
+    const k = g[q];
+    const cls = v === "*" ? "warn" : !k || k === "-" ? "" : k === "X" || v === k ? "ok" : "bad";
+    h += `<label class="rq ${cls}"><b>${q + 1}</b><select data-muda="resp" data-res="${r.id}" data-q="${q}">${["-", ...LETRAS.slice(0, av.nAlt), "*"].map((o) => `<option value="${o}" ${o === v ? "selected" : ""}>${o === "-" ? "—" : o === "*" ? "2+" : o}</option>`).join("")}</select></label>`;
+  }
+  return h + `</div><small class="muted">— em branco · 2+ mais de uma marcação (anulada). Verde: acerto, vermelho: erro.</small>`;
+}
+
+/* ---------- Notas ---------- */
+function telaNotas() {
+  const av = avAtual();
+  if (!av) return `<div class="cab"><div><h2>Notas</h2></div></div><div class="vazio"><strong>Nenhuma avaliação ainda</strong>As notas aparecem aqui assim que as folhas forem lidas.</div>`;
+  const ts = (av.turmas || []).map((id) => S.turmas[id]).filter(Boolean);
+  const res = resultadosDe(av.id);
+  const filtro = ui.turmaFiltro && (ts.some((t) => t.id === ui.turmaFiltro) || ui.turmaFiltro === "_neutras") ? ui.turmaFiltro : "";
+  const linhas = linhasNotas(av, filtro);
+  const lidas = linhas.filter((l) => l.r);
+  const notas = lidas.map((l) => l.c.nota);
+  const media = notas.length ? notas.reduce((a, b) => a + b, 0) / notas.length : 0;
+  const esperadas = linhas.filter((l) => l.aluno).length;
+  // acertos por questão
+  const porQ = Array.from({ length: av.nQ }, (_, q) => {
+    const k = (av.gabarito || "")[q];
+    if (!k || k === "-" || !lidas.length) return null;
+    const ac = lidas.filter((l) => k === "X" || l.r.respostas[q] === k).length;
+    return ac / lidas.length;
+  });
+  const nuvem = Nuvem.modo === "nuvem";
+  return `<div class="cab"><div><h2>Notas</h2><p>Atualiza sozinha a cada folha lida, em qualquer aparelho conectado à sua conta. Toque numa linha para conferir ou lançar respostas à mão.</p></div>
+    <div class="acoes"><button class="btn" data-acao="exp-xlsx">Excel</button>${nuvem ? `<button class="btn" data-acao="exp-sheets">Google Planilhas</button>` : ""}<button class="btn" data-acao="copiar-tabela">Copiar tabela</button></div></div>
+    <div class="grade-campos" style="margin-bottom:14px">${seletorAv()}
+      <label class="campo"><span>Turma</span><select data-muda="filtro"><option value="">Todas as turmas</option>${ts.map((t) => `<option value="${t.id}" ${filtro === t.id ? "selected" : ""}>${esc(t.nome)}</option>`).join("")}${res.some((r) => !r.alunoId) ? `<option value="_neutras" ${filtro === "_neutras" ? "selected" : ""}>Só folhas neutras</option>` : ""}</select></label></div>
+    ${av.planilhaId ? `<p style="margin:-4px 0 14px"><a href="https://docs.google.com/spreadsheets/d/${esc(av.planilhaId)}" target="_blank" rel="noopener">Abrir a planilha no Google Planilhas</a> <small class="muted">· atualizada em ${dataCurta(av.planilhaEm)}</small></p>` : ""}
+    <div class="resumo">
+      <div><b>${lidas.length}${esperadas ? `<small class="muted" style="font-size:1rem"> / ${esperadas}</small>` : ""}</b><span>folhas lidas</span></div>
+      <div><b>${lidas.length ? fmt(media) : "–"}</b><span>média (de ${fmt(+av.valor || 10)})</span></div>
+      <div><b>${notas.length ? fmt(Math.max(...notas)) : "–"}</b><span>maior nota</span></div>
+      <div><b>${notas.length ? fmt(Math.min(...notas)) : "–"}</b><span>menor nota</span></div>
+    </div>
+    ${lidas.length ? `<div class="bloco" style="margin-bottom:14px"><h3>Acertos por questão</h3><div class="barras">${porQ.map((p, q) => `<div class="barra" title="Questão ${q + 1}: ${p == null ? "sem gabarito" : Math.round(p * 100) + "% de acerto"}"><i style="--p:${p == null ? 0 : Math.round(p * 100)}%;--c:${p == null ? "var(--line)" : p < 0.4 ? "var(--bad)" : p < 0.7 ? "var(--warn)" : "var(--ok)"}"></i>${q + 1}</div>`).join("")}</div></div>` : ""}
+    <div class="tabela-wrap"><table><thead><tr><th>Turma</th><th>Nº</th><th>Aluno</th><th>R.A.</th><th class="num">Acertos</th><th class="num">Nota</th><th>Lida em</th><th>Respostas</th></tr></thead><tbody>
+    ${linhas.map((l) => `<tr data-acao="abrir-res" data-av="${av.id}" data-turma="${l.turma ? l.turma.id : ""}" data-aluno="${l.aluno ? l.aluno.id : ""}" data-res="${l.r ? l.r.id : ""}">
+      <td>${esc(l.turma ? l.turma.nome : "—")}</td><td class="num">${l.aluno ? String(l.aluno.num).padStart(2, "0") : l.r && l.r.seq ? "#" + l.r.seq : ""}</td>
+      <td>${l.aluno ? esc(l.aluno.nome) : `<em>Folha neutra${l.r.nome ? " · " + esc(l.r.nome) : ""}</em>`}</td><td class="mono">${esc(l.aluno ? l.aluno.ra : "")}</td>
+      <td class="num">${l.r ? `${l.c.ac}/${l.c.tot}` : ""}</td><td class="num nota">${l.r ? fmt(l.c.nota) : `<span class="chip">pendente</span>`}</td>
+      <td>${l.r ? dataCurta(l.r.lidoEm) : ""}</td><td class="resp">${l.r ? esc(l.r.respostas) : ""}</td></tr>`).join("") || `<tr><td colspan="8" class="muted">Nenhum aluno nesta seleção.</td></tr>`}
+    </tbody></table></div>`;
+}
+
+/* Linhas da planilha: todos os alunos das turmas (lidos ou pendentes) + folhas neutras */
+function linhasNotas(av, filtro) {
+  const res = resultadosDe(av.id);
+  const ts = (av.turmas || []).map((id) => S.turmas[id]).filter(Boolean);
+  const linhas = [];
+  if (filtro !== "_neutras") for (const t of ts) {
+    if (filtro && filtro !== t.id) continue;
+    for (const a of t.alunos || []) {
+      const r = res.find((x) => x.alunoId === a.id && x.turmaId === t.id);
+      linhas.push({ turma: t, aluno: a, r, c: r ? corrigir(av, r.respostas) : null });
+    }
+  }
+  for (const r of res.filter((x) => !x.alunoId).sort((a, b) => (a.seq || 0) - (b.seq || 0))) {
+    if (filtro && filtro !== "_neutras" && filtro !== r.turmaId) continue;
+    linhas.push({ turma: S.turmas[r.turmaId] || null, aluno: null, r, c: corrigir(av, r.respostas) });
+  }
+  // resultados de alunos que saíram da turma
+  for (const r of res.filter((x) => x.alunoId && !linhas.some((l) => l.r === x))) {
+    if (filtro && filtro !== r.turmaId) continue;
+    linhas.push({ turma: S.turmas[r.turmaId] || null, aluno: { id: r.alunoId, nome: r.nome, ra: r.ra, num: r.num }, r, c: corrigir(av, r.respostas) });
+  }
+  return linhas;
+}
+
+/* ---------- Escola ---------- */
+function telaEscola() {
+  const p = S.perfil, u = Nuvem.usuario;
+  return `<div class="cab"><div><h2>Escola e conta</h2><p>Estes dados aparecem no cabeçalho de todas as suas folhas.</p></div></div>
+    <div class="bloco">
+      <div class="grade-campos">
+        <label class="campo" style="grid-column:1/-1"><span>Escola</span><input type="text" id="pfEscola" value="${esc(p.escola)}" placeholder="Ex.: CENTRO DE ATIVIDADES ENG ROBERTO EGIDIO DE AZEVEDO"></label>
+        <label class="campo"><span>Município</span><input type="text" id="pfMunicipio" value="${esc(p.municipio)}"></label>
+        <label class="campo"><span>Regional</span><input type="text" id="pfRegional" value="${esc(p.regional)}" placeholder="Ex.: PE"></label>
+      </div>
+      <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap">
+        ${p.logo ? `<img src="${esc(p.logo)}" alt="Logo" style="max-height:56px;max-width:180px;background:#fff;padding:4px;border-radius:6px;border:1px solid var(--line)">` : `<span class="muted">Sem logo</span>`}
+        <button class="btn peq" data-acao="logo">${p.logo ? "Trocar logo" : "Enviar logo"}</button>
+        ${p.logo ? `<button class="btn peq perigo" data-acao="tirar-logo">Remover</button>` : ""}
+      </div>
+      <div class="acoes"><button class="btn pri" data-acao="salvar-perfil">Salvar</button></div>
+    </div>
+    <div class="bloco">
+      <h3>Conta</h3>
+      ${Nuvem.modo === "nuvem" && u ? `<p style="margin:0">Conectado como <strong>${esc(u.displayName || "")}</strong> <span class="muted">${esc(u.email)}</span>. Seus dados ficam na nuvem e sincronizam entre o celular e o computador.</p>`
+      : `<p style="margin:0" class="muted">Sem a nuvem do site (arquivo aberto no computador ou sem login): os dados ficam salvos só neste navegador. Entre com sua conta Google no site para sincronizar entre o celular e o computador.</p>
+      <div class="acoes"><button class="btn" data-acao="exemplo">Carregar dados de exemplo</button></div>`}
+    </div>`;
+}
+
+/* ===================== Painéis ===================== */
+let painelAtual = null;
+function abrirPainel(html, ao) {
+  $("#painel").innerHTML = html;
+  $("#painelFundo").hidden = false;
+  document.body.style.overflow = "hidden";
+  painelAtual = ao || {};
+  const f = $("#painel input, #painel select, #painel textarea");
+  if (f && window.matchMedia("(min-width: 700px)").matches) f.focus();
+}
+function fecharPainel() {
+  $("#painelFundo").hidden = true;
+  $("#painel").innerHTML = "";
+  document.body.style.overflow = "";
+  painelAtual = null;
+}
+const cabPainel = (t) => `<div class="painel-cab"><h2>${t}</h2><button class="btn peq" data-acao="fechar">Fechar</button></div>`;
+
+/* --- Turma --- */
+function painelTurma(t) {
+  const novo = !t;
+  t = t || { id: novoId(), nome: "", turno: "", alunos: [] };
+  const linhas = (t.alunos || []).map((a) => `${String(a.num).padStart(2, "0")} | ${a.ra || ""} | ${a.nome}`).join("\n");
+  abrirPainel(`${cabPainel(novo ? "Nova turma" : esc(t.nome))}
+    <div class="painel-corpo">
+      <div class="grade-campos">
+        <label class="campo"><span>Nome da turma</span><input type="text" id="tNome" value="${esc(t.nome)}" placeholder="Ex.: 6º A - BILÍNGUE"></label>
+        <label class="campo"><span>Turno <small>(opcional)</small></span><input type="text" id="tTurno" value="${esc(t.turno)}" placeholder="Ex.: Manhã"></label>
+      </div>
+      <label class="campo"><span>Alunos <small>— um por linha: Nº | R.A. | Nome</small></span><textarea id="tAlunos" rows="16" class="mono" spellcheck="false" placeholder="01 | 00327116 | AMANDA VALENTHYNA DE CARVALHO">${esc(linhas)}</textarea></label>
+      <small class="muted">O R.A. é o código de barras do aluno. Se ficar vazio, o site cria um código. Mudar o nome não muda o código, então folhas já impressas continuam valendo.</small>
+    </div>
+    <div class="painel-rodape">${novo ? "" : `<button class="btn perigo" data-acao="excluir-turma" data-id="${t.id}" style="margin-right:auto">Excluir turma</button>`}<button class="btn" data-acao="fechar">Cancelar</button><button class="btn pri" data-acao="salvar-turma">Salvar</button></div>`, { turma: t });
+}
+function lerTextoAlunos(txt, antigos) {
+  const out = [];
+  let ult = 0;
+  for (const linha of txt.split("\n")) {
+    if (!linha.trim()) continue;
+    let partes = linha.split(/\s*[|;\t]\s*/).map((s) => s.trim()).filter((s) => s !== "");
+    let num = null, ra = "", nome = "";
+    if (partes.length >= 3) [num, ra, nome] = [partes[0], partes[1], partes.slice(2).join(" ")];
+    else if (partes.length === 2) { if (/^\d{5,}$/.test(partes[0])) [ra, nome] = partes; else [num, nome] = partes; }
+    else nome = partes[0];
+    const m = /^(\d{1,3})\s*[-.)]?\s+(.+)$/.exec(nome);
+    if (num == null && m) { num = m[1]; nome = m[2]; }
+    num = num != null && /^\d+$/.test(num) ? +num : ult + 1;
+    ult = num;
+    ra = /^\d+$/.test(ra) ? ra : "";
+    nome = normalizarNome(nome).toUpperCase();
+    if (!nome) continue;
+    const ant = antigos.find((a) => (ra && a.ra === ra) || a.nome === nome);
+    out.push({ id: ra || (ant && ant.id) || "X" + novoId().toUpperCase(), ra, nome, num });
+  }
+  return out;
+}
+
+/* --- Importação de atas --- */
+async function importarArquivos(files) {
+  toast("Lendo " + files.length + " arquivo(s)…");
+  const lidas = [];
+  for (const f of files) {
+    try {
+      if (/\.pdf$/i.test(f.name)) await garantirPdfJs();
+      lidas.push(...(await importarAta(f)));
+    } catch (e) { lidas.push({ arquivo: f.name, erro: e.message }); }
+  }
+  // avisos que dependem das outras atas e das turmas já cadastradas
+  const vistos = new Map();
+  for (const l of lidas) {
+    if (l.erro) continue;
+    for (const a of l.alunos) {
+      if (vistos.has(a.ra) && a.ra) l.avisos.push(`${a.nome} (R.A. ${a.ra}) também está em ${vistos.get(a.ra)}.`);
+      else if (a.ra) vistos.set(a.ra, l.turma);
+    }
+  }
+  const nomes = lidas.filter((l) => !l.erro).map((l) => l.turma);
+  lidas.forEach((l) => { if (!l.erro && nomes.filter((n) => n === l.turma).length > 1) l.avisos.unshift(`Outra ata também se chama "${l.turma}". Confira o nome da turma antes de salvar.`); });
+  painelImportacao(lidas);
+}
+function painelImportacao(lidas) {
+  const existentes = listaTurmas();
+  const escolaAta = (lidas.find((l) => l.escola && l.escola.length) || {}).escola || [];
+  const sugestaoEscola = escolaAta.find((s) => /unidade|escola|centro|col[eé]gio/i.test(s)) || "";
+  abrirPainel(`${cabPainel("Conferir atas")}
+    <div class="painel-corpo">
+      <p class="muted" style="margin:0">Confira o nome de cada turma e os avisos. Se a turma já existir, os alunos são atualizados pelo R.A. e as folhas já impressas continuam valendo.</p>
+      ${lidas.map((l, i) => l.erro ? `<div class="aviso erro"><strong>${esc(l.arquivo)}:</strong> ${esc(l.erro)}</div>` : `
+        <div class="bloco">
+          <div class="grade-campos">
+            <label class="campo"><span>Turma <small>· ${esc(l.arquivo)}</small></span><input type="text" id="imp-nome-${i}" value="${esc(l.turma)}"></label>
+            <label class="campo"><span>Salvar como</span><select id="imp-dest-${i}"><option value="novo">Turma nova</option>${existentes.map((t) => `<option value="${t.id}" ${t.nome === l.turma ? "selected" : ""}>Atualizar ${esc(t.nome)}</option>`).join("")}<option value="pular">Não importar</option></select></label>
+          </div>
+          <div class="meta" style="display:flex;gap:6px;flex-wrap:wrap"><span class="chip acc">${l.alunos.length} alunos</span>${l.avisos.length ? `<span class="chip warn">${l.avisos.length} aviso${l.avisos.length > 1 ? "s" : ""}</span>` : `<span class="chip ok">Sem problemas</span>`}</div>
+          ${l.avisos.length ? `<div class="aviso">${l.avisos.map(esc).join("<br>")}</div>` : ""}
+          <details><summary class="muted" style="cursor:pointer">Ver alunos</summary><div class="mono" style="font-size:.82rem;margin-top:8px;line-height:1.7">${l.alunos.map((a) => `${String(a.num).padStart(2, "0")} · ${esc(a.ra)} · ${esc(a.nome)}`).join("<br>")}</div></details>
+        </div>`).join("")}
+      ${sugestaoEscola && !S.perfil.escola ? `<label class="check"><input type="checkbox" id="impEscola" checked> Usar "${esc(sugestaoEscola)}" como nome da escola nas folhas</label>` : ""}
+    </div>
+    <div class="painel-rodape"><button class="btn" data-acao="fechar">Cancelar</button><button class="btn pri" data-acao="confirmar-importacao">Salvar turmas</button></div>`, { lidas, sugestaoEscola });
+}
+async function confirmarImportacao() {
+  const { lidas, sugestaoEscola } = painelAtual;
+  let n = 0;
+  for (let i = 0; i < lidas.length; i++) {
+    const l = lidas[i];
+    if (l.erro) continue;
+    const dest = $("#imp-dest-" + i).value;
+    if (dest === "pular") continue;
+    const nome = $("#imp-nome-" + i).value.trim() || l.turma;
+    const base = dest === "novo" ? { id: novoId(), alunos: [] } : { ...S.turmas[dest] };
+    const antigos = base.alunos || [];
+    const alunos = l.alunos.map((a) => {
+      const ant = antigos.find((x) => (a.ra && x.ra === a.ra) || x.nome === a.nome);
+      return { id: a.ra || (ant && ant.id) || "X" + novoId().toUpperCase(), ra: a.ra, nome: a.nome, num: a.num };
+    });
+    await Nuvem.put("turmas", base.id, { ...base, nome, alunos, criadoEm: base.criadoEm || agora() });
+    n++;
+  }
+  if ($("#impEscola") && $("#impEscola").checked) await Nuvem.salvarPerfil({ escola: sugestaoEscola });
+  fecharPainel();
+  toast(`${n} turma${n !== 1 ? "s" : ""} salva${n !== 1 ? "s" : ""}.`);
+}
+
+/* --- Avaliação --- */
+function painelAvaliacao(av) {
+  const novo = !av;
+  av = av ? { ...av } : { id: novoId(), titulo: "", componente: "", subtitulo: "ENSINO FUNDAMENTAL - ANOS FINAIS", turno: "", tipo: "nominal", nQ: 20, nAlt: 4, valor: 10, turmas: [], gabarito: "", transcricao: false, transcricaoTexto: "", instrucoes: "" };
+  const ts = listaTurmas();
+  abrirPainel(`${cabPainel(novo ? "Nova avaliação" : "Editar avaliação")}
+    <div class="painel-corpo">${novo ? blocoProvasMontadas() : ""}
+      <div class="grade-campos">
+        <label class="campo" style="grid-column:1/-1"><span>Título</span><input type="text" id="avTitulo" value="${esc(av.titulo)}" placeholder="Ex.: AVALIA II - 2026"></label>
+        <label class="campo"><span>Componente</span><input type="text" id="avComp" value="${esc(av.componente)}" placeholder="Ex.: LINGUAGENS"></label>
+        <label class="campo"><span>Turno <small>(opcional)</small></span><input type="text" id="avTurno" value="${esc(av.turno)}" placeholder="Ex.: Manhã"></label>
+        <label class="campo" style="grid-column:1/-1"><span>Linha abaixo do componente <small>(a série vem da turma)</small></span><input type="text" id="avSub" value="${esc(av.subtitulo)}"></label>
+      </div>
+      <fieldset style="border:0;padding:0;margin:0;display:grid;gap:8px"><legend class="campo" style="margin-bottom:6px;font-weight:700;color:var(--muted);font-size:.9rem">Tipo de folha</legend>
+        <div class="opcoes-tipo">
+          <label class="opcao"><input type="radio" name="avTipo" value="nominal" ${av.tipo !== "neutra" ? "checked" : ""}><span><strong>Nominal</strong><small>Uma folha por aluno, com nome, Nº, código de barras do R.A. e QR code. A nota vai direto para a planilha da turma.</small></span></label>
+          <label class="opcao"><input type="radio" name="avTipo" value="neutra" ${av.tipo === "neutra" ? "checked" : ""}><span><strong>Neutra</strong><small>Sem nome, para pôr dentro da prova. O QR code identifica a avaliação e a turma; o site mostra o resultado na hora.</small></span></label>
+        </div>
+      </fieldset>
+      <div class="grade-campos">
+        <label class="campo"><span>Questões</span><input type="number" id="avNQ" min="1" max="${MAX_QUESTOES}" value="${av.nQ}" data-muda="av-nq"></label>
+        <label class="campo"><span>Alternativas</span><select id="avNAlt" data-muda="av-nalt">${[2, 3, 4, 5].map((n) => `<option value="${n}" ${+av.nAlt === n ? "selected" : ""}>A a ${LETRAS[n - 1]}</option>`).join("")}</select></label>
+        <label class="campo"><span>Valor da prova</span><input type="number" id="avValor" min="0.1" step="0.1" value="${av.valor}"></label>
+      </div>
+      <div class="campo"><span>Turmas</span>${ts.length ? `<div style="display:flex;flex-wrap:wrap;gap:8px 18px">${ts.map((t) => `<label class="check"><input type="checkbox" class="avTurma" value="${t.id}" ${(av.turmas || []).includes(t.id) ? "checked" : ""}> ${esc(t.nome)}</label>`).join("")}</div>` : `<span class="muted" style="font-weight:400">Importe as turmas primeiro (aba Turmas).</span>`}</div>
+      <div class="bloco">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><h3>Gabarito</h3><span class="chip" id="gabStatus"></span></div>
+        <label class="campo"><span>Digitar ou colar de uma vez <small>(ex.: ABCDA BCDAB; X anula a questão)</small></span><input type="text" id="avGabTexto" class="mono" value="${esc((av.gabarito || "").slice(0, av.nQ).replace(/-/g, "."))}" data-muda="gab-texto" autocomplete="off" spellcheck="false"></label>
+        <div id="gabGrade"></div>
+      </div>
+      <details class="bloco"><summary style="cursor:pointer;font-weight:700">Mais opções da folha</summary>
+        <label class="check"><input type="checkbox" id="avTrans" ${av.transcricao ? "checked" : ""}> Incluir quadro para o aluno transcrever uma frase</label>
+        <label class="campo"><span>Texto do quadro</span><input type="text" id="avTransTxt" value="${esc(av.transcricaoTexto)}" placeholder="ATENÇÃO: TRANSCREVA AQUI, COM A SUA CALIGRAFIA USUAL, A FRASE APRESENTADA NA CAPA DO SEU CADERNO DE QUESTÕES."></label>
+        <label class="campo"><span>Instruções <small>(uma por linha; vazio usa o padrão)</small></span><textarea id="avInstr" rows="5" placeholder="${esc(INSTRUCOES_PADRAO.join("\n"))}">${esc(av.instrucoes)}</textarea></label>
+      </details>
+    </div>
+    <div class="painel-rodape">${novo ? "" : `<button class="btn perigo" data-acao="excluir-av" data-id="${av.id}" style="margin-right:auto">Excluir</button>`}<button class="btn" data-acao="fechar">Cancelar</button><button class="btn pri" data-acao="salvar-av">Salvar</button></div>`, { av, novo });
+  painelAtual.gab = ((av.gabarito || "") + "-".repeat(MAX_QUESTOES)).slice(0, MAX_QUESTOES).split("");
+  desenharGabarito();
+}
+function desenharGabarito() {
+  const p = painelAtual;
+  const nQ = Math.max(1, Math.min(MAX_QUESTOES, +$("#avNQ").value || 1)), nAlt = +$("#avNAlt").value;
+  let h = `<div class="gab">`;
+  for (let q = 0; q < nQ; q++) {
+    h += `<div class="gq"><span>${q + 1}</span>`;
+    for (let a = 0; a < nAlt; a++) h += `<button type="button" class="bol" data-acao="gab" data-q="${q}" data-v="${LETRAS[a]}" aria-pressed="${p.gab[q] === LETRAS[a]}">${LETRAS[a]}</button>`;
+    h += `<button type="button" class="bol anula" data-acao="gab" data-q="${q}" data-v="X" aria-pressed="${p.gab[q] === "X"}" title="Anular questão (todos ganham o ponto)">X</button></div>`;
+  }
+  $("#gabGrade").innerHTML = h + `</div>`;
+  const falta = p.gab.slice(0, nQ).filter((v) => v === "-" || (v !== "X" && LETRAS.indexOf(v) >= nAlt)).length;
+  const st = $("#gabStatus");
+  st.textContent = falta ? `faltam ${falta}` : "completo";
+  st.className = "chip " + (falta ? "warn" : "ok");
+}
+function salvarAvaliacao() {
+  const { av } = painelAtual;
+  const nQ = Math.max(1, Math.min(MAX_QUESTOES, +$("#avNQ").value || 1)), nAlt = +$("#avNAlt").value;
+  const gab = painelAtual.gab.slice(0, nQ).map((v) => (v === "X" || LETRAS.indexOf(v) > -1 && LETRAS.indexOf(v) < nAlt ? v : "-")).join("");
+  const dados = {
+    ...av,
+    titulo: $("#avTitulo").value.trim(), componente: $("#avComp").value.trim(), subtitulo: $("#avSub").value.trim(), turno: $("#avTurno").value.trim(),
+    tipo: GAB_RAIZ.querySelector("input[name=avTipo]:checked").value,
+    nQ, nAlt, valor: +$("#avValor").value || 10, gabarito: gab,
+    turmas: [...GAB_RAIZ.querySelectorAll(".avTurma:checked")].map((c) => c.value),
+    transcricao: $("#avTrans").checked, transcricaoTexto: $("#avTransTxt").value.trim(), instrucoes: $("#avInstr").value.trim(),
+    criadoEm: av.criadoEm || agora(),
+  };
+  if (!dados.titulo) { toast("Dê um título à avaliação."); $("#avTitulo").focus(); return; }
+  Nuvem.put("avaliacoes", av.id, dados);
+  ui.avSel = av.id;
+  fecharPainel();
+  toast("Avaliação salva.");
+}
+
+/* --- Resultado (conferir ou lançar à mão) --- */
+function painelResultado(avId, turmaId, alunoId, resId) {
+  const av = S.avaliacoes[avId];
+  const turma = S.turmas[turmaId];
+  let r = resId && S.resultados[resId];
+  const aluno = turma && alunoId ? (turma.alunos || []).find((a) => a.id === alunoId) : null;
+  const novo = !r;
+  if (!r) r = { id: `${avId}__${turmaId}__${alunoId}`, avaliacaoId: avId, turmaId, alunoId, nome: aluno ? aluno.nome : "", ra: aluno ? aluno.ra : "", num: aluno ? aluno.num : null, respostas: "-".repeat(av.nQ), origem: "manual", tipo: "nominal" };
+  const c = corrigir(av, r.respostas);
+  abrirPainel(`${cabPainel(esc(aluno ? aluno.nome : r.nome || "Folha neutra" + (r.seq ? " nº " + r.seq : "")))}
+    <div class="painel-corpo">
+      <p class="muted" style="margin:0">${esc(av.titulo)} · ${esc(turma ? turma.nome : "sem turma")}${r.lidoEm ? " · lida em " + dataCurta(r.lidoEm) : novo ? " · ainda não lida: lance as respostas à mão se precisar" : ""}${r.origem === "manual" && !novo ? " · lançada/ajustada à mão" : ""}</p>
+      <div class="resumo"><div><b id="resNota">${fmt(c.nota)}</b><span>nota</span></div><div><b id="resAc">${c.ac}/${c.tot}</b><span>acertos</span></div></div>
+      ${!r.alunoId ? `<label class="campo"><span>Nome <small>(opcional)</small></span><input type="text" id="resNome" value="${esc(r.nome || "")}"></label>` : ""}
+      ${gradeRespostas(av, r).replaceAll('data-muda="resp"', 'data-muda="resp-painel"')}
+    </div>
+    <div class="painel-rodape">${novo ? "" : `<button class="btn perigo" data-acao="excluir-res" data-id="${r.id}" style="margin-right:auto">Apagar leitura</button>`}<button class="btn" data-acao="fechar">Cancelar</button><button class="btn pri" data-acao="salvar-res">Salvar</button></div>`, { r: { ...r }, av });
+}
+
+/* ===================== Leitura ===================== */
+async function processarCanvas(canvas, arquivo) {
+  let L;
+  try { L = lerFolha(canvas); }
+  catch (e) { return { erro: e.message, arquivo, codigo: e.codigo }; }
+  const info = L.info;
+  const av = S.avaliacoes[info.avId];
+  if (!av) return { erro: "Esta folha é de uma avaliação que não está na sua conta (pode ter sido excluída ou ser de outro professor).", arquivo };
+  const turma = info.turmaId ? S.turmas[info.turmaId] : null;
+  const previa = previaLeitura(canvas, L, av.gabarito, 360).toDataURL("image/jpeg", 0.72);
+  const respostas = (L.resp + "-".repeat(av.nQ)).slice(0, Math.max(av.nQ, L.resp.length));
+  let res, substituiu = false;
+  if (info.alunoId) {
+    const aluno = turma && (turma.alunos || []).find((a) => a.id === info.alunoId);
+    const id = `${av.id}__${info.turmaId}__${info.alunoId}`;
+    substituiu = !!S.resultados[id];
+    res = { id, avaliacaoId: av.id, turmaId: info.turmaId, alunoId: info.alunoId, nome: aluno ? aluno.nome : "(aluno removido da turma)", ra: aluno ? aluno.ra : "", num: aluno ? aluno.num : null, respostas, lidoEm: agora(), origem: "leitura", tipo: "nominal" };
+  } else {
+    const seq = resultadosDe(av.id).filter((r) => !r.alunoId && r.turmaId === info.turmaId).reduce((m, r) => Math.max(m, r.seq || 0), 0) + 1;
+    res = { id: `${av.id}__n__${novoId()}`, avaliacaoId: av.id, turmaId: info.turmaId, alunoId: null, nome: "", seq, respostas, lidoEm: agora(), origem: "leitura", tipo: "neutra" };
+  }
+  await Nuvem.put("resultados", res.id, res);
+  return { resId: res.id, res, previa, substituiu, arquivo };
+}
+
+async function processarArquivos(files) {
+  for (const f of files) {
+    toast("Lendo " + f.name + "…", 10000);
+    try {
+      const cv = await arquivoParaCanvas(f);
+      ui.leituras.unshift(await processarCanvas(cv, f.name));
+    } catch (e) { ui.leituras.unshift({ erro: e.message, arquivo: f.name }); }
+    render();
+  }
+  const ultimo = ui.leituras[0];
+  toast(ultimo && !ultimo.erro ? "Folha lida e nota salva." : "Não foi possível ler a folha.");
+}
+
+/* Câmera ao vivo: tenta ler um quadro a cada ~0,4 s; ao ler, pausa até o professor pedir a próxima */
+async function abrirCamera() {
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { toast("Este navegador não libera a câmera aqui. Use 'Tirar foto'."); return; }
+  let stream;
+  try { stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: false }); }
+  catch (e) { toast("Não consegui abrir a câmera. Verifique a permissão do navegador ou use 'Tirar foto'."); return; }
+  const el = document.createElement("div");
+  el.className = "camera";
+  el.innerHTML = `<video playsinline muted autoplay></video><div class="guia"></div><button class="btn peq fechar" data-acao="fechar-camera">Fechar câmera</button><div class="status">Enquadre a folha inteira, com os 4 quadrados pretos.</div>`;
+  const video = el.querySelector("video");
+  video.srcObject = stream;
+  ui.camera = { el, stream, video, pausada: false, timer: null };
+  render();
+  let wake = null;
+  try { wake = await navigator.wakeLock.request("screen"); } catch (e) { /* opcional */ }
+  ui.camera.wake = wake;
+  const cv = document.createElement("canvas");
+  const status = el.querySelector(".status");
+  const ciclo = async () => {
+    const cam = ui.camera;
+    if (!cam || cam.el !== el) return;
+    if (!cam.pausada && video.videoWidth) {
+      const k = Math.min(1, 1600 / Math.max(video.videoWidth, video.videoHeight));
+      cv.width = Math.round(video.videoWidth * k); cv.height = Math.round(video.videoHeight * k);
+      cv.getContext("2d", { willReadFrequently: true }).drawImage(video, 0, 0, cv.width, cv.height);
+      const r = await processarCanvas(cv, "Câmera");
+      if (!r.erro) {
+        cam.pausada = true;
+        if (navigator.vibrate) navigator.vibrate(120);
+        ui.leituras.unshift(r);
+        const res = S.resultados[r.resId] || r.res, av = S.avaliacoes[res.avaliacaoId];
+        status.innerHTML = `<strong>${esc(res.alunoId ? res.nome : "Folha neutra")}: ${fmt(corrigir(av, res.respostas).nota)}</strong> · salvo. <button class="btn peq pri" data-acao="proxima" style="margin-left:8px">Próxima folha</button>`;
+        render();
+      } else if (r.codigo === "qr") status.textContent = "Folha encontrada. Aproxime um pouco para ler o QR code.";
+      else if (r.codigo === "cantos") status.textContent = "Enquadre a folha inteira, com os 4 quadrados pretos.";
+      else status.textContent = r.erro;
+    }
+    cam.timer = setTimeout(ciclo, 400);
+  };
+  ciclo();
+}
+function fecharCamera() {
+  const c = ui.camera;
+  if (!c) return;
+  clearTimeout(c.timer);
+  c.stream.getTracks().forEach((t) => t.stop());
+  if (c.wake) c.wake.release().catch(() => {});
+  ui.camera = null;
+  render();
+}
+
+/* ===================== Exportação ===================== */
+function tabelaNotas(av, turmaId) {
+  const cab = ["Turma", "Nº", "R.A.", "Aluno", "Acertos", "Questões válidas", "Nota", "Situação", "Lida em", ...Array.from({ length: av.nQ }, (_, i) => "Q" + (i + 1))];
+  const linhas = linhasNotas(av, turmaId).map((l) => [
+    l.turma ? l.turma.nome : "",
+    l.aluno ? l.aluno.num : l.r && l.r.seq ? "#" + l.r.seq : "",
+    l.aluno ? l.aluno.ra || "" : "",
+    l.aluno ? l.aluno.nome : "Folha neutra" + (l.r.nome ? " · " + l.r.nome : ""),
+    l.r ? l.c.ac : "", l.r ? l.c.tot : "", l.r ? Math.round(l.c.nota * 100) / 100 : "",
+    l.r ? "Corrigida" : "Pendente", l.r ? dataCurta(l.r.lidoEm) : "",
+    ...Array.from({ length: av.nQ }, (_, q) => (l.r ? (l.r.respostas[q] || "-").replace("*", "2+").replace("-", "") : "")),
+  ]);
+  return [cab, ...linhas];
+}
+function nomeAba(s, usados) {
+  let n = String(s).replace(/[\[\]:*?/\\]/g, "-").slice(0, 31) || "Turma";
+  let k = 2;
+  while (usados.has(n)) n = n.slice(0, 28) + " " + k++;
+  usados.add(n);
+  return n;
+}
+function abasExportacao(av) {
+  const ts = (av.turmas || []).map((id) => S.turmas[id]).filter(Boolean);
+  const abas = ts.map((t) => ({ titulo: t.nome, dados: tabelaNotas(av, t.id) }));
+  if (resultadosDe(av.id).some((r) => !r.alunoId)) abas.push({ titulo: "Folhas neutras", dados: tabelaNotas(av, "_neutras") });
+  const g = [["Questão", ...Array.from({ length: av.nQ }, (_, i) => i + 1)], ["Gabarito", ...(av.gabarito || "").slice(0, av.nQ).split("").map((v) => (v === "X" ? "Anulada" : v === "-" ? "" : v))]];
+  abas.push({ titulo: "Gabarito", dados: g });
+  return abas;
+}
+function exportarXLSX() {
+  const av = avAtual();
+  if (!av) return;
+  const wb = XLSX.utils.book_new(), usados = new Set();
+  for (const a of abasExportacao(av)) {
+    const ws = XLSX.utils.aoa_to_sheet(a.dados);
+    ws["!cols"] = a.dados[0].map((_, i) => ({ wch: i === 3 ? 42 : i === 0 ? 18 : i > 8 ? 4 : 11 }));
+    XLSX.utils.book_append_sheet(wb, ws, nomeAba(a.titulo, usados));
+  }
+  const buf = XLSX.write(wb, { type: "array", bookType: "xlsx" });
+  salvarArquivo(new Blob([buf], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }), nomeArquivo(`Notas - ${av.titulo}${av.componente ? " - " + av.componente : ""}.xlsx`));
+}
+async function exportarSheets() {
+  const av = avAtual();
+  if (!av) return;
+  let token;
+  try { token = await Nuvem.tokenGoogle(); } catch (e) { toast("Sem acesso ao Google Planilhas: " + e.message); return; }
+  toast("Enviando para o Google Planilhas…", 15000);
+  const api = async (url, metodo = "GET", corpo) => {
+    const r = await fetch(url, { method: metodo, headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" }, body: corpo ? JSON.stringify(corpo) : undefined });
+    if (!r.ok) { const e = new Error((await r.json().catch(() => ({}))).error?.message || r.statusText); e.status = r.status; throw e; }
+    return r.json();
+  };
+  const usados = new Set();
+  const abas = abasExportacao(av).map((a) => ({ ...a, nome: nomeAba(a.titulo, usados) }));
+  try {
+    let sid = av.planilhaId;
+    let existentes = [];
+    if (sid) {
+      try { existentes = (await api(`https://sheets.googleapis.com/v4/spreadsheets/${sid}?fields=sheets.properties`)).sheets.map((s) => s.properties); }
+      catch (e) { if (e.status === 404 || e.status === 403) sid = null; else throw e; }
+    }
+    if (!sid) {
+      const nova = await api("https://sheets.googleapis.com/v4/spreadsheets", "POST", { properties: { title: `Notas - ${av.titulo}${av.componente ? " - " + av.componente : ""}`, locale: "pt_BR" }, sheets: abas.map((a) => ({ properties: { title: a.nome } })) });
+      sid = nova.spreadsheetId;
+      existentes = nova.sheets.map((s) => s.properties);
+    }
+    const faltam = abas.filter((a) => !existentes.some((e) => e.title === a.nome));
+    if (faltam.length) await api(`https://sheets.googleapis.com/v4/spreadsheets/${sid}:batchUpdate`, "POST", { requests: faltam.map((a) => ({ addSheet: { properties: { title: a.nome } } })) });
+    await api(`https://sheets.googleapis.com/v4/spreadsheets/${sid}/values:batchClear`, "POST", { ranges: abas.map((a) => `'${a.nome}'`) });
+    await api(`https://sheets.googleapis.com/v4/spreadsheets/${sid}/values:batchUpdate`, "POST", { valueInputOption: "RAW", data: abas.map((a) => ({ range: `'${a.nome}'!A1`, values: a.dados.map((l) => l.map((v) => (v === "" || v == null ? "" : v))) })) });
+    await Nuvem.put("avaliacoes", av.id, { ...av, planilhaId: sid, planilhaEm: agora() });
+    toast("Planilha atualizada no seu Google Drive.");
+  } catch (e) { toast("Não foi possível enviar para o Google Planilhas: " + e.message, 7000); }
+}
+function copiarTabela() {
+  const av = avAtual();
+  if (!av) return;
+  const txt = tabelaNotas(av, ui.turmaFiltro).map((l) => l.join("\t")).join("\n");
+  navigator.clipboard.writeText(txt).then(() => toast("Tabela copiada. Cole no Excel ou no Google Planilhas."), () => toast("Não consegui copiar automaticamente neste navegador."));
+}
+
+/* ===================== Geração das folhas ===================== */
+async function gerarFolhas(fmtArq, turmaId) {
+  const av = avAtual();
+  if (!av) return;
+  const neutra = av.tipo === "neutra";
+  let folhas = [], rotulo;
+  if (turmaId === "*") {
+    for (const id of av.turmas || []) if (S.turmas[id]) folhas.push(...folhasPara(av, S.turmas[id], S.perfil));
+    rotulo = "todas as turmas";
+  } else {
+    const t = turmaId ? S.turmas[turmaId] : null;
+    const cop = neutra ? +($("#cop-" + (turmaId || "-")) || {}).value || 1 : 0;
+    folhas = folhasPara(av, t, S.perfil, cop);
+    rotulo = t ? t.nome : "sem turma";
+  }
+  if (!folhas.length) { toast("Esta turma não tem alunos."); return; }
+  const prog = $("#progGerar");
+  prog.hidden = false;
+  const mostrar = (i, n) => { prog.querySelector("i").style.width = (100 * i) / n + "%"; prog.querySelector("small").textContent = `Gerando folha ${i} de ${n}…`; };
+  GAB_RAIZ.querySelectorAll("[data-acao=gerar]").forEach((b) => (b.disabled = true));
+  try {
+    const blob = fmtArq === "pdf" ? await gerarPDF(folhas, mostrar) : await gerarDOCX(folhas, mostrar);
+    salvarArquivo(blob, nomeArquivo(`Folhas - ${av.titulo} - ${rotulo}.${fmtArq}`));
+    prog.querySelector("small").textContent = `${folhas.length} folha${folhas.length > 1 ? "s" : ""} gerada${folhas.length > 1 ? "s" : ""}.`;
+  } catch (e) { toast("Erro ao gerar: " + e.message); prog.hidden = true; }
+  GAB_RAIZ.querySelectorAll("[data-acao=gerar]").forEach((b) => (b.disabled = false));
+}
+
+/* ===================== Dados de exemplo (modo demonstração) ===================== */
+function carregarExemplo() {
+  const nomes = ["ANA CLARA SOUZA", "BRUNO HENRIQUE LIMA", "CAMILA FERREIRA", "DAVI SANTOS COSTA", "EDUARDA MELO", "FELIPE ARAÚJO", "GABRIELA NUNES", "HEITOR CAVALCANTI"];
+  const t = { id: "exemplo6a", nome: "6º A - EXEMPLO", turno: "Manhã", alunos: nomes.map((n, i) => ({ id: String(91000001 + i).padStart(8, "0"), ra: String(91000001 + i).padStart(8, "0"), nome: n, num: i + 1 })), criadoEm: agora() };
+  Nuvem.put("turmas", t.id, t);
+  Nuvem.put("avaliacoes", "exemploav", { id: "exemploav", titulo: "SIMULADO - EXEMPLO", componente: "LINGUAGENS", subtitulo: "ENSINO FUNDAMENTAL - ANOS FINAIS", tipo: "nominal", nQ: 20, nAlt: 4, valor: 10, turmas: [t.id], gabarito: "ABCDABCDABCDABCDABCD", transcricao: false, criadoEm: agora() });
+  ui.avSel = "exemploav";
+  toast("Exemplo carregado: 1 turma e 1 avaliação.");
+}
+
+/* ===================== Eventos ===================== */
+const acoes = {
+  entrar: () => Nuvem.entrar(),
+  sair: () => Nuvem.sair(),
+  fechar: fecharPainel,
+  "importar-atas": () => $("#arqAtas").click(),
+  "nova-turma": () => painelTurma(null),
+  "editar-turma": (el) => painelTurma(S.turmas[el.dataset.id]),
+  "salvar-turma": () => {
+    const { turma } = painelAtual;
+    const nome = $("#tNome").value.trim();
+    if (!nome) { toast("Dê um nome à turma."); return; }
+    const alunos = lerTextoAlunos($("#tAlunos").value, turma.alunos || []);
+    Nuvem.put("turmas", turma.id, { ...turma, nome, turno: $("#tTurno").value.trim(), alunos, criadoEm: turma.criadoEm || agora() });
+    fecharPainel(); toast("Turma salva.");
+  },
+  "excluir-turma": (el) => armar(el, () => { Nuvem.del("turmas", el.dataset.id); fecharPainel(); toast("Turma excluída."); }),
+  "confirmar-importacao": confirmarImportacao,
+  "nova-av": () => painelAvaliacao(null),
+  "editar-av": (el) => painelAvaliacao(S.avaliacoes[el.dataset.id]),
+  "salvar-av": salvarAvaliacao,
+  "excluir-av": (el) => armar(el, () => { Nuvem.del("avaliacoes", el.dataset.id); fecharPainel(); toast("Avaliação excluída. As notas lidas continuam guardadas."); }),
+  gab: (el) => {
+    const q = +el.dataset.q, v = el.dataset.v;
+    painelAtual.gab[q] = painelAtual.gab[q] === v ? "-" : v;
+    $("#avGabTexto").value = painelAtual.gab.slice(0, +$("#avNQ").value).join("").replace(/-/g, ".");
+    desenharGabarito();
+  },
+  gerar: (el) => gerarFolhas(el.dataset.fmt, el.dataset.turma),
+  camera: abrirCamera,
+  "fechar-camera": fecharCamera,
+  proxima: () => {
+    if (!ui.camera) return;
+    ui.camera.pausada = false;
+    ui.camera.el.querySelector(".status").textContent = "Enquadre a próxima folha.";
+  },
+  foto: () => $("#arqFotos").click(),
+  galeria: () => $("#arqGaleria").click(),
+  "abrir-res": (el) => painelResultado(el.dataset.av, el.dataset.turma, el.dataset.aluno, el.dataset.res),
+  "salvar-res": () => {
+    const { r } = painelAtual;
+    if ($("#resNome")) r.nome = $("#resNome").value.trim();
+    if (r.origem !== "leitura" || r._editado) r.origem = "manual";
+    delete r._editado;
+    if (!r.lidoEm) r.lidoEm = agora();
+    Nuvem.put("resultados", r.id, r);
+    fecharPainel(); toast("Respostas salvas.");
+  },
+  "excluir-res": (el) => armar(el, () => { Nuvem.del("resultados", el.dataset.id); fecharPainel(); toast("Leitura apagada."); }),
+  "exp-xlsx": exportarXLSX,
+  "exp-sheets": exportarSheets,
+  "copiar-tabela": copiarTabela,
+  logo: () => $("#arqLogo").click(),
+  "tirar-logo": () => Nuvem.salvarPerfil({ logo: "" }),
+  "salvar-perfil": () => { Nuvem.salvarPerfil({ escola: $("#pfEscola").value.trim(), municipio: $("#pfMunicipio").value.trim(), regional: $("#pfRegional").value.trim() }); toast("Dados da escola salvos."); },
+  exemplo: carregarExemplo,
+};
+
+GAB_RAIZ.addEventListener("click", (e) => {
+  const aba = e.target.closest("[data-aba]");
+  if (aba) { ui.aba = aba.dataset.aba; if (ui.aba !== "corrigir" && ui.camera) fecharCamera(); guardarAba(); render(); rolarParaTopo(); return; }
+  const el = e.target.closest("[data-acao]");
+  if (el && acoes[el.dataset.acao]) { e.preventDefault(); acoes[el.dataset.acao](el); return; }
+  if (e.target.id === "painelFundo") fecharPainel();
+});
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && painelAtual) fecharPainel(); });
+
+GAB_RAIZ.addEventListener("change", (e) => {
+  const el = e.target, m = el.dataset.muda;
+  if (m === "usar-prova") usarProvaMontada(el.value);
+  else if (m === "av") { ui.avSel = el.value; render(); }
+  else if (m === "filtro") { ui.turmaFiltro = el.value; render(); }
+  else if (m === "av-nq" || m === "av-nalt") desenharGabarito();
+  else if (m === "resp") {
+    const r = { ...S.resultados[el.dataset.res] };
+    const arr = r.respostas.split(""); arr[+el.dataset.q] = el.value; r.respostas = arr.join(""); r.origem = "manual";
+    Nuvem.put("resultados", r.id, r);
+    const l = ui.leituras.find((x) => x.resId === r.id); if (l) l.res = r;
+  } else if (m === "resp-painel") {
+    const { r, av } = painelAtual;
+    const arr = (r.respostas + "-".repeat(av.nQ)).split(""); arr[+el.dataset.q] = el.value; r.respostas = arr.join("").slice(0, Math.max(av.nQ, r.respostas.length)); r._editado = true;
+    const c = corrigir(av, r.respostas);
+    $("#resNota").textContent = fmt(c.nota); $("#resAc").textContent = `${c.ac}/${c.tot}`;
+    const k = (av.gabarito || "")[+el.dataset.q];
+    el.parentElement.className = "rq " + (el.value === "*" ? "warn" : !k || k === "-" ? "" : k === "X" || el.value === k ? "ok" : "bad");
+  } else if (m === "vincular") {
+    const r = { ...S.resultados[el.dataset.res] };
+    const t = S.turmas[r.turmaId], a = el.value && t && t.alunos.find((x) => x.id === el.value);
+    if (!a) return;
+    const novo = { ...r, id: `${r.avaliacaoId}__${r.turmaId}__${a.id}`, alunoId: a.id, nome: a.nome, ra: a.ra, num: a.num, tipo: "neutra-vinculada" };
+    delete novo.seq;
+    Nuvem.put("resultados", novo.id, novo).then(() => Nuvem.del("resultados", r.id));
+    const l = ui.leituras.find((x) => x.resId === r.id); if (l) { l.resId = novo.id; l.res = novo; }
+    toast(`Leitura vinculada a ${a.nome}.`);
+  }
+});
+GAB_RAIZ.addEventListener("input", (e) => {
+  if (e.target.dataset.muda !== "gab-texto") return;
+  const v = e.target.value.toUpperCase().replace(/[^A-EX.\-_?]/g, "").split("");
+  const nAlt = +$("#avNAlt").value;
+  v.forEach((c, i) => { if (i < MAX_QUESTOES) painelAtual.gab[i] = c === "X" || (LETRAS.indexOf(c) > -1 && LETRAS.indexOf(c) < nAlt) ? c : "-"; });
+  for (let i = v.length; i < +$("#avNQ").value; i++) painelAtual.gab[i] = "-";
+  desenharGabarito();
+});
+
+$("#arqAtas").addEventListener("change", (e) => { const fs = [...e.target.files]; e.target.value = ""; if (fs.length) importarArquivos(fs); });
+$("#arqFotos").addEventListener("change", (e) => { const fs = [...e.target.files]; e.target.value = ""; if (fs.length) processarArquivos(fs); });
+$("#arqGaleria").addEventListener("change", (e) => { const fs = [...e.target.files]; e.target.value = ""; if (fs.length) processarArquivos(fs); });
+$("#arqLogo").addEventListener("change", (e) => {
+  const f = e.target.files[0]; e.target.value = "";
+  if (!f) return;
+  const im = new Image(), url = URL.createObjectURL(f);
+  im.onload = () => {
+    const k = Math.min(1, 600 / im.width, 240 / im.height);
+    const cv = document.createElement("canvas");
+    cv.width = Math.round(im.width * k); cv.height = Math.round(im.height * k);
+    const ctx = cv.getContext("2d"); ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, cv.width, cv.height); ctx.drawImage(im, 0, 0, cv.width, cv.height);
+    URL.revokeObjectURL(url);
+    Nuvem.salvarPerfil({ logo: cv.toDataURL("image/jpeg", 0.9) });
+    toast("Logo salva.");
+  };
+  im.src = url;
+});
+/* ===================== Dentro do Banco de Questões ===================== */
+function guardarAba() { try { localStorage.setItem("bancoQuestoes.gabaritoAba.v1", ui.aba); } catch (e) { /* sem armazenamento */ } }
+function rolarParaTopo() { window.scrollTo(0, 0); }
+
+/* Provas montadas no site (Montar prova: na tela, em Word ou no timbrado) guardam o gabarito final,
+   já com as alternativas na ordem em que saíram, para virar uma avaliação aqui sem redigitar */
+function provasMontadas() { try { return JSON.parse(localStorage.getItem("bancoQuestoes.provasMontadas.v1") || "[]"); } catch (e) { return []; } }
+function blocoProvasMontadas() {
+  const ps = provasMontadas();
+  if (!ps.length) return `<div class="aviso info">Dica: monte a prova na aba Montar prova (na tela, em Word ou no timbrado) e ela aparece aqui com o gabarito pronto.</div>`;
+  return `<label class="campo"><span>Usar o gabarito de uma prova montada no site</span><select id="avDaProva" data-muda="usar-prova"><option value="">Não, vou digitar o gabarito</option>${ps.map((p, i) => `<option value="${i}">${esc(p.titulo || "Avaliação")}${p.turma ? " · " + esc(p.turma) : ""} · ${p.nQ} questões · ${dataCurta(p.em)}</option>`).join("")}</select></label>`;
+}
+function usarProvaMontada(i) {
+  const p = provasMontadas()[+i];
+  if (!p || !painelAtual) return;
+  $("#avTitulo").value = p.titulo || $("#avTitulo").value;
+  if (p.componente) $("#avComp").value = p.componente;
+  const nQ = Math.max(1, Math.min(MAX_QUESTOES, p.nQ));
+  $("#avNQ").value = nQ;
+  $("#avNAlt").value = String(Math.max(2, Math.min(5, p.nAlt || 4)));
+  painelAtual.gab = (p.gabarito + "-".repeat(MAX_QUESTOES)).slice(0, MAX_QUESTOES).split("");
+  $("#avGabTexto").value = p.gabarito.slice(0, nQ).replace(/-/g, ".");
+  desenharGabarito();
+  const sem = p.gabarito.slice(0, nQ).split("").filter((v) => v === "-").length;
+  toast(sem ? `Gabarito copiado. ${sem} questão(ões) sem alternativa (discursivas) ficaram sem gabarito e não contam na nota.` : "Gabarito copiado da prova. Confira e marque as turmas.", 6000);
+}
+
+try { const a = localStorage.getItem("bancoQuestoes.gabaritoAba.v1"); if (ABAS.some(([id]) => id === a)) ui.aba = a; } catch (e) { /* sem armazenamento */ }
+render();
+Nuvem.sincronizar();
+
+return {
+  sincronizar: () => Nuvem.sincronizar(),
+  /* ao sair da aba: desliga a câmera e fecha o painel lateral */
+  sair: () => { if (ui.camera) fecharCamera(); if (painelAtual) fecharPainel(); },
+  /* botão da aba Montar prova: abre uma avaliação nova já com o gabarito da última prova montada */
+  novaDaProva: () => {
+    ui.aba = "avaliacoes"; guardarAba(); render();
+    painelAvaliacao(null);
+    if ($("#avDaProva")) { $("#avDaProva").value = "0"; usarProvaMontada(0); }
+  },
+  avisar: (m) => toast(m, 9000),
+  interno: () => ({ geometria, opsFolha, desenharCanvas, carregarImagens, A4, corrigir, codigoQR }),
+  estado: () => ({ S, ui, modo: Nuvem.modo }),
+};
+
+}
 
 nuvemIniciar();
 
