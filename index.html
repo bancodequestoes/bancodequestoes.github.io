@@ -11412,6 +11412,8 @@ function sistemaDoChat(){
     "- provas_oficiais: números e cadernos do acervo de Provas oficiais (ENEM, SSA, PASSE), por ano, turma e disciplina.",
     "- abrir_pagina: leva a pessoa à página certa quando ela quiser ir até lá.",
     "- ARQUIVOS: quando a pessoa anexar um Word, PDF ou texto, o conteúdo chega na mensagem como [ARQUIVO ANEXADO]. Você pode ler, resumir, corrigir, reorganizar, criar questões a partir dele etc. Para embaralhar as questões de uma prova em Word, use embaralhar_prova_anexada (mantém a formatação; diga a nova ordem, de forma resumida, e lembre de ajustar o gabarito). Para devolver qualquer outro resultado como arquivo, use criar_arquivo_word com o conteúdo completo. Depois de criar um arquivo, diga só que o botão Baixar apareceu logo acima, sem repetir o conteúdo inteiro.",
+    "- REGRA DE OURO DOS ARQUIVOS: um arquivo só existe se você chamou a ferramenta NESTA resposta. Cada Word novo que o professor anexar precisa de uma nova chamada, mesmo que você já tenha feito o mesmo com outro arquivo antes. Nunca diga 'pronto', 'embaralhei' ou 'o botão apareceu' sem ter chamado a ferramenta agora.",
+    "- Para embaralhar uma prova em Word, use SEMPRE embaralhar_prova_anexada (ela trabalha no último Word anexado e mantém o timbrado, as imagens e a formatação). Nunca refaça a prova com criar_arquivo_word para embaralhar: o arquivo sairia sem o timbrado. Se embaralhar_prova_anexada der erro, explique o erro ao professor em vez de recriar o arquivo.",
     "- Se a pessoa mandar um print, descreva rapidinho o que você vê nele e responda a partir do print.",
     "- Nunca peça nem repita a chave de API, senhas ou dados pessoais.",
     "",
@@ -11515,7 +11517,7 @@ function chatRenderAnexos(){
     '<button type="button" data-tirar-arquivo="1" aria-label="Tirar este arquivo">×</button></span>':"");
 }
 /* conversa com a IA: histórico com imagens, texto livre na resposta, troca de modelo quando ocupado */
-function chamarChatIA(sistema,historico){
+function chamarChatIA(sistema,historico,forcar){
   if(!chaveIA())return Promise.reject(new Error("sem chave"));
   var modelos=[modeloIA()||(provedorIA()==="anthropic"?"claude-sonnet-5":"gemini-3.6-flash")];
   if(reservaIA()&&reservaIA()!==modelos[0])modelos.push(reservaIA());
@@ -11551,12 +11553,18 @@ function chamarChatIA(sistema,historico){
           method:"POST",signal:ctl.signal,headers:{"Content-Type":"application/json","x-goog-api-key":chaveIA()},
           body:JSON.stringify({systemInstruction:{parts:[{text:sistema}]},contents:conteudos,
             tools:[{functionDeclarations:FERRAMENTAS_CHAT}],
-            generationConfig:{maxOutputTokens:32768,temperature:0.7}})
+            // pedido de embaralhar com Word anexado: a primeira resposta TEM de chamar a ferramenta
+            // (sem isso, no segundo arquivo da conversa o modelo copiava o "prontinho" anterior sem fazer nada)
+            toolConfig:k===0&&forcar?{functionCallingConfig:{mode:"ANY",allowedFunctionNames:[forcar]}}:undefined,
+            // conversa pede resposta rápida: raciocínio curto (era o padrão do modelo, que pensava muito)
+            generationConfig:Object.assign({maxOutputTokens:32768,temperature:0.7},
+              /gemma/.test(modelo)?{}:{thinkingConfig:/gemini-2\.5/.test(modelo)?{thinkingBudget:/pro/.test(modelo)?128:0}:{thinkingLevel:"low"}})})
         }).then(tratarResposta).then(function(d){
           var c=d.candidates&&d.candidates[0];
           if(!c||!c.content||!c.content.parts)throw new Error("O modelo respondeu vazio.");
           var chamadas=c.content.parts.filter(function(p){return p.functionCall;});
           if(chamadas.length&&k<6){
+            chamadas.forEach(function(p){CHAT_ARQ.usadas.push(p.functionCall.name);});
             conteudos.push({role:"model",parts:c.content.parts});
             return Promise.all(chamadas.map(function(p){
               return executarFerramentaChat(p.functionCall.name,p.functionCall.args).then(function(r){
@@ -11576,7 +11584,7 @@ function chamarChatIA(sistema,historico){
     if(i>=modelos.length)throw ultimo||new Error("Nenhum modelo respondeu.");
     return pegarVez().then(function(){return pedir(modelos[i]);}).then(function(v){soltarVez();return v;},function(e){soltarVez();throw e;}).catch(function(e){
       if(e&&e.cota&&provedorIA()==="gemini")anotarCotaDia(modelos[i],e.esperaMs);
-      if(passarParaEscola(e))return chamarChatIA(sistema,historico);
+      if(passarParaEscola(e))return chamarChatIA(sistema,historico,forcar);
       if(e&&e.minuto&&!esperouMinuto){
         esperouMinuto=true;var ms=Math.min(30000,Math.max(e.esperaMs||0,8000));pausarFila(ms);
         return esperar(ms).then(function(){return tentar(i,e);});
@@ -11594,7 +11602,7 @@ function chamarChatIA(sistema,historico){
    e trabalha nos arquivos que o professor manda no chat (Word, PDF, texto): embaralha uma prova
    no próprio Word e devolve o arquivo, ou escreve um Word novo com o que o professor pediu.
    Funciona com o Gemini (chamada de funções); os arquivos gerados ficam para baixar no chat.  */
-var CHAT_ARQ={atual:null,downloads:{},n:0,feitos:{}};
+var CHAT_ARQ={atual:null,downloads:{},n:0,feitos:{},usadas:[]};
 function chatSemAc(t){return semAcento(String(t||"")).replace(/\s+/g," ").trim();}
 function chaveDaSerie(s){
   var t=chatSemAc(s), num=(t.match(/\d+/)||[""])[0];
@@ -11870,7 +11878,7 @@ function executarFerramentaChat(nome,a){
     if(nome==="embaralhar_prova_anexada"){
       var arq=CHAT_ARQ.atual;
       if(!arq)return {erro:"Nenhum arquivo anexado. Peça ao professor para anexar a prova em Word (.docx) pelo clipe do chat."};
-      if(arq.tipo!=="docx")return {erro:"O arquivo anexado é "+arq.tipo.toUpperCase()+". Para embaralhar mantendo a formatação, preciso do Word (.docx). Alternativa: reescrever as questões em outra ordem com criar_arquivo_word."};
+      if(arq.tipo!=="docx")return {erro:"O arquivo anexado é "+arq.tipo.toUpperCase()+". Para embaralhar mantendo o timbrado e a formatação, preciso do Word (.docx): peça ao professor para anexar a prova em Word."};
       return embaralharProvaDocx(arq,!!a.embaralhar_alternativas).then(function(r){
         chatOferecerArquivo(r.blob,r.nome);
         return guardar({ok:true,arquivo:r.nome,questoes:r.relatorio.length,nova_ordem:r.relatorio,
@@ -11905,7 +11913,11 @@ function chatEnviar(texto){
   }
   var msg={papel:"user",texto:texto||(CHAT.arquivo?"Veja este arquivo.":"Veja este print."),imagens:CHAT.anexos.slice()};
   if(CHAT.arquivo){msg.arquivo={nome:CHAT.arquivo.nome,texto:CHAT.arquivo.texto||""};msg.texto+="\n📄 "+CHAT.arquivo.nome;CHAT_ARQ.atual=CHAT.arquivo;CHAT.arquivo=null;}
-  CHAT_ARQ.feitos={};
+  CHAT_ARQ.feitos={};CHAT_ARQ.usadas=[];
+  // embaralhar: no texto desta mensagem, ou um Word novo logo depois de um pedido de embaralhar
+  var pediuEmb=/embaralh|sortei|misturar? as quest|mudar a ordem|trocar a ordem|segunda chamada/i.test(texto)||
+    (msg.arquivo&&CHAT.msgs.filter(function(m){return m.papel==="user"&&!m.tipo;}).slice(-2).some(function(m){return /embaralh/i.test(m.texto||"");})&&!texto);
+  var forcar=pediuEmb&&CHAT_ARQ.atual&&CHAT_ARQ.atual.tipo==="docx"&&provedorIA()==="gemini"?"embaralhar_prova_anexada":"";
   CHAT.msgs.push(msg);CHAT.anexos=[];chatRenderAnexos();
   $("chat-texto").value="";chatAjustarCampo();
   CHAT.enviando=true;$("chat-enviar").disabled=true;chatRender();
@@ -11913,16 +11925,18 @@ function chatEnviar(texto){
   var conversa=CHAT.msgs.filter(function(m){return !m.tipo;}).slice(-14);
   var comImagem=0, comArquivo=0;
   var historico=conversa.slice().reverse().map(function(m){
-    var c={papel:m.papel,texto:m.texto+(m.temPrint&&!(m.imagens||[]).length?" (havia um print nesta mensagem)":"")};
-    if(m.arquivo&&comArquivo<2){comArquivo++;c.texto+="\n\n[ARQUIVO ANEXADO: "+m.arquivo.nome+" — conteúdo extraído abaixo]\n"+String(m.arquivo.texto||"(sem texto legível)").slice(0,80000);}
+    var c={papel:m.papel,texto:m.texto+(m.temPrint&&!(m.imagens||[]).length?" (havia um print nesta mensagem)":"")+
+      (m.papel==="model"?((m.ferramentas||[]).length?"\n[nesta resposta o site executou: "+m.ferramentas.join(", ")+"]":"\n[nesta resposta nenhuma ferramenta foi executada]"):"")};
+    // só o último arquivo vai inteiro; o anterior vai resumido (pedido menor = resposta mais rápida)
+    if(m.arquivo&&comArquivo<2){comArquivo++;c.texto+="\n\n[ARQUIVO ANEXADO: "+m.arquivo.nome+(comArquivo===1?" — é o arquivo atual; conteúdo extraído abaixo]\n":" — arquivo anterior, só o começo]\n")+String(m.arquivo.texto||"(sem texto legível)").slice(0,comArquivo===1?80000:3000);}
     if(m.papel==="user"&&(m.imagens||[]).length&&comImagem<2){c.imagens=m.imagens;comImagem++;}
     return c;
   }).reverse();
   while(historico.length&&historico[0].papel!=="user")historico.shift();
-  chamarChatIA(sistemaDoChat(),historico).then(function(resp){
+  chamarChatIA(sistemaDoChat(),historico,forcar).then(function(resp){
     var marca=/\[\[\s*ERRO_DO_SITE\s*:([\s\S]*?)\]\]/i.exec(resp||"");
     var limpa=String(resp||"").replace(/\[\[\s*ERRO_DO_SITE\s*:[\s\S]*?\]\]/ig,"").trim();
-    CHAT.msgs.push({papel:"model",texto:limpa||"Hum, fiquei sem palavras aqui. 😅 Pode perguntar de novo?"});
+    CHAT.msgs.push({papel:"model",texto:limpa||"Hum, fiquei sem palavras aqui. 😅 Pode perguntar de novo?",ferramentas:CHAT_ARQ.usadas.slice()});
     if(marca)return relatarErroSite(marca[1].trim(),msg).then(function(r){
       CHAT.msgs.push({papel:"model",tipo:r==="ok"?"aviso":"falha",texto:r==="ok"
         ? "📨 Avisei o Matheus sobre esse erro, com o que você contou. Obrigado pela ajuda para deixar o site melhor!"
