@@ -1522,6 +1522,16 @@ body.ap-arrastando,body.ap-arrastando *{cursor:grabbing !important}
 <section class="vista" id="vista-prova">
   <div class="cabeca-vista"><h1>Montar prova</h1><p>Organize as questões marcadas, escolha a série e baixe a prova pronta.</p></div>
   <div class="bloco nao-imprime">
+    <h2>Modelo timbrado</h2>
+    <details id="det-anexar-modelo">
+      <summary><span><strong>Anexar ou trocar o modelo</strong> <span class="sumario" id="resumo-anexar-modelo">— nenhum modelo anexado ainda</span></span></summary>
+      <p class="ajuda">Anexe uma única vez o .docx timbrado da escola. Ele fica guardado neste navegador e é reaproveitado em todas as provas. Todo trecho entre chaves duplas no Word — como {{DISCIPLINA}} — vira um campo aqui embaixo, e o marcador {{QUESTOES}} indica onde as questões entram.</p>
+      <input type="file" id="arquivo-modelo" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
+      <div id="status-modelo"></div>
+    </details>
+  </div>
+  <div class="bloco nao-imprime">
+    <h2>Dados da prova</h2>
     <details id="det-turma-prova">
       <summary><span><strong>Série ou ano da prova</strong> <span class="sumario" id="resumo-turma-prova">— nenhuma escolhida</span></span></summary>
       <p class="ajuda">Escolha uma vez. Ela entra no timbrado, na versão sem timbre e no nome do arquivo. Ela também define as alternativas: Ensino Fundamental sai com 4 (A a D) e Ensino Médio com 5 (A a E).</p>
@@ -1534,15 +1544,6 @@ body.ap-arrastando,body.ap-arrastando *{cursor:grabbing !important}
         <div class="botoes"><button class="botao secundario" type="button" id="btn-salvar-turmas">Salvar lista de turmas</button></div>
         <div id="retorno-turmas"></div>
       </details>
-    </details>
-  </div>
-  <div class="bloco nao-imprime">
-    <h2>Modelo timbrado</h2>
-    <details id="det-anexar-modelo">
-      <summary><span><strong>Anexar ou trocar o modelo</strong> <span class="sumario" id="resumo-anexar-modelo">— nenhum modelo anexado ainda</span></span></summary>
-      <p class="ajuda">Anexe uma única vez o .docx timbrado da escola. Ele fica guardado neste navegador e é reaproveitado em todas as provas. Todo trecho entre chaves duplas no Word — como {{DISCIPLINA}} — vira um campo aqui embaixo, e o marcador {{QUESTOES}} indica onde as questões entram.</p>
-      <input type="file" id="arquivo-modelo" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
-      <div id="status-modelo"></div>
     </details>
 
     <div id="bloco-campos" style="display:none">
@@ -11411,7 +11412,7 @@ var GUIA_SITE=[
 "",
 "BANCO: todas as questões geradas e guardadas. Filtros por assunto, nível, componente, série, matriz, nível de exigência e formato, e busca por palavra. Cada questão pode ser editada (texto, alternativas, gabarito, resolução) ou excluída. Marque as caixas das questões para usar: aparece a barra azul com 'Montar prova com as selecionadas', 'Baixar sem timbre', 'Reequilibrar gabarito' (espalha as respostas certas entre as letras) e 'Excluir selecionadas'. Também há 'Selecionar tudo que o filtro mostra' e 'Limpar seleção'.",
 "",
-"MONTAR PROVA: primeiro 'Série ou ano da prova' (define 4 ou 5 alternativas e entra no cabeçalho). 'Modelo timbrado': o .docx da escola é anexado uma vez em 'Anexar ou trocar o modelo' (fica recolhido); cada marcador entre chaves duplas do Word, como {{DISCIPLINA}}, {{PROFESSOR}}, {{TURMA}}, vira um campo, e {{QUESTOES}} marca onde entram as questões. Escolher uma ou duas colunas, gabarito em página separada e código de habilidade; botão 'Gerar prova no timbrado'. Ao lado, o botão discreto '🔀 Embaralhar questões': ligado, cada prova baixada (no timbrado ou sem timbre) sai com as questões numa ordem sorteada, bom para segunda chamada; clicar de novo volta à ordem do Banco. 'Versão sem timbre' (opcional, recolhida): montar na tela, imprimir ou salvar em PDF, baixar em Word, copiar como texto. 'Completar a prova com questões novas' (opcional): gera questões inéditas já incluídas na prova.",
+"MONTAR PROVA: no topo, 'Modelo timbrado': o .docx da escola é anexado uma vez em 'Anexar ou trocar o modelo' (fica recolhido). Logo abaixo, no bloco 'Dados da prova', vem 'Série ou ano da prova' (define 4 ou 5 alternativas e entra no cabeçalho) e, com o modelo anexado, os campos dele; cada marcador entre chaves duplas do Word, como {{DISCIPLINA}}, {{PROFESSOR}}, {{TURMA}}, vira um campo, e {{QUESTOES}} marca onde entram as questões. Escolher uma ou duas colunas, gabarito em página separada e código de habilidade; botão 'Gerar prova no timbrado'. Ao lado, o botão discreto '🔀 Embaralhar questões': ligado, cada prova baixada (no timbrado ou sem timbre) sai com as questões numa ordem sorteada, bom para segunda chamada; clicar de novo volta à ordem do Banco. 'Versão sem timbre' (opcional, recolhida): montar na tela, imprimir ou salvar em PDF, baixar em Word, copiar como texto. 'Completar a prova com questões novas' (opcional): gera questões inéditas já incluídas na prova.",
 "",
 "PROVAS OFICIAIS: acervo com ENEM 2009 a 2025, SSA (UPE) e PASSE (Avalia SESI), com as questões como no original. Passo 1, 'Escolher a prova': cartão da origem (ENEM, SSA, PASSE), depois Ano, Turma (PASSE e SSA) e Disciplina (Linguagens, Humanas, Natureza, Exatas/Matemática), e o caderno. Escolher a Disciplina no passo 1 já mostra só as questões dela. Passo 2, 'Filtrar as questões': Disciplina (quando não escolhida no passo 1), Matéria para detalhar (História, Filosofia, Sociologia…), assunto, busca por tema amplo, e dificuldade com ordem da mais fácil para a mais difícil. A matriz do ENEM (área, competência, habilidade) e a dificuldade da TRI do INEP só aparecem nas provas do ENEM; no SSA e no PASSE a dificuldade é estimada. Cada questão tem alternativas clicáveis: clicar numa alternativa mostra a certa com círculo verde e, se errou, a escolhida com círculo vermelho. O botão pequeno 'Mostrar gabarito', embaixo da questão, revela a resposta sem responder. O botão 'Abrir' (canto da questão) abre a questão em destaque sobre a página, ajustada à tela, sem gabarito exposto, com setas discretas (ou as setas do teclado) para ir à próxima e Esc para fechar; dá para selecionar a questão ali mesmo. Marcando as caixas das questões aparece a barra com 'Baixar Word no timbrado', 'Baixar Word sem timbre', 'Ver na tela' e 'incluir gabarito no fim'. Importar uma prova nova: bloco 'Importar uma prova oficial' (caderno e gabarito em PDF, com texto selecionável; PDF escaneado como imagem não funciona). Gabarito marcado 'não oficial' foi resolvido à parte porque o caderno veio sem gabarito.",
 "",
