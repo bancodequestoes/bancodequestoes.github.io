@@ -699,6 +699,7 @@ body:has(#faixa-erro) .chat-painel{bottom:124px}
 .chat-digitando{display:inline-flex;gap:4px;align-items:center;padding:4px 2px}
 .chat-digitando i{width:7px;height:7px;border-radius:50%;background:#AAB2C2;animation:chatPulo 1.1s infinite ease-in-out}
 .chat-digitando i:nth-child(2){animation-delay:.15s}.chat-digitando i:nth-child(3){animation-delay:.3s}
+#chat-espera{margin-top:6px;font-size:.92em}#chat-espera p{margin:0 0 8px}#chat-espera .botao{padding:6px 12px;font-size:.9em}
 @keyframes chatPulo{0%,60%,100%{transform:translateY(0);opacity:.5}30%{transform:translateY(-5px);opacity:1}}
 @keyframes chatEntra{from{opacity:0;transform:translateY(8px) scale(.97)}to{opacity:1;transform:none}}
 .chat-sugestoes{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px}
@@ -4501,12 +4502,46 @@ function textoDaFalha(falhas){
     return "O Gemini gratuito aceita poucos pedidos por minuto e continuou recusando depois de várias esperas. "+
       "A cota do dia não acabou: espere um minuto e tente de novo.";
   if(paradaGeral==="sobrecarga"||paradaGeral==="sem resposta")
-    return "O Gemini está sobrecarregado no Google agora: todos os modelos que o site tentou responderam \"ocupado\". "+
-      "Não é problema do site nem da sua chave, e nada foi perdido. Costuma passar em alguns minutos; tente gerar de novo daqui a pouco.";
+    return "O Gemini continuou lotado no Google: o site esperou e tentou de novo sozinho por "+Math.round(JANELA_LOTADO/60000)+" minutos, e todos os modelos seguiram respondendo \"ocupado\". "+
+      "Não é problema do site nem da sua chave (nem a cota do dia), e nada foi perdido. Tente gerar de novo daqui a uns 10 minutos.";
   return "Nenhuma questão foi gerada. "+esc(falhas.length?falhas.join(" · "):ultimoErroIA);
 }
 function repetivel(e){if(cancelado||(e&&e.name==="AbortError"))return false;return !!(e&&(e.repetivel||e.name==="TypeError"));}
 function comFolga(ms){return Math.round(ms*(0.8+Math.random()*0.5));} // evita que tentativas coincidam
+/* Google lotado (todos os modelos responderam "ocupado", erro 503): em vez de desistir, o site espera
+   uma vaga e tenta de novo sozinho, com pausas crescentes (e um pouco sorteadas, para os pedidos de
+   vários professores não baterem juntos), por até JANELA_LOTADO. A contagem aparece na tela a cada
+   segundo e o Cancelar interrompe na hora. Cota do dia esgotada NÃO entra aqui: essa desiste na hora. */
+var JANELA_LOTADO=5*60000, PAUSAS_LOTADO=[10000,20000,30000,45000,60000];
+function pausaLotado(n){return comFolga(PAUSAS_LOTADO[Math.min(n,PAUSAS_LOTADO.length-1)]);}
+// próxima pausa respeitando a janela; 0 = a janela acabou, é hora de mostrar o erro
+function proximaPausaLotado(inicio,n){
+  var resta=JANELA_LOTADO-(Date.now()-inicio);
+  if(resta<5000)return 0;
+  return Math.min(pausaLotado(n),resta);
+}
+function tempoLegivel(ms){
+  var s=Math.max(0,Math.round(ms/1000)), m=Math.floor(s/60);s=s%60;
+  return m?(m+" min"+(s?" "+s+" s":"")):(s+" s");
+}
+function textoLotado(faltaMs,tentativa,inicio){
+  return "Google lotado, aguardando vaga… nova tentativa em "+Math.max(1,Math.ceil(faltaMs/1000))+" s (tentativa "+tentativa+"). "+
+    "Todos os modelos do Gemini responderam \"ocupado\": não é cota nem a sua chave, e nada foi perdido. "+
+    "Esperando há "+tempoLegivel(Date.now()-inicio)+"; o site insiste sozinho por até "+Math.round(JANELA_LOTADO/60000)+" minutos. Você pode cancelar quando quiser.";
+}
+// espera ms mostrando a contagem a cada segundo; rejeita na hora (AbortError) se parar() ficar verdadeiro
+function esperarVaga(ms,tentativa,inicio,avisar,parar){
+  return new Promise(function(ok,falhou){
+    var fim=Date.now()+ms, relogio=null;
+    function passo(){
+      if(parar&&parar()){clearInterval(relogio);falhou(new DOMException("cancelado","AbortError"));return;}
+      var falta=fim-Date.now();
+      if(falta<=0){clearInterval(relogio);ok();return;}
+      if(avisar)avisar(textoLotado(falta,tentativa,inicio));
+    }
+    relogio=setInterval(passo,1000);passo();
+  });
+}
 // modelo que respondeu ocupado há pouco e o último que respondeu bem: com vários pedidos ao mesmo tempo
 // (aulas da apresentação), os seguintes já começam pelo modelo que está livre, sem refazer a fila toda
 var modelosOcupados={}, ultimoModeloOk={m:"",t:0};
@@ -4540,10 +4575,9 @@ function insistirNaIA(prompt,avisar,op){
   if(livre&&livre!==principal&&agora-ultimoModeloOk.t<5*60000&&agora-(modelosOcupados[principal]||0)<3*60000&&
      !esgotadoHoje(livre)&&!modelosAusentes[livre])plano.unshift([livre,0]);
 
-  var falhasDeRede=0, semResposta=0, modelosSemCota={}, modelosSobrecarregados={}, rodadaSobrecarga=0, esperasMinuto=0;
-  // quando todos os modelos estão ocupados, o Google costuma voltar em um ou dois minutos:
-  // novas rodadas com pausas crescentes antes de desistir (com o aviso na tela)
-  var PAUSAS_SOBRECARGA=[15000,30000,60000,90000];
+  var falhasDeRede=0, semResposta=0, modelosSemCota={}, modelosSobrecarregados={}, rodadaSobrecarga=0, esperasMinuto=0, inicioLotado=0;
+  // quando todos os modelos estão ocupados, o Google costuma voltar em poucos minutos:
+  // novas rodadas com pausas crescentes por até JANELA_LOTADO, com a contagem na tela (esperarVaga)
   var distintos={};plano.forEach(function(x){distintos[x[0]]=1;});
   // rodadas depois de "todos ocupados": um pedido por modelo, os Flash-Lite primeiro (mais capacidade no Google)
   // e com raciocínio baixo, que é um pedido mais leve e mais rápido de atender
@@ -4633,12 +4667,14 @@ function insistirNaIA(prompt,avisar,op){
       if(e&&(e.sobrecarga||e.semResposta)){
         modelosSobrecarregados[modelo]=1;modelosOcupados[modelo]=Date.now();
         if(Object.keys(modelosSobrecarregados).length>=Object.keys(distintos).length){
-          if(rodadaSobrecarga>=PAUSAS_SOBRECARGA.length||(e.semResposta&&semResposta>=2)){paradaGeral="sobrecarga";throw e;}
-          var pausa=PAUSAS_SOBRECARGA[rodadaSobrecarga++];
+          if(e.semResposta&&semResposta>=2){paradaGeral="sobrecarga";throw e;}
+          if(!inicioLotado)inicioLotado=Date.now();
+          var pausa=proximaPausaLotado(inicioLotado,rodadaSobrecarga);
+          if(!pausa){paradaGeral="sobrecarga";throw e;}
+          rodadaSobrecarga++;
           modelosSobrecarregados={};plano=planoLeve;
-          if(avisar)avisar("O Gemini está sobrecarregado no Google em todos os modelos (não é cota nem a sua chave). Nova rodada, com pedidos mais leves, em "+
-            Math.round(pausa/1000)+" segundos ("+rodadaSobrecarga+" de "+PAUSAS_SOBRECARGA.length+"). Você pode cancelar quando quiser.");
-          return esperar(pausa).then(function(){
+          // a tentativa 1 foi a primeira volta por todos os modelos; esta será a seguinte
+          return esperarVaga(pausa,rodadaSobrecarga+1,inicioLotado,avisar,function(){return cancelado;}).then(function(){
             if(cancelado)throw e;
             return tentar(0,e);
           });
@@ -11504,7 +11540,9 @@ function chatRender(){
     var imgs=(m.imagens||[]).map(function(d){return '<img src="'+d+'" alt="Print enviado">';}).join("")+
       (!(m.imagens||[]).length&&m.temPrint?'<p><em>(print anexado)</em></p>':"");
     return '<div class="chat-msg '+(m.papel==="user"?"eu":"ia")+'">'+imgs+(m.papel==="user"?chatFormatar(m.texto):chatFormatar(m.texto))+"</div>";
-  }).join("")+(CHAT.enviando?'<div class="chat-msg ia"><span class="chat-digitando" aria-label="digitando"><i></i><i></i><i></i></span></div>':"");
+  }).join("")+(CHAT.enviando?'<div class="chat-msg ia"><span class="chat-digitando" aria-label="digitando"><i></i><i></i><i></i></span>'+
+    '<div id="chat-espera"'+(CHAT.esperaTxt?"":" hidden")+'><p id="chat-espera-txt">'+esc(CHAT.esperaTxt||"")+'</p>'+
+    '<button type="button" class="botao secundario" data-chat-parar="1">Parar de esperar</button></div></div>':"");
   chatRolar();
 }
 function chatAbrir(){
@@ -11568,7 +11606,8 @@ function chamarChatIA(sistema,historico,forcar){
   if(provedorIA()==="gemini")extrasGemini().forEach(function(m){if(modelos.indexOf(m)<0&&!modelosAusentes[m])modelos.push(m);});
   modelos=modelos.filter(function(m){return !esgotadoHoje(m);});
   if(!modelos.length){var nada=new Error("A cota do dia acabou em todos os modelos.");nada.cota=true;return Promise.reject(nada);}
-  var esperouMinuto=false;
+  var esperouMinuto=false, inicioLotado=0, rodadaLotado=0, ocupadosNaVolta=0;
+  CHAT.pararEspera=false;
   function base64(d){return String(d).replace(/^data:[^,]+,/,"");}
   function pedir(modelo){
     var ctl=new AbortController(), relogio=setTimeout(function(){try{ctl.abort();}catch(e){}},180000);
@@ -11625,7 +11664,21 @@ function chamarChatIA(sistema,historico,forcar){
       throw marcarRede(e);});
   }
   function tentar(i,ultimo){
-    if(i>=modelos.length)throw ultimo||new Error("Nenhum modelo respondeu.");
+    if(i===0)ocupadosNaVolta=0;
+    if(i>=modelos.length){
+      // todos os modelos responderam "ocupado": espera uma vaga e começa outra volta (até JANELA_LOTADO)
+      if(ultimo&&ultimo.sobrecarga&&ocupadosNaVolta>=modelos.length){
+        if(!inicioLotado)inicioLotado=Date.now();
+        var pausa=proximaPausaLotado(inicioLotado,rodadaLotado);
+        if(pausa){
+          rodadaLotado++;
+          return esperarVaga(pausa,rodadaLotado+1,inicioLotado,chatAvisoEspera,function(){return CHAT.pararEspera;})
+            .then(function(){chatAvisoEspera("");return tentar(0,ultimo);},function(x){chatAvisoEspera("");throw x;});
+        }
+        ultimo.lotadoJanela=true;
+      }
+      throw ultimo||new Error("Nenhum modelo respondeu.");
+    }
     return pegarVez().then(function(){return pedir(modelos[i]);}).then(function(v){soltarVez();return v;},function(e){soltarVez();throw e;}).catch(function(e){
       if(e&&e.cota&&provedorIA()==="gemini")anotarCotaDia(modelos[i],e.esperaMs);
       if(passarParaEscola(e))return chamarChatIA(sistema,historico,forcar);
@@ -11635,6 +11688,7 @@ function chamarChatIA(sistema,historico,forcar){
       }
       if(e&&e.semModelo&&modelos[i]!==conf.modelo)modelosAusentes[modelos[i]]=1;
       if(e&&e.rede)throw e;
+      if(e&&e.sobrecarga)ocupadosNaVolta++;
       if(e&&(e.repetivel||e.semModelo||e.cota||e.sobrecarga))return tentar(i+1,e);
       throw e;
     });
@@ -11937,8 +11991,19 @@ function executarFerramentaChat(nome,a){
     return {erro:"Ferramenta desconhecida."};
   }).catch(function(e){return {erro:(e&&e.message)||"falhou"};});
 }
+// texto da espera "Google lotado" dentro do balão de digitando, trocado no lugar (sem redesenhar a conversa)
+function chatAvisoEspera(t){
+  CHAT.esperaTxt=t||"";
+  var caixa=$("chat-espera"), txt=$("chat-espera-txt");
+  if(!caixa||!txt)return;
+  var antes=caixa.hidden;
+  caixa.hidden=!t;txt.textContent=t||"";
+  if(antes&&t)chatRolar();
+}
 function chatFalha(e){
   var t=(e&&e.message)||"";
+  if(e&&e.name==="AbortError"&&CHAT.pararEspera)return "Tudo bem, parei de esperar. O Google estava lotado; pode mandar a mensagem de novo daqui a pouco.";
+  if(e&&e.lotadoJanela)return "Esperei "+Math.round(JANELA_LOTADO/60000)+" minutos tentando de novo, e o Google continuou lotado em todos os modelos do Gemini (não é cota nem a sua chave). Tente de novo daqui a uns 10 minutos.";
   if(e&&e.rede)return "Não consegui falar com a IA agora: "+esc(t);
   if(e&&e.minuto)return "Muita gente usando a IA neste minuto (o plano gratuito aceita poucos pedidos por minuto). Tente de novo daqui a um minutinho.";
   if((e&&e.cota)&&usaEscola())return "A cota gratuita do dia da IA da escola acabou. Ela volta sozinha "+(horaDeVolta()||"amanhã cedo")+". Com a sua própria chave gratuita, a cota fica só para você."+"<br><button type=\"button\" class=\"botao\" data-criar-chave=\"1\" style=\"margin-top:10px\">Criar minha chave grátis</button>";
@@ -11990,7 +12055,7 @@ function chatEnviar(texto){
   }).catch(function(e){
     CHAT.msgs.push({papel:"model",tipo:"falha",texto:chatFalha(e)});
   }).then(function(){
-    CHAT.enviando=false;$("chat-enviar").disabled=false;
+    CHAT.enviando=false;CHAT.esperaTxt="";$("chat-enviar").disabled=false;
     chatGuardar();chatRender();
   });
 }
@@ -12063,6 +12128,7 @@ $("chat-anexos").addEventListener("click",function(ev){
   CHAT.anexos.splice(+b.dataset.tirarAnexo,1);chatRenderAnexos();
 });
 $("chat-msgs").addEventListener("click",function(ev){
+  if(ev.target.closest("[data-chat-parar]")){CHAT.pararEspera=true;chatAvisoEspera("Parando…");return;}
   var s=ev.target.closest("[data-sugestao]");if(s)chatEnviar(s.dataset.sugestao);
   var bx=ev.target.closest("[data-baixar-chat]");
   if(bx){
